@@ -1,0 +1,129 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>Order Detail</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <!-- jquery -->
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <!-- bootstrap -->
+    <link rel="stylesheet" type="text/css"
+          href="/bootstrap/css/bootstrap.min.css"/>
+    <script type="text/javascript" src="/bootstrap/js/bootstrap.min.js">
+    </script>
+    <!-- layer -->
+    <script type="text/javascript" src="/layer/layer.js"></script>
+    <!-- common.js -->
+    <script type="text/javascript" src="/js/common.js"></script>
+</head>
+
+<body>
+<div class="panel panel-default">
+    <div class="panel-heading">Order Detail</div>
+    <table class="table" id="order">
+        <tr>
+            <td>订单号</td>
+            <td colspan="3"><b id="orderNo"></b></td>
+        </tr>
+        <tr>
+            <td>订单价格</td>
+            <td colspan="2"><b id="orderAmount"></b></td>
+        </tr>
+        <tr>
+            <td>下单时间</td>
+            <td colspan="2"><b id="createTime"></b></td>
+        </tr>
+        <tr>
+            <td>订单状态</td>
+            <td colspan="2"><b id="status"></b></td>
+            <td>
+                <button class="btn btn-primary btn-block" type="button" id="payButton">立即支付</button>
+            </td>
+        </tr>
+        <tr>
+            <td>收货人</td>
+            <td colspan="2"><b id="userPhone"></b></td>
+        </tr>
+    </table>
+</div>
+<script>
+    $(function () {
+        getOrderDetail();
+
+        $("#payButton").click(function () {
+            payOrder();
+        });
+    });
+
+    function getOrderDetail() {
+        var orderNo = g_getQueryString("orderNo");
+        $.ajax({
+            url: "/order/detail",
+            type: "GET",
+            data: {
+                orderNo: orderNo
+            },
+            success: function (data) {
+                if (data.code == 200) {
+                    render(data.object);
+                } else {
+                    layer.msg(data.message);
+                }
+            },
+            error: function () {
+                layer.msg("客户端请求错误")
+            }
+        });
+    }
+
+    function getDate(Object) {
+        return Object[0] + "-" + Object[1] + "-" + Object[2] + " " + Object[3] + ":" + Object[4] + ":" + Object[5];
+    }
+
+    function render(detail) {
+        $("#orderNo").text(detail.orderNo);
+        $("#orderAmount").text(detail.orderAmount);
+        $("#createTime").text(getDate(detail.createTime));
+        $("#userPhone").text(detail.userId);
+        var status = detail.orderStatus;
+        var statusText = ""
+        switch (status) {
+            case 0:
+                statusText = "没有可用库存，无效订单";
+                $("#payButton").css("display", "none");
+                break;
+            case 1:
+                statusText = "已创建等待支付";
+                break;
+            case 2:
+                statusText = "已支付，购买成功";
+                $("#payButton").css("display", "none");
+                break;
+            case -1:
+                statusText = "未支付已关闭";
+                $("#payButton").css("display", "none");
+                break;
+        }
+        $("#status").text(statusText);
+    }
+
+    function payOrder() {
+        var orderNo = g_getQueryString("orderNo");
+        $.ajax({
+            url: "seckill/payOrder/" + orderNo,
+            type: "GET",
+            success: function (data) {
+                if (data.code == 200) {
+                    location.reload();
+                } else {
+                    layer.msg(data.message);
+                }
+            },
+            error: function () {
+                layer.msg("客户端请求错误")
+            }
+        });
+    }
+</script>
+</body>
+</html>

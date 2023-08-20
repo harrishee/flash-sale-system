@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hanfei.flashsales.mapper.OrderMapper">
+
+    <sql id="base">
+        order_id, order_no, order_status, order_amount, user_id, activity_id, commodity_id, create_time, pay_time
+    </sql>
+
+    <insert id="insertOrder">
+        insert into fs_order (order_no, order_status, order_amount, user_id, activity_id, commodity_id,
+                              create_time, pay_time)
+        values (#{orderNo}, #{orderStatus}, #{orderAmount}, #{userId}, #{activityId}, #{commodityId}, #{createTime},
+                #{payTime})
+    </insert>
+
+    <select id="selectOrderByOrderNo" resultType="com.hanfei.flashsales.pojo.Order">
+        select
+        <include refid="base"/>
+        from fs_order where order_no = #{orderNo}
+    </select>
+
+    <select id="getOrderByUserIdAndActivityId" resultType="com.hanfei.flashsales.pojo.Order">
+        select
+        <include refid="base"/>
+        from fs_order
+        where user_id = #{userId} and activity_id = #{activityId}
+    </select>
+
+    <update id="updateOrder">
+        update fs_order
+        set order_no     = #{orderNo},
+            order_status = #{orderStatus},
+            order_amount = #{orderAmount},
+            user_id      = #{userId},
+            activity_id  = #{activityId},
+            commodity_id = #{commodityId},
+            create_time  = #{createTime},
+            pay_time     = #{payTime}
+        where order_id = #{orderId}
+    </update>
+</mapper>

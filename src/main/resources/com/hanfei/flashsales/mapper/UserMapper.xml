@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hanfei.flashsales.mapper.UserMapper">
+
+    <sql id="base">
+        user_id, username, password, salt, address
+    </sql>
+
+    <insert id="insertUser">
+        insert into fs_user (user_id, username, password, salt, address)
+        values (#{userId}, #{username}, #{password}, #{salt}, #{address})
+    </insert>
+
+    <select id="selectUserById" resultType="com.hanfei.flashsales.pojo.User">
+        select
+        <include refid="base"/>
+        from fs_user
+        where user_id = #{userId}
+    </select>
+</mapper>

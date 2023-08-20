@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Activity List</title>
+    <!-- jquery -->
+    <script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
+    <!-- bootstrap -->
+    <link rel="stylesheet" type="text/css" th:href="@{/bootstrap/css/bootstrap.min.css}"/>
+    <script type="text/javascript" th:src="@{/bootstrap/js/bootstrap.min.js}"></script>
+    <!-- layer -->
+    <script type="text/javascript" th:src="@{/layer/layer.js}"></script>
+    <!-- common.js -->
+    <script type="text/javascript" th:src="@{/js/common.js}"></script>
+</head>
+
+<body>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <b th:text="${user.username}"></b> Welcome back！
+    </div>
+
+    <div class="panel-heading">Activity List</div>
+    <table class="table" id="activityVOs">
+        <tr>
+            <td>活动名称</td>
+            <td>商品名称</td>
+            <td>商品图片</td>
+            <td>活动原价</td>
+            <td>活动价格</td>
+            <td>库存数量</td>
+            <td>查看详情</td>
+        </tr>
+        <tr th:each="activity : ${activityVOs}">
+            <td th:text="${activity.activityName}"></td>
+            <td th:text="${activity.commodityName}"></td>
+            <td><img th:src="@{${activity.commodityImg}}" width="100" height="100" alt=""/></td>
+            <td th:text="${activity.oldPrice}"></td>
+            <td th:text="${activity.salePrice}"></td>
+            <td th:text="${activity.availableStock}"></td>
+            <td><a th:href="'/activityDetail.html?activityId='+${activity.activityId}">详情</a></td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

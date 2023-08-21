@@ -156,22 +156,7 @@ C. 采用：创建订单时锁定，支付时扣减，分段状态
 
 `activityMapper.addAvaAndDeductLockById(orderNoInfo.getActivityId());`
 
-#### 6. feat: limit user purchase
-
-限流策略：限制每个用户的购买数量，防止恶意刷单
-
-```java
-void addLimitMember(long activityId, String userId);
-
-boolean isInLimitMember(long activityId, String userId);
-
-void removeLimitMember(Long activityId, String userId);
-```
-
-通过 Redis 来进行记录，设一个 key 为 activity_limited_user，value 为一个 set，里面存放的是用户的 id。
-每次请求过来，先去 Redis 里面查一下，如果有就说明已经购买过了，没有就执行之前抢购的逻辑，抢购成功后，再把用户 id 放到 Redis 里面去
-
-#### 7. tmp
+#### 5. tmp
 
 分布式锁：
 - 进来一个线程先占位，当别的线程进来操作时，发现已经有人占位了，就会放弃或者稍后再试 线程操作执行完成后，需要调用del指令释放位子
@@ -245,6 +230,21 @@ QPS ~3700
 `消息队列`：引入了消息队列，可以异步处理来削峰，但目前未处理
 
 但是 Redis 的库存有问题，因为原因在于 Redis 没有做到原子性。可以用锁去解决
+
+#### 3. feat: limit user purchase
+
+限流策略：限制每个用户的购买数量，防止恶意刷单
+
+```java
+void addLimitMember(long activityId, String userId);
+
+boolean isInLimitMember(long activityId, String userId);
+
+void removeLimitMember(Long activityId, String userId);
+```
+
+通过 Redis 来进行记录，设一个 key 为 activity_limited_user，value 为一个 set，里面存放的是用户的 id。
+每次请求过来，先去 Redis 里面查一下，如果有就说明已经购买过了，没有就执行之前抢购的逻辑，抢购成功后，再把用户 id 放到 Redis 里面去
 
 ### 安全优化
 

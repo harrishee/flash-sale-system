@@ -38,18 +38,18 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public void addLimitMember(long activityId, String userId) {
+    public void addLimitMember(Long activityId, Long userId) {
         redisTemplate.opsForSet().add("activity_limited_users:" + activityId, userId);
         log.info("***Redis*** 添加到限购名单，userId: {}，activityId: {}", activityId, userId + " ***addLimitMember***");
     }
 
     @Override
-    public boolean isInLimitMember(long activityId, String userId) {
+    public boolean isInLimitMember(Long activityId, Long userId) {
         return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember("activity_limited_users:" + activityId, userId));
     }
 
     @Override
-    public void removeLimitMember(Long activityId, String userId) {
+    public void removeLimitMember(Long activityId, Long userId) {
         redisTemplate.opsForSet().remove("activity_limited_users:" + activityId, userId);
         // log.info("***Redis*** 从限购名单中移除，userId: {}，activityId: {}", activityId, userId + " ***removeLimitMember***");
     }

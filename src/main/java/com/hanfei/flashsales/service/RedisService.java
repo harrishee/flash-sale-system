@@ -11,9 +11,9 @@ public interface RedisService {
 
     void incrementValueByKey(String key);
 
-    void addLimitMember(long activityId, String userId);
+    void addLimitMember(Long activityId, Long userId);
 
-    boolean isInLimitMember(long activityId, String userId);
+    boolean isInLimitMember(Long activityId, Long userId);
 
-    void removeLimitMember(Long activityId, String userId);
+    void removeLimitMember(Long activityId, Long userId);
 }

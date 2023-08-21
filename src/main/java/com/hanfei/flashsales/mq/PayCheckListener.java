@@ -64,9 +64,13 @@ public class PayCheckListener implements RocketMQListener<MessageExt> {
 
             // 1. 恢复数据库库存
             activityMapper.revertStockById(orderNoInfo.getActivityId());
+
             // 2. 恢复 redis 库存
             String key = "activity:" + orderNoInfo.getActivityId();
             redisService.incrementValueByKey(key);
+
+            // 3. 将用户从已购名单中移除
+            redisService.removeLimitMember(orderNoInfo.getActivityId(), orderInfo.getUserId());
         }
     }
 }

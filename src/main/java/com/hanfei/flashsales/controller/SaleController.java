@@ -40,6 +40,11 @@ public class SaleController {
     @PostMapping("/processSaleCacheMq")
     public Result processSaleCacheMq(User user, Long activityId) throws Exception {
 
+        if (redisService.isInLimitMember(activityId, user.getUserId())) {
+            // log.info("=====> 抢购失败，已经抢购过了，用户：{}", user.getUserId());
+            return Result.error(ResultEnum.REPEAT_ERROR);
+        }
+
         // 通过 Redis 缓存做判断预减库存，如果库存不足，直接返回，避免了对数据库的频繁访问，挡住了大部分无效请求
         boolean deductResult = false;
         deductResult = redisService.stockDeductValidator(activityId);
@@ -53,6 +58,8 @@ public class SaleController {
             Order order = orderService.createOrderMq(user.getUserId(), activityId);
             String orderNo = order.getOrderNo();
 
+            // 添加到限购名单
+            redisService.addLimitMember(activityId, user.getUserId());
             log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
             return Result.success(order);
         }

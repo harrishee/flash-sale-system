@@ -20,13 +20,15 @@ public interface ActivityService {
 
     void updateActivity(Activity activity);
 
+    // 乐观锁版本
     boolean lockStock(Long activityId);
+
+    // 原始版本
+    void lockStockNoLock(Long activityId);
 
     int revertStock(Long activityId);
 
     int deductStock(Long activityId);
 
     int addActivity(Activity activity);
-
-    void lockStockNoLock(Long activityId);
 }

@@ -124,24 +124,7 @@ messageSender.sendDelayMessage("pay_check", JSON.toJSONString(order), delayTimeL
 
 本次主要是一个功能性的实现，异步处理来关闭超时未支付的订单，保证了数据一致性
 
-#### 6. feat: limit user purchase
-
-限流策略：限制每个用户的购买数量，防止恶意刷单
-
-```java
-void addLimitMember(long activityId, String userId);
-
-boolean isInLimitMember(long activityId, String userId);
-
-void removeLimitMember(Long activityId, String userId);
-```
-
-通过 Redis 来进行记录，设一个 key 为 activity_limited_user，value 为一个 set，里面存放的是用户的 id。
-每次请求过来，先去 Redis 里面查一下，如果有就说明已经购买过了，没有就执行之前抢购的逻辑，抢购成功后，再把用户 id 放到 Redis 里面去
-
-#### 7. feat: segmented stock states
-
-扣减库存可以发生在：
+还有，扣减库存可以发生在：
 
 A. 创建订单时扣减
 
@@ -172,6 +155,21 @@ C. 采用：创建订单时锁定，支付时扣减，分段状态
 3 订单关闭冻结库存回补 PayCheckListener：
 
 `activityMapper.addAvaAndDeductLockById(orderNoInfo.getActivityId());`
+
+#### 6. feat: limit user purchase
+
+限流策略：限制每个用户的购买数量，防止恶意刷单
+
+```java
+void addLimitMember(long activityId, String userId);
+
+boolean isInLimitMember(long activityId, String userId);
+
+void removeLimitMember(Long activityId, String userId);
+```
+
+通过 Redis 来进行记录，设一个 key 为 activity_limited_user，value 为一个 set，里面存放的是用户的 id。
+每次请求过来，先去 Redis 里面查一下，如果有就说明已经购买过了，没有就执行之前抢购的逻辑，抢购成功后，再把用户 id 放到 Redis 里面去
 
 #### 7. tmp
 
@@ -221,6 +219,8 @@ QPS ~3700
 #### 2. feat: Static Page for Commodity Detail
 
 把前端页面放在静态资源目录下，后端只负责提供数据
+
+#### 3. feat: sentinel
 
 
 ### 接口优化

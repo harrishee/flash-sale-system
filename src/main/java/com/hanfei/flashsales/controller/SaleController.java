@@ -35,7 +35,7 @@ public class SaleController {
     private RedisService redisService;
 
     /**
-     * final: feat: process order by mq
+     * 4. feat: process order by mq
      */
     @PostMapping("/processSaleCacheMq")
     public Result processSaleCacheMq(User user, Long activityId) throws Exception {
@@ -45,14 +45,11 @@ public class SaleController {
         deductResult = redisService.stockDeductValidator(activityId);
         if (!deductResult) {
             // 如果库存不足，直接返回
-            log.info("=====> 抢购失败，已售罄，用户：{}", user.getUserId());
+            // log.info("=====> 抢购失败，已售罄，用户：{}", user.getUserId());
             return Result.error(ResultEnum.EMPTY_STOCK);
 
         } else {
-            // 如果缓存库存充足，首先在数据库中锁定库存，然后执行下单操作
-            activityService.lockStock(activityId);
-
-            // 使用 MQ 进行下单 和 异步扣减库存
+            // 如果缓存库存充足，使用 MQ 进行下单 和 异步扣减库存
             Order order = orderService.createOrderMq(user.getUserId(), activityId);
             String orderNo = order.getOrderNo();
 

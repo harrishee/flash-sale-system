@@ -5,6 +5,7 @@ import com.hanfei.flashsales.pojo.Order;
 import com.hanfei.flashsales.pojo.User;
 import com.hanfei.flashsales.service.ActivityService;
 import com.hanfei.flashsales.service.OrderService;
+import com.hanfei.flashsales.service.RedisService;
 import com.hanfei.flashsales.vo.Result;
 import com.hanfei.flashsales.vo.ResultEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -30,20 +31,29 @@ public class SaleController {
     @Autowired
     private ActivityService activityService;
 
-    /**
-     * feat: sql optimistic lock
-     */
-    @PostMapping("/processSaleOptimisticLock")
-    public Result processSaleOptimisticLock(User user, Long activityId) throws Exception {
+    @Autowired
+    private RedisService redisService;
 
-        // 乐观锁，在更新库存同时检查 available_stock 是否大于 0。如果不是，说明商品已售罄，此时不进行更新库存操作，从而避免了超卖现象
-        boolean lockStockResult = activityService.lockStock(activityId);
-        if (!lockStockResult) { // 如果库存不足，直接返回
-            log.info("=====> 抢购失败，已售罄");
+    /**
+     * feat: Redis Lua Script
+     */
+    @PostMapping("/processSaleCache")
+    public Result processSaleCache(User user, Long activityId) throws Exception {
+
+        // 通过 Redis 缓存做判断预减库存，如果库存不足，直接返回，避免了对数据库的频繁访问，挡住了大部分无效请求
+        boolean deductResult = false;
+        deductResult = redisService.stockDeductValidator(activityId);
+        if (!deductResult) {
+            // 如果库存不足，直接返回
+            log.info("=====> 抢购失败，已售罄，用户：{}", user.getUserId());
             return Result.error(ResultEnum.EMPTY_STOCK);
-        } else { // 如果库存充足，执行下单操作
+
+        } else {
+            // 如果缓存库存充足，首先在数据库中锁定库存，然后执行下单操作
+            activityService.lockStock(activityId);
             Order order = orderService.createOrder(user.getUserId(), activityId);
             String orderNo = order.getOrderNo();
+
             log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
             return Result.success(order);
         }
@@ -77,6 +87,25 @@ public class SaleController {
 
             // 3. 如果库存充足，执行下单操作
             Order order = orderService.createOrder(user.getUserId(), activity.getActivityId());
+            String orderNo = order.getOrderNo();
+            log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
+            return Result.success(order);
+        }
+    }
+
+    /**
+     * feat: sql optimistic lock
+     */
+    @PostMapping("/processSaleOptimisticLock")
+    public Result processSaleOptimisticLock(User user, Long activityId) throws Exception {
+
+        // 乐观锁，在更新库存同时检查 available_stock 是否大于 0。如果不是，说明商品已售罄，此时不进行更新库存操作，从而避免了超卖现象
+        boolean lockStockResult = activityService.lockStock(activityId);
+        if (!lockStockResult) { // 如果库存不足，直接返回
+            log.info("=====> 抢购失败，已售罄");
+            return Result.error(ResultEnum.EMPTY_STOCK);
+        } else { // 如果库存充足，执行下单操作
+            Order order = orderService.createOrder(user.getUserId(), activityId);
             String orderNo = order.getOrderNo();
             log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
             return Result.success(order);

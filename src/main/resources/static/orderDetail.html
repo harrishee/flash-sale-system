@@ -110,7 +110,7 @@
     function payOrder() {
         var orderNo = g_getQueryString("orderNo");
         $.ajax({
-            url: "seckill/payOrder/" + orderNo,
+            url: "sale/payOrder/" + orderNo,
             type: "GET",
             success: function (data) {
                 if (data.code == 200) {

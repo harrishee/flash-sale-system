@@ -13,7 +13,7 @@
         insert into fs_activity (activity_name, commodity_id, total_stock, available_stock, lock_stock,
                                  activity_status, old_price, sale_price, start_time, end_time)
         values (#{activityName}, #{commodityId}, #{totalStock}, #{availableStock}, #{lockStock}, #{activityStatus},
-                #{oldPrice}, #{seckillPrice}, #{startTime}, #{endTime})
+                #{oldPrice}, #{salePrice}, #{startTime}, #{endTime})
     </insert>
 
     <select id="selectActivityById" resultType="com.hanfei.flashsales.pojo.Activity">
@@ -39,7 +39,7 @@
                a.lock_stock       as lockStock,
                a.activity_status  as activityStatus,
                a.old_price        as oldPrice,
-               a.sale_price       as seckillPrice,
+               a.sale_price       as salePrice,
                a.start_time       as startTime,
                a.end_time         as endTime,
                c.commodity_name   as commodityName,

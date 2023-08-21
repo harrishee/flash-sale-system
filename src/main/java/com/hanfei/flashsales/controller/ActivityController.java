@@ -90,7 +90,7 @@ public class ActivityController {
         Commodity commodity = commodityService.getCommodityById(activity.getCommodityId());
 
         // 秒杀状态，0 表示秒杀未开始
-        int seckillStatus = 0;
+        int saleStatus = 0;
         int remainSeconds;
 
         LocalDateTime startDateTime = activity.getStartTime();
@@ -102,10 +102,10 @@ public class ActivityController {
             Duration duration = Duration.between(nowDateTime, startDateTime);
             remainSeconds = (int) duration.getSeconds();
         } else if (nowDateTime.isAfter(endDateTime)) {
-            seckillStatus = 2;
+            saleStatus = 2;
             remainSeconds = -1;
         } else {
-            seckillStatus = 1;
+            saleStatus = 1;
             remainSeconds = 0;
         }
 
@@ -116,7 +116,7 @@ public class ActivityController {
         detailVO.setUserId(user.getUserId());
         detailVO.setUsername(user.getUsername());
         detailVO.setRemainSeconds(remainSeconds);
-        detailVO.setSecKillStatus(seckillStatus);
+        detailVO.setSaleStatus(saleStatus);
 
         return Result.success(detailVO);
     }

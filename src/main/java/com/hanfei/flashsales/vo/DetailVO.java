@@ -24,7 +24,7 @@ public class DetailVO {
 
     private String username;
 
-    private int secKillStatus;
+    private int saleStatus;
 
     private int remainSeconds;
 }

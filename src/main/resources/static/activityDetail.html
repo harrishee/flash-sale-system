@@ -40,7 +40,7 @@
             <td colspan="3"><b id="startTime"></b></td>
             <td>
                 <input type="hidden" id="remainSeconds">
-                <span id="seckillTip"></span>
+                <span id="saleTip"></span>
             </td>
             <td>
                 <div class="row">
@@ -49,7 +49,7 @@
                         <!--<input id="captcha" class="form-control" style="display: none">-->
                         <button class="btn btn-primary" type="submit" id="buyButton"
                                 onclick="processSale()">立即秒杀
-                            <!--onclick="getSeckillPath()">立即秒杀-->
+                            <!--onclick="getSalePath()">立即秒杀-->
                             <input type="hidden" name="activityId" id="activityId">
                         </button>
                     </div>
@@ -66,7 +66,7 @@
         </tr>
         <tr>
             <td>秒杀价</td>
-            <td colspan="3"><b id="seckillPrice"></b></td>
+            <td colspan="3"><b id="salePrice"></b></td>
         </tr>
         <tr>
             <td>库存数量</td>
@@ -100,15 +100,15 @@
     }
 
     // function refreshCaptcha() {
-    //     $("#captchaImg").attr("src", "/seckill/captcha?activityId=" + $("#activityId").val() + "&time=" + new Date());
+    //     $("#captchaImg").attr("src", "/sale/captcha?activityId=" + $("#activityId").val() + "&time=" + new Date());
     // }
 
-    function getSeckillPath() {
+    function getSalePath() {
         var activityId = $("#activityId").val();
         // var captcha = $("#captcha").val();
         g_showLoading();
         $.ajax({
-            url: "/seckill/path",
+            url: "/sale/path",
             type: "GET",
             data: {
                 activityId: activityId,
@@ -132,7 +132,7 @@
     // 秒杀方法
     function processSale() {
         $.ajax({
-            url: 'seckill/processSale',
+            url: 'sale/processSaleCache',
             type: "POST",
             data: {
                 activityId: $('#activityId').val()
@@ -172,7 +172,7 @@
         //秒杀还未开始
         if (remainSeconds > 0) {
             $("#buyButton").attr("disabled", true);
-            $("#seckillTip").html("秒杀倒计时：" + remainSeconds + "秒");
+            $("#saleTip").html("秒杀倒计时：" + remainSeconds + "秒");
             timeout = setTimeout(function () {
                 $("#remainSeconds").val(remainSeconds - 1);
                 countDown();
@@ -183,13 +183,13 @@
             if (timeout) {
                 clearTimeout(timeout);
             }
-            $("#seckillTip").html("秒杀进行中")
+            $("#saleTip").html("秒杀进行中")
             // refreshCaptcha();
             $("#captchaImg").show();
             $("#captcha").show();
         } else {
             $("#buyButton").attr("disabled", true);
-            $("#seckillTip").html("秒杀已经结束");
+            $("#saleTip").html("秒杀已经结束");
             $("#captchaImg").hide();
             $("#captcha").hide();
         }
@@ -216,7 +216,7 @@
         $("#endTime").text(getDate(activity.endTime));
         $("#remainSeconds").val(remainSeconds);
         $("#oldPrice").text(activity.oldPrice);
-        $("#seckillPrice").text(activity.salePrice);
+        $("#salePrice").text(activity.salePrice);
         $("#availableStock").text(activity.availableStock);
         $("#activityId").val(activity.activityId);
     }

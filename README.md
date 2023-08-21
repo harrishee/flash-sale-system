@@ -94,6 +94,8 @@
 
 #### 4. feat: process order by mq
 
+测试接口：`/sale/processSaleCacheMq`，脚本：`fs-cache-mq-sell`
+
 瞬间流量冲击下，需要进行订单流量的削峰填谷。利用 MQ 流量削峰，做异步处理从而减少数据库的顺时负载
 
 本方案选择将 RocketMQ 作为消息队列系统，其出色的高吞吐量和消息可靠性使其非常适合处理大规模消息流。
@@ -105,9 +107,6 @@
 目前新订单请求仍然是发送的实时消息。后续可以考虑将其改为延时消息，用户提交订单后，先返回订单创建中排队中
 
 后续的订单支付校验就可以通过延时消息来完成
-
-
-#### 5. feat: delayed order handling
 
 处理超时任务，第一种方案是`定时轮询`，但是：1. 时效性差、2. 容易挤压、3. 效率低
 
@@ -124,7 +123,6 @@ messageSender.sendDelayMessage("pay_check", JSON.toJSONString(order), delayTimeL
 ```
 
 本次主要是一个功能性的实现，异步处理来关闭超时未支付的订单，保证了数据一致性
-
 
 #### 6. feat: limit user purchase
 

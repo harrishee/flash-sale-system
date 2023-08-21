@@ -35,10 +35,10 @@ public class SaleController {
     private RedisService redisService;
 
     /**
-     * feat: Redis Lua Script
+     * final: feat: process order by mq
      */
-    @PostMapping("/processSaleCache")
-    public Result processSaleCache(User user, Long activityId) throws Exception {
+    @PostMapping("/processSaleCacheMq")
+    public Result processSaleCacheMq(User user, Long activityId) throws Exception {
 
         // 通过 Redis 缓存做判断预减库存，如果库存不足，直接返回，避免了对数据库的频繁访问，挡住了大部分无效请求
         boolean deductResult = false;
@@ -51,7 +51,9 @@ public class SaleController {
         } else {
             // 如果缓存库存充足，首先在数据库中锁定库存，然后执行下单操作
             activityService.lockStock(activityId);
-            Order order = orderService.createOrder(user.getUserId(), activityId);
+
+            // 使用 MQ 进行下单 和 异步扣减库存
+            Order order = orderService.createOrderMq(user.getUserId(), activityId);
             String orderNo = order.getOrderNo();
 
             log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
@@ -69,7 +71,7 @@ public class SaleController {
     }
 
     /**
-     * feat: basic sell
+     * 1. feat: basic sell
      */
     @PostMapping("/processSaleNoLock")
     public Result processSaleNoLock(User user, Long activityId) throws Exception {
@@ -94,7 +96,7 @@ public class SaleController {
     }
 
     /**
-     * feat: sql optimistic lock
+     * 2. feat: sql optimistic lock
      */
     @PostMapping("/processSaleOptimisticLock")
     public Result processSaleOptimisticLock(User user, Long activityId) throws Exception {
@@ -107,6 +109,31 @@ public class SaleController {
         } else { // 如果库存充足，执行下单操作
             Order order = orderService.createOrder(user.getUserId(), activityId);
             String orderNo = order.getOrderNo();
+            log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
+            return Result.success(order);
+        }
+    }
+
+    /**
+     * 3. feat: Redis Lua Script
+     */
+    @PostMapping("/processSaleCache")
+    public Result processSaleCache(User user, Long activityId) throws Exception {
+
+        // 通过 Redis 缓存做判断预减库存，如果库存不足，直接返回，避免了对数据库的频繁访问，挡住了大部分无效请求
+        boolean deductResult = false;
+        deductResult = redisService.stockDeductValidator(activityId);
+        if (!deductResult) {
+            // 如果库存不足，直接返回
+            log.info("=====> 抢购失败，已售罄，用户：{}", user.getUserId());
+            return Result.error(ResultEnum.EMPTY_STOCK);
+
+        } else {
+            // 如果缓存库存充足，首先在数据库中锁定库存，然后执行下单操作
+            activityService.lockStock(activityId);
+            Order order = orderService.createOrder(user.getUserId(), activityId);
+            String orderNo = order.getOrderNo();
+
             log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
             return Result.success(order);
         }

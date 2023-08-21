@@ -1,7 +1,9 @@
 package com.hanfei.flashsales.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.hanfei.flashsales.mapper.ActivityMapper;
 import com.hanfei.flashsales.mapper.OrderMapper;
+import com.hanfei.flashsales.mq.MessageSender;
 import com.hanfei.flashsales.pojo.Activity;
 import com.hanfei.flashsales.pojo.Order;
 import com.hanfei.flashsales.service.OrderService;
@@ -28,10 +30,32 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private ActivityMapper activityMapper;
 
+    @Autowired
+    private MessageSender messageSender;
+
     private final SnowFlakeUtils snowFlakeUtils = new SnowFlakeUtils(1, 1);
 
     @Override
-    public Order createOrder(Long userPhone, Long activityId) {
+    public Order createOrderMq(Long userId, Long activityId) throws Exception {
+        // 1. 创建订单
+        Activity activity = activityMapper.selectActivityById(activityId);
+        Order order = new Order();
+        order.setOrderNo(String.valueOf(snowFlakeUtils.nextId()));
+        order.setOrderAmount(activity.getSalePrice());
+        order.setActivityId(activityId);
+        order.setUserId(userId);
+        order.setCommodityId(activity.getCommodityId());
+
+        // 2. 发送 创建订单 消息到 new_order 主题的消息队列
+        messageSender.sendMessage("new_order", JSON.toJSONString(order));
+
+        // 3. 发送 订单付款状态校验 消息到 pay_check 主题的消息队列
+        messageSender.sendDelayMessage("pay_check", JSON.toJSONString(order), 4);
+        return order;
+    }
+
+    @Override
+    public Order createOrder(Long userId, Long activityId) {
         Activity activity = activityMapper.selectActivityById(activityId);
 
         Order order = new Order();
@@ -41,7 +65,7 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderStatus(1);
         order.setOrderAmount(activity.getSalePrice());
         order.setActivityId(activityId);
-        order.setUserId(Long.valueOf(userPhone));
+        order.setUserId(userId);
         order.setCommodityId(activity.getCommodityId());
         order.setCreateTime(LocalDateTime.now());
         orderMapper.insertOrder(order);
@@ -57,12 +81,5 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public Order getOrderByOrderNo(String orderNo) {
         return orderMapper.selectOrderByOrderNo(orderNo);
-    }
-
-    @Override
-    public Order createOrderNoMq(String phone, Long activityId) {
-        Activity activity = activityMapper.selectActivityById(activityId);
-        Order order = new Order();
-        return order;
     }
 }

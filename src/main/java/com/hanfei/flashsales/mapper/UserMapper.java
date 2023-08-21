@@ -6,7 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Mapper
 public interface UserMapper {

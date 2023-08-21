@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Slf4j
 @RestController

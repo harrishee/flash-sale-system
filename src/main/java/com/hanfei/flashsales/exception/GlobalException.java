@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  *
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Data
 @NoArgsConstructor

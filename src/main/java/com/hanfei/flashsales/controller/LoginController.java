@@ -18,7 +18,7 @@ import javax.validation.Valid;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Slf4j
 @Controller

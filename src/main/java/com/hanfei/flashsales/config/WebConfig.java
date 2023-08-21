@@ -15,7 +15,7 @@ import java.util.List;
  *
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Configuration
 @EnableWebMvc // 启用 Spring MVC 的配置，若无此注解，重写 WebMvcConfigurer 中的方法无效

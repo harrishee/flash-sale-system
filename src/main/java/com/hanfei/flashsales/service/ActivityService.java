@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 public interface ActivityService {
 
@@ -18,7 +18,7 @@ public interface ActivityService {
 
     Activity getActivityById(Long activityId);
 
-    int updateActivity(Activity activity);
+    void updateActivity(Activity activity);
 
     boolean lockStock(Long activityId);
 
@@ -28,5 +28,5 @@ public interface ActivityService {
 
     int addActivity(Activity activity);
 
-    int lockStockOptimisticLock(Long activityId);
+    void lockStockNoLock(Long activityId);
 }

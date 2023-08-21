@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Slf4j
 @RestController

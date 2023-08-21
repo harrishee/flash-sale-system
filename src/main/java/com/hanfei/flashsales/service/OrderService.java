@@ -6,7 +6,7 @@ import com.hanfei.flashsales.vo.Result;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 public interface OrderService {
 

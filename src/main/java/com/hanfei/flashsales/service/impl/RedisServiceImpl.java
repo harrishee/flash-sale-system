@@ -12,7 +12,7 @@ import java.util.Collections;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Slf4j
 @Controller

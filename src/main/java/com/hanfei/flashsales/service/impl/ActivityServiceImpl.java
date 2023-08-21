@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Slf4j
 @Service
@@ -37,8 +37,8 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public int updateActivity(Activity activity) {
-        return activityMapper.updateActivity(activity);
+    public void updateActivity(Activity activity) {
+        activityMapper.updateActivity(activity);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public int lockStockOptimisticLock(Long activityId) {
-        return activityMapper.lockStockOptimisticLock(activityId);
+    public void lockStockNoLock(Long activityId) {
+        activityMapper.lockStockNoOptimisticLock(activityId);
     }
 }

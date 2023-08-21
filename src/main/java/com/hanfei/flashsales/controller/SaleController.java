@@ -17,11 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Slf4j
 @RestController
-@RequestMapping("/seckill")
+@RequestMapping("/sale")
 public class SaleController {
 
     @Autowired
@@ -33,8 +33,8 @@ public class SaleController {
     /**
      * 处理抢购请求
      */
-    @PostMapping("/doSeckill")
-    public Result doSecKill(User user, Long activityId) throws Exception {
+    @PostMapping("/processSaleNoLock")
+    public Result processSaleNoLock(User user, Long activityId) throws Exception {
 
         // 1. 先查询商品库存
         Activity activity = activityService.getActivityById(activityId);
@@ -45,9 +45,7 @@ public class SaleController {
             log.info("=====> 抢购失败，已售罄");
             return Result.error(ResultEnum.EMPTY_STOCK);
         } else {
-            activity.setAvailableStock(availableStock - 1);
-            activity.setLockStock(lockStock + 1);
-            activityService.updateActivity(activity);
+            activityService.lockStockNoLock(activityId);
 
             // 3. 如果库存充足，执行下单操作
             Order order = orderService.createOrder(user.getUserId(), activity.getActivityId());

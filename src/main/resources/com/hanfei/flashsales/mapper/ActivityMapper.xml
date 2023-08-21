@@ -90,11 +90,10 @@
         where activity_id = #{activityId}
     </update>
 
-    <update id="lockStockOptimisticLock">
+    <update id="lockStockNoOptimisticLock">
         update fs_activity
         set lock_stock      = lock_stock + 1,
             available_stock = available_stock - 1
         where activity_id = #{activityId}
-          and available_stock > 0
     </update>
 </mapper>

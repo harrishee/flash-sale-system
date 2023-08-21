@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 public class UserTests {
 

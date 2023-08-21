@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Mapper
 public interface ActivityMapper {
@@ -39,5 +39,5 @@ public interface ActivityMapper {
      */
     int revertStockById(Long activityId);
 
-    int lockStockOptimisticLock(Long activityId);
+    int lockStockNoOptimisticLock(Long activityId);
 }

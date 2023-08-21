@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Slf4j
 @Service

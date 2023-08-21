@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Slf4j
 @Service

@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 @Component
 public class UserArgumentResolver implements HandlerMethodArgumentResolver {

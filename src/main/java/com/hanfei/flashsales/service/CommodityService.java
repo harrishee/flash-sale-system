@@ -5,7 +5,7 @@ import com.hanfei.flashsales.pojo.Commodity;
 /**
  * @author: harris
  * @time: 2023
- * @summary: seckill
+ * @summary: flash-sales
  */
 public interface CommodityService {
 

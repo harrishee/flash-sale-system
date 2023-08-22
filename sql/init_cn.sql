@@ -8,9 +8,9 @@ CREATE TABLE IF NOT EXISTS fs_activity
     lock_stock      BIGINT  DEFAULT 0 NOT NULL COMMENT '锁定库存数量',
     activity_status TINYINT DEFAULT 0 NOT NULL COMMENT '活动状态，0:下架 1:正常',
     old_price       DECIMAL(10, 2)    NOT NULL COMMENT '商品原价',
-    sale_price      DECIMAL(10, 2)    NOT NULL COMMENT '秒杀价格',
-    start_time      DATETIME          NULL COMMENT '秒杀开始时间',
-    end_time        DATETIME          NULL COMMENT '秒杀结束时间'
+    sale_price      DECIMAL(10, 2)    NOT NULL COMMENT '活动价格',
+    start_time      DATETIME          NULL COMMENT '开始时间',
+    end_time        DATETIME          NULL COMMENT '结束时间'
 );
 
 CREATE TABLE IF NOT EXISTS fs_commodity

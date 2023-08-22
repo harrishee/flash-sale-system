@@ -1,6 +1,7 @@
 package com.hanfei.flashsales.mq;
 
 import com.alibaba.fastjson.JSON;
+import com.hanfei.flashsales.controller.SaleController;
 import com.hanfei.flashsales.mapper.ActivityMapper;
 import com.hanfei.flashsales.mapper.OrderMapper;
 import com.hanfei.flashsales.pojo.Order;
@@ -30,6 +31,9 @@ public class PayCheckListener implements RocketMQListener<MessageExt> {
 
     @Autowired
     private ActivityMapper activityMapper;
+
+    @Autowired
+    private SaleController saleController;
 
     @Autowired
     private RedisService redisService;
@@ -71,6 +75,9 @@ public class PayCheckListener implements RocketMQListener<MessageExt> {
 
             // 3. 将用户从已购名单中移除
             redisService.removeLimitMember(orderNoInfo.getActivityId(), orderInfo.getUserId());
+
+            // 4. 恢复内存标记
+            saleController.getEmptyStockMap().put(orderNoInfo.getActivityId(), false);
         }
     }
 }

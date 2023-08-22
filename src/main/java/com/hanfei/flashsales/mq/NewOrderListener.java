@@ -35,7 +35,7 @@ public class NewOrderListener implements RocketMQListener<MessageExt> {
      * 处理新订单的创建
      * 加 @Transactional 确保数据库事务:
      * 1. 插入订单：orderMapper.insertOrder(order)
-     * 2. 锁定秒杀活动的库存：lockStock(order.getActivityId())
+     * 2. 锁定活动库存：lockStock(order.getActivityId())
      * 要么全部成功提交，要么全部回滚
      *
      * @param messageExt 消息对象，包含了消息的内容、主题、标签等信息

@@ -8,12 +8,16 @@ import com.hanfei.flashsales.service.OrderService;
 import com.hanfei.flashsales.service.RedisService;
 import com.hanfei.flashsales.vo.Result;
 import com.hanfei.flashsales.vo.ResultEnum;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author: harris
@@ -34,11 +38,19 @@ public class SaleController {
     @Autowired
     private RedisService redisService;
 
+    @Getter
+    private Map<Long, Boolean> EmptyStockMap = new HashMap<>();
+
     /**
      * 4. feat: process order by mq
      */
     @PostMapping("/processSaleCacheMq")
     public Result processSaleCacheMq(User user, Long activityId) throws Exception {
+
+        // 内存标记，减少 Redis 访问
+        if (EmptyStockMap.get(activityId)) {
+            return Result.error(ResultEnum.EMPTY_STOCK);
+        }
 
         if (redisService.isInLimitMember(activityId, user.getUserId())) {
             // log.info("=====> 抢购失败，已经抢购过了，用户：{}", user.getUserId());
@@ -51,6 +63,7 @@ public class SaleController {
         if (!deductResult) {
             // 如果库存不足，直接返回
             // log.info("=====> 抢购失败，已售罄，用户：{}", user.getUserId());
+            EmptyStockMap.put(activityId, true);
             return Result.error(ResultEnum.EMPTY_STOCK);
 
         } else {

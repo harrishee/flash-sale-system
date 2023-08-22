@@ -48,8 +48,8 @@
                         <!--<img id="captchaImg" width="130" height="32" onclick="refreshCaptcha()" style="display: none">-->
                         <!--<input id="captcha" class="form-control" style="display: none">-->
                         <button class="btn btn-primary" type="submit" id="buyButton"
-                                onclick="processSale()">立即秒杀
-                            <!--onclick="getSalePath()">立即秒杀-->
+                                onclick="processSale()">立即抢购
+                            <!--onclick="getSalePath()">立即抢购-->
                             <input type="hidden" name="activityId" id="activityId">
                         </button>
                     </div>
@@ -65,7 +65,7 @@
             <td colspan="3"><b id="oldPrice"></b></td>
         </tr>
         <tr>
-            <td>秒杀价</td>
+            <td>抢购价</td>
             <td colspan="3"><b id="salePrice"></b></td>
         </tr>
         <tr>
@@ -129,7 +129,7 @@
     }
 
 
-    // 秒杀方法
+    // 抢购方法
     function processSale() {
         $.ajax({
             url: 'sale/processSaleCache',
@@ -169,27 +169,27 @@
     function countDown() {
         var remainSeconds = $("#remainSeconds").val();
         var timeout;
-        //秒杀还未开始
+        //抢购还未开始
         if (remainSeconds > 0) {
             $("#buyButton").attr("disabled", true);
-            $("#saleTip").html("秒杀倒计时：" + remainSeconds + "秒");
+            $("#saleTip").html("抢购倒计时：" + remainSeconds + "秒");
             timeout = setTimeout(function () {
                 $("#remainSeconds").val(remainSeconds - 1);
                 countDown();
             }, 1000);
-            // 秒杀进行中
+            // 抢购进行中
         } else if (remainSeconds == 0) {
             $("#buyButton").attr("disabled", false);
             if (timeout) {
                 clearTimeout(timeout);
             }
-            $("#saleTip").html("秒杀进行中")
+            $("#saleTip").html("抢购进行中")
             // refreshCaptcha();
             $("#captchaImg").show();
             $("#captcha").show();
         } else {
             $("#buyButton").attr("disabled", true);
-            $("#saleTip").html("秒杀已经结束");
+            $("#saleTip").html("抢购已经结束");
             $("#captchaImg").hide();
             $("#captcha").hide();
         }

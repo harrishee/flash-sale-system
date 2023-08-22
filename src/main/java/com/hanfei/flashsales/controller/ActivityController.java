@@ -97,7 +97,7 @@ public class ActivityController {
         Activity activity = activityService.getActivityById(activityId);
         Commodity commodity = commodityService.getCommodityById(activity.getCommodityId());
 
-        // 秒杀状态，0 表示秒杀未开始
+        // 抢购状态，0 表示未开始
         int saleStatus = 0;
         int remainSeconds;
 
@@ -105,7 +105,7 @@ public class ActivityController {
         LocalDateTime endDateTime = activity.getEndTime();
         LocalDateTime nowDateTime = LocalDateTime.now();
 
-        // 判断秒杀状态
+        // 判断状态
         if (nowDateTime.isBefore(startDateTime)) {
             Duration duration = Duration.between(nowDateTime, startDateTime);
             remainSeconds = (int) duration.getSeconds();

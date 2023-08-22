@@ -30,7 +30,7 @@ public enum ResultEnum {
 
     SESSION_ERROR(500214, "session 不存在或者已经失效"),
 
-    // 秒杀模块 5005xx
+    // 抢购模块 5005xx
     EMPTY_STOCK(500500, "库存不足"),
 
     REPEAT_ERROR(500501, "该商品每人限购一件"),

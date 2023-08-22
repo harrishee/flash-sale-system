@@ -1,5 +1,6 @@
 package com.hanfei.flashsales.config;
 
+import com.hanfei.flashsales.controller.SaleController;
 import com.hanfei.flashsales.mapper.ActivityMapper;
 import com.hanfei.flashsales.pojo.Activity;
 import lombok.extern.slf4j.Slf4j;
@@ -25,10 +26,13 @@ public class RedisPreheat implements ApplicationRunner {
     private ActivityMapper activityMapper;
 
     @Autowired
+    private SaleController saleController;
+
+    @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
+    public void run(ApplicationArguments args) {
         List<Activity> activityList = activityMapper.selectActivitiesByStatus(1);
         if (CollectionUtils.isEmpty(activityList)) {
             log.info("***Redis*** 预热，没有进行中的活动");
@@ -36,7 +40,9 @@ public class RedisPreheat implements ApplicationRunner {
         }
         activityList.forEach(activity -> {
             redisTemplate.opsForValue().set("activity:" + activity.getActivityId(), activity.getAvailableStock());
+            saleController.getEmptyStockMap().put(activity.getActivityId(), false);
         });
         log.info("***Redis*** 预热成功，有 {} 条进行中的活动", activityList.size());
+        log.info("***Redis*** 内存标记初始化成功，EmptyStockMap: {}", saleController.getEmptyStockMap());
     }
 }

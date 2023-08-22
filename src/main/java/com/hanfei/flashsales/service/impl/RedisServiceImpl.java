@@ -40,7 +40,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public void addLimitMember(Long activityId, Long userId) {
         redisTemplate.opsForSet().add("activity_limited_users:" + activityId, userId);
-        log.info("***Redis*** 添加到限购名单，userId: {}，activityId: {}", activityId, userId + " ***addLimitMember***");
+        // log.info("***Redis*** 添加到限购名单，userId: {}，activityId: {}", activityId, userId + " ***addLimitMember***");
     }
 
     @Override

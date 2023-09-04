@@ -1,5 +1,6 @@
 package com.hanfei.flashsales.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.hanfei.flashsales.pojo.Activity;
 import com.hanfei.flashsales.pojo.Order;
 import com.hanfei.flashsales.pojo.User;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,51 +41,55 @@ public class SaleController {
     private RedisService redisService;
 
     @Getter
-    private Map<Long, Boolean> EmptyStockMap = new HashMap<>();
+    private final Map<Long, Boolean> emptyStockMap = new HashMap<>();
 
     /**
+     * Handle sale request
      * 4. feat: process order by mq
+     * 5. feat: in-memory marking
      */
     @PostMapping("/processSaleCacheMq")
     public Result processSaleCacheMq(User user, Long activityId) throws Exception {
 
-        // 内存标记，减少 Redis 访问
-        if (EmptyStockMap.get(activityId)) {
+        // In-memory marking to reduce Redis access, check if the activity has empty stock
+        if (emptyStockMap.get(activityId)) {
+            log.info("===> Purchase fail, activity has no stock from Map, userId: [{}]", user.getUserId());
             return Result.error(ResultEnum.EMPTY_STOCK);
         }
 
+        // Check if the user has already purchased to prevent repeated purchases
         if (redisService.isInLimitMember(activityId, user.getUserId())) {
-            // log.info("=====> 抢购失败，已经抢购过了，用户：{}", user.getUserId());
+            log.info("===> Purchase fail, already purchased, userId: [{}]", user.getUserId());
             return Result.error(ResultEnum.REPEAT_ERROR);
         }
 
-        // 通过 Redis 缓存做判断预减库存，如果库存不足，直接返回，避免了对数据库的频繁访问，挡住了大部分无效请求
+        // Check and deduct stock using Redis cache to avoid frequent database access.
         boolean deductResult = false;
         deductResult = redisService.stockDeductValidator(activityId);
         if (!deductResult) {
-            // 如果库存不足，直接返回
-            // log.info("=====> 抢购失败，已售罄，用户：{}", user.getUserId());
-            EmptyStockMap.put(activityId, true);
+            log.info("===> Purchase fail, activity has no stock from Redis, userId: [{}]", user.getUserId());
+            emptyStockMap.put(activityId, true);
             return Result.error(ResultEnum.EMPTY_STOCK);
 
         } else {
-            // 如果缓存库存充足，使用 MQ 进行下单 和 异步扣减库存
+            // If Redis stock is available, use MQ for placing order and asynchronous stock deduction
             Order order = orderService.createOrderMq(user.getUserId(), activityId);
-            String orderNo = order.getOrderNo();
 
-            // 添加到限购名单
+            // Add the user to the purchase limit list
             redisService.addLimitMember(activityId, user.getUserId());
-            log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
+            log.info("Added to the purchase limit list, userId: [{}], activityId: [{}]", user.getUserId(), activityId);
+
+            String orderNo = order.getOrderNo();
+            log.info("===> Purchase successful! userId: [{}], orderNo: [{}]", user.getUserId(), orderNo);
             return Result.success(order);
         }
     }
 
     /**
-     * 处理订单支付请求
+     * Handle order payment requests, just simulate the payment process
      */
     @RequestMapping("/payOrder/{orderNo}")
     public Result payOrder(@PathVariable String orderNo) throws Exception {
-        log.info("***Controller*** 订单支付，订单号：{}", orderNo);
         return orderService.payOrder(orderNo);
     }
 
@@ -93,21 +99,20 @@ public class SaleController {
     @PostMapping("/processSaleNoLock")
     public Result processSaleNoLock(User user, Long activityId) throws Exception {
 
-        // 1. 先查询商品库存
+        // 1. Check available stock
         Activity activity = activityService.getActivityById(activityId);
         Long availableStock = activity.getAvailableStock();
-        Long lockStock = activity.getLockStock();
         if (availableStock < 1) {
-            // 2. 如果库存不足，直接返回
-            log.info("=====> 抢购失败，已售罄");
+            // 2.1 If not enough, return
+            log.info("===> Purchase fail, activity has no stock, userId: [{}]", user.getUserId());
             return Result.error(ResultEnum.EMPTY_STOCK);
         } else {
             activityService.lockStockNoLock(activityId);
 
-            // 3. 如果库存充足，执行下单操作
+            // 2.2 If enough, place order
             Order order = orderService.createOrder(user.getUserId(), activity.getActivityId());
             String orderNo = order.getOrderNo();
-            log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
+            log.info("===> Purchase successful! userId: [{}], orderNo: [{}]", user.getUserId(), orderNo);
             return Result.success(order);
         }
     }
@@ -118,15 +123,17 @@ public class SaleController {
     @PostMapping("/processSaleOptimisticLock")
     public Result processSaleOptimisticLock(User user, Long activityId) throws Exception {
 
-        // 乐观锁，在更新库存同时检查 available_stock 是否大于 0。如果不是，说明商品已售罄，此时不进行更新库存操作，从而避免了超卖现象
+        // Optimistic locking: Checks if available_stock is greater than 0 while updating the stock
+        // If not, it means the product is sold out, and no stock update is performed, avoiding overselling
         boolean lockStockResult = activityService.lockStock(activityId);
-        if (!lockStockResult) { // 如果库存不足，直接返回
-            log.info("=====> 抢购失败，已售罄");
+        if (!lockStockResult) {
+            log.info("===> Purchase fail, activity has no stock, userId: [{}]", user.getUserId());
             return Result.error(ResultEnum.EMPTY_STOCK);
-        } else { // 如果库存充足，执行下单操作
+        } else {
+            // If stock is available, place order
             Order order = orderService.createOrder(user.getUserId(), activityId);
             String orderNo = order.getOrderNo();
-            log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
+            log.info("===> Purchase successful! userId: [{}], orderNo: [{}]", user.getUserId(), orderNo);
             return Result.success(order);
         }
     }
@@ -137,21 +144,20 @@ public class SaleController {
     @PostMapping("/processSaleCache")
     public Result processSaleCache(User user, Long activityId) throws Exception {
 
-        // 通过 Redis 缓存做判断预减库存，如果库存不足，直接返回，避免了对数据库的频繁访问，挡住了大部分无效请求
+        // Uses Redis caching to check and deduct stock with Lua script. If stock is insufficient, returns an error
         boolean deductResult = false;
         deductResult = redisService.stockDeductValidator(activityId);
         if (!deductResult) {
-            // 如果库存不足，直接返回
-            log.info("=====> 抢购失败，已售罄，用户：{}", user.getUserId());
+            log.info("===> Purchase fail, activity has no stock, userId: [{}]", user.getUserId());
             return Result.error(ResultEnum.EMPTY_STOCK);
 
         } else {
-            // 如果缓存库存充足，首先在数据库中锁定库存，然后执行下单操作
+            // If Redis stock is available, lock the stock in the database, and then place order
             activityService.lockStock(activityId);
             Order order = orderService.createOrder(user.getUserId(), activityId);
             String orderNo = order.getOrderNo();
 
-            log.info("=====> 抢购成功，用户：{}，订单号：{}", user.getUserId(), orderNo);
+            log.info("===> Purchase successful! userId: [{}], orderNo: [{}]", user.getUserId(), orderNo);
             return Result.success(order);
         }
     }

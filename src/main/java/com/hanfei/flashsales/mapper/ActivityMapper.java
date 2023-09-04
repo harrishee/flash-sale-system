@@ -25,17 +25,17 @@ public interface ActivityMapper {
     int updateActivity(Activity activity);
 
     /**
-     * 根据活动 id 锁定库存（可用库存减 1，锁定库存加 1）
+     * Lock the stock of an activity by its ID (decrease available_stock by 1, increase lock_stock by 1)
      */
     boolean lockStockById(long activityId);
 
     /**
-     * 根据 id 扣减库存（将锁定库存减 1）
+     * Deduct the stock of an activity by its ID (decrease lock_stock by 1)
      */
     int deductStockById(Long activityId);
 
     /**
-     * 根据 id 回滚库存（将可用库存加 1，锁定库存减 1）
+     * Revert the stock of an activity by its ID (increase available_stock by 1, decrease lock_stock by 1)
      */
     int revertStockById(Long activityId);
 

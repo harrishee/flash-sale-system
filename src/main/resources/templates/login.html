@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Logib</title>
+    <title>Login</title>
     <!-- jquery -->
     <script type="text/javascript" th:src="@{/js/jquery.min.js}"></script>
     <!-- bootstrap -->
@@ -30,7 +30,7 @@
         <div class="row">
             <label class="form-label col-md-3">Mobile</label>
             <div class="col-md-6">
-                <input id="userId" name="userId" class="form-control" type="text" placeholder="手机号码" required="true"
+                <input id="userId" name="userId" class="form-control" type="text" placeholder="Phone number" required="true"
                        minlength="11" maxlength="11"/>
             </div>
             <div class="col-md-3">
@@ -50,11 +50,15 @@
 
     <div class="row">
         <div class="col-md-4 col-md-offset-4">
-            <button class="btn btn-primary btn-block" type="submit" onclick="login()">登录</button>
+            <button class="btn btn-primary btn-block" type="submit" onclick="login()">Login</button>
         </div>
     </div>
-
-    <h4 style="text-align:center; margin-bottom: 20px; padding-top: 30px">请使用 UserTests 中生成用户，这里不做用户注册功能了</h4>
+    <h4 style="text-align:center; margin-bottom: 20px; padding-top: 30px">
+        Please generate users provided in the UserTests.
+    </h4>
+    <h4 style="text-align:center; margin-bottom: 20px; padding-top: 30px">
+        User registration will not implemented in this project.
+    </h4>
 </form>
 </body>
 
@@ -86,7 +90,7 @@
             success: function (data) {
                 layer.closeAll();
                 if (data.code == 200) {
-                    layer.msg("成功");
+                    layer.msg("Success");
                     document.cookie = "ticket=" + data.object;
                     window.location.href = "/activity/all";
                 } else {

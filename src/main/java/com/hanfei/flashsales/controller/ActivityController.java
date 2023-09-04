@@ -51,73 +51,81 @@ public class ActivityController {
     private ThymeleafViewResolver thymeleafViewResolver;
 
     /**
-     * 跳转商品列表页面 页面缓存
+     * Handle getting all activities requests, applying feat: Sentinel rate limiting and feat: page caching
      */
     @GetMapping(value = "/all", produces = "text/html;charset=utf-8")
-    public String list(Model model, User user, HttpServletRequest req, HttpServletResponse resp) {
-        // 使用 Sentinel 进行限流，SphU.entry("activityList") 表示对此资源进行限流
+    public String all(Model model, User user, HttpServletRequest request, HttpServletResponse response) {
+        // Sentinel rate limiting with resource “activityAll”
         try (Entry entry = SphU.entry("activityAll")) {
-            log.info("***Controller*** 商品列表页面被用户: {} 访问", user.getUserId());
+            log.info("Request activity/all, userId: [{}]", user.getUserId());
 
-            // 从缓存中获取页面，如果有，直接返回页面
+            // If activityAll html is cached in Redis
             ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
             String html = (String) valueOperations.get("activityAll");
             if (!StringUtils.isEmpty(html)) {
-                log.info("=====> 加载到缓存的内容");
+                log.info("===> Content found from Redis");
                 return html;
             }
 
-            // 未从缓存中查到，需要从数据库中联表查询一次
-            List<ListVO> activityVOs = activityService.getActiveActivityVOs();
-
+            // If activityAll html is not cached in Redis
+            List<ListVO> activeActivityVOs = activityService.getActiveActivityVOs();
             model.addAttribute("user", user);
-            model.addAttribute("activityVOs", activityVOs);
+            model.addAttribute("activityVOs", activeActivityVOs);
 
-            // 如果缓存中没有，手动渲染，存入缓存
-            WebContext webContext = new WebContext(req, resp, req.getServletContext(), req.getLocale(), model.asMap());
+            // Create a WebContext to facilitate rendering the 'activityAll' Thymeleaf template
+            WebContext webContext = new WebContext(
+                    request,
+                    response,
+                    request.getServletContext(),
+                    request.getLocale(),
+                    model.asMap()
+            );
+
+            // Process the 'activityAll' Thymeleaf template using the configured Thymeleaf view resolver
             html = thymeleafViewResolver.getTemplateEngine().process("activityAll", webContext);
             if (!StringUtils.isEmpty(html)) {
                 valueOperations.set("activityAll", html, 60, TimeUnit.SECONDS);
             }
-            log.info("=====> 没加载到缓存的内容");
+            log.info("===> Content not found from Redis");
             return html;
-        } catch (BlockException ex) {
-            return "点击过快，请稍后再试";
+
+        } catch (BlockException e) {
+            log.warn("Request blocked due to excessive clicking, userId: [{}]", user.getUserId());
+            return "Clicking too fast, please try again later...";
         }
     }
 
     /**
-     * 跳转商品详情页面
+     * Handle getting activity detail requests
      */
     @GetMapping("/detail/{activityId}")
     public Result detail(User user, @PathVariable Long activityId) {
-        log.info("***Controller*** 商品详情页面被用户: {} 访问", user.getUserId());
+        log.info("Request activity/detail, userId: [{}], activityId: [{}]", user.getUserId(), activityId);
 
-        // 数据库中查询两次
+        // Fetch activity and commodity detail from mysql
         Activity activity = activityService.getActivityById(activityId);
         Commodity commodity = commodityService.getCommodityById(activity.getCommodityId());
 
-        // 抢购状态，0 表示未开始
-        int saleStatus = 0;
+        // Initialize sale status and remaining seconds
+        int saleStatus = 0; // 0: not started
         int remainSeconds;
-
         LocalDateTime startDateTime = activity.getStartTime();
         LocalDateTime endDateTime = activity.getEndTime();
         LocalDateTime nowDateTime = LocalDateTime.now();
 
-        // 判断状态
+        // Determine the sale status and remaining time
         if (nowDateTime.isBefore(startDateTime)) {
             Duration duration = Duration.between(nowDateTime, startDateTime);
             remainSeconds = (int) duration.getSeconds();
         } else if (nowDateTime.isAfter(endDateTime)) {
-            saleStatus = 2;
+            saleStatus = 2; // 2: ended
             remainSeconds = -1;
         } else {
-            saleStatus = 1;
+            saleStatus = 1; // 1: started
             remainSeconds = 0;
         }
 
-        // 封装数据
+        // Create a DetailVO object to encapsulate the data
         DetailVO detailVO = new DetailVO();
         detailVO.setActivity(activity);
         detailVO.setCommodity(commodity);

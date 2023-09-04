@@ -10,10 +10,10 @@ import com.hanfei.flashsales.vo.Result;
  */
 public interface OrderService {
 
-    // 没有 MQ 版本
+    // No MQ version
     Order createOrder(Long userId, Long activityId);
 
-    // 有 MQ 版本
+    // MQ version
     Order createOrderMq(Long userId, Long activityId) throws Exception;
 
     Result payOrder(String orderNo) throws Exception;

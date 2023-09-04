@@ -19,7 +19,7 @@ public class CookieUtils {
 
 
     /**
-     * 得到 Cookie 的值，根据参数 isDecoder 来决定是否进行 "UTF-8" URL 解码
+     * Get the value of a cookie, with an option to decode it with "UTF-8"
      */
     public static String getCookieValue(HttpServletRequest request, String cookieName, boolean isDecoder) {
         Cookie[] cookieList = request.getCookies();
@@ -31,10 +31,10 @@ public class CookieUtils {
         for (Cookie cookie : cookieList) {
             if (cookie.getName().equals(cookieName)) {
                 if (isDecoder) {
-                    // 如果需要解码，对 Cookie 值进行 URL 解码
+                    // Decode the cookie value with URL decoding if needed
                     res = URLDecoder.decode(cookie.getValue(), StandardCharsets.UTF_8);
                 } else {
-                    // 否则直接使用原始 Cookie 值
+                    // Otherwise, use the original cookie value
                     res = cookie.getValue();
                 }
                 break;
@@ -44,7 +44,7 @@ public class CookieUtils {
     }
 
     /**
-     * 设置 Cookie，不编码，不设置有效时间，默认浏览器关闭失效
+     * Set a cookie without encoding, without setting an expiration time (expires when the browser is closed)
      */
     public static void setCookie(HttpServletRequest request, HttpServletResponse response,
                                  String name, String value) {
@@ -52,14 +52,14 @@ public class CookieUtils {
     }
 
     /**
-     * 设置 Cookie，支持选择是否编码和设置域名
+     * Set a cookie with options for encoding, setting an expiration time, and specifying the domain.
      *
-     * @param request  HttpServletRequest 对象，用于确定域名
-     * @param response HttpServletResponse 对象，用于添加 Cookie
-     * @param name     要设置的 Cookie 的名称
-     * @param value    要存储在 Cookie 中的值
-     * @param maxAge   Cookie 的最大有效时间，以秒为单位
-     * @param isEncode 是否对 Cookie 值进行编码
+     * @param request  HttpServletRequest object.
+     * @param response HttpServletResponse object to add the cookie.
+     * @param name     Name of the cookie to set.
+     * @param value    Value to store in the cookie.
+     * @param maxAge   Maximum age of the cookie in seconds (expires after this time).
+     * @param isEncode Whether to encode the cookie value.
      */
     private static void setCookieHelper(HttpServletRequest request, HttpServletResponse response,
                                         String name, String value, int maxAge, boolean isEncode) {
@@ -74,7 +74,7 @@ public class CookieUtils {
             if (maxAge > 0)
                 cookie.setMaxAge(maxAge);
 
-            // 设置Cookie的域名
+            // Set the cookie's domain
             if (request != null) {
                 String domainName = request.getServerName();
                 if (!domainName.equals("localhost")) {
@@ -82,11 +82,11 @@ public class CookieUtils {
                 }
             }
 
-            // 设置 Cookie 的路径，'/' 表示在整个应用程序中都可以访问该 Cookie
+            // Set the cookie path, '/' means it's accessible throughout the entire application
             cookie.setPath("/");
             response.addCookie(cookie);
         } catch (Exception e) {
-            log.error("设置 Cookie 异常：", e);
+            log.error("Set Cookie Exception:", e);
         }
     }
 }

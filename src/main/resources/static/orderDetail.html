@@ -22,26 +22,26 @@
     <div class="panel-heading">Order Detail</div>
     <table class="table" id="order">
         <tr>
-            <td>订单号</td>
+            <td>Order Number</td>
             <td colspan="3"><b id="orderNo"></b></td>
         </tr>
         <tr>
-            <td>订单价格</td>
+            <td>Order Amount</td>
             <td colspan="2"><b id="orderAmount"></b></td>
         </tr>
         <tr>
-            <td>下单时间</td>
+            <td>Create Time</td>
             <td colspan="2"><b id="createTime"></b></td>
         </tr>
         <tr>
-            <td>订单状态</td>
+            <td>Order Status</td>
             <td colspan="2"><b id="status"></b></td>
             <td>
-                <button class="btn btn-primary btn-block" type="button" id="payButton">立即支付</button>
+                <button class="btn btn-primary btn-block" type="button" id="payButton">Pay Now</button>
             </td>
         </tr>
         <tr>
-            <td>收货人</td>
+            <td>User Phone</td>
             <td colspan="2"><b id="userPhone"></b></td>
         </tr>
     </table>
@@ -71,7 +71,7 @@
                 }
             },
             error: function () {
-                layer.msg("客户端请求错误")
+                layer.msg("Client request error")
             }
         });
     }
@@ -89,18 +89,18 @@
         var statusText = ""
         switch (status) {
             case 0:
-                statusText = "没有可用库存，无效订单";
+                statusText = "No available stock, invalid order";
                 $("#payButton").css("display", "none");
                 break;
             case 1:
-                statusText = "已创建等待支付";
+                statusText = "Created, awaiting payment";
                 break;
             case 2:
-                statusText = "已支付，购买成功";
+                statusText = "Paid, purchase successful";
                 $("#payButton").css("display", "none");
                 break;
             case -1:
-                statusText = "未支付已关闭";
+                statusText = "Unpaid, closed";
                 $("#payButton").css("display", "none");
                 break;
         }
@@ -120,7 +120,7 @@
                 }
             },
             error: function () {
-                layer.msg("客户端请求错误")
+                layer.msg("Client request error")
             }
         });
     }

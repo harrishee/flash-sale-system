@@ -20,10 +20,10 @@ public interface ActivityService {
 
     void updateActivity(Activity activity);
 
-    // 乐观锁版本
+    // Optimistic lock version
     boolean lockStock(Long activityId);
 
-    // 原始版本
+    // Original version
     void lockStockNoLock(Long activityId);
 
     int revertStock(Long activityId);

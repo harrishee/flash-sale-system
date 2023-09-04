@@ -22,17 +22,18 @@ public class UserUtils {
 
     public static void createUser(int count) throws Exception {
         List<User> users = new ArrayList<>(count);
-        // 生成用户
+        String password = "121212";
+        // Generate users
         for (int i = 0; i < count; i++) {
             User user = new User();
             user.setUserId(Long.valueOf(String.valueOf(13000000000L + i)));
             user.setUsername("user " + i);
             user.setSalt("1a2b3c4d");
-            user.setPassword(MD5Utils.inputPassToDBPass("121212", user.getSalt()));
-            user.setAddress("广州市");
+            user.setPassword(MD5Utils.inputPassToDBPass(password, user.getSalt()));
+            user.setAddress("San Diego");
             users.add(user);
         }
-        System.out.println("生成用户完毕");
+        System.out.println("Users generated");
 
         Connection conn = getConn();
         String sql = "insert into fs_user(user_id, username, password, salt, address)values(?,?,?,?,?)";
@@ -49,10 +50,9 @@ public class UserUtils {
         pstmt.executeBatch();
         pstmt.close();
         conn.close();
-        System.out.println("已插入到数据库");
+        System.out.println("Inserted to db");
 
-
-        // 登录，生成 ticket
+        // Login to generate ticket
         String urlString = "http://localhost:8080/login/processLogin";
         File file = new File("/Users/harris/config.txt");
         if (file.exists()) {
@@ -68,7 +68,7 @@ public class UserUtils {
             co.setRequestMethod("POST");
             co.setDoOutput(true);
             OutputStream out = co.getOutputStream();
-            String params = "userId=" + user.getUserId() + "&password=" + MD5Utils.inputPassToFormPass("121212");
+            String params = "userId=" + user.getUserId() + "&password=" + MD5Utils.inputPassToFormPass(password);
             out.write(params.getBytes());
             out.flush();
             InputStream inputStream = co.getInputStream();
@@ -90,7 +90,8 @@ public class UserUtils {
             raf.write("\r\n".getBytes());
         }
         raf.close();
-        System.out.println("写入 ticket 完毕");
+        System.out.println("Wrote tickets to file");
+        System.out.println("Done!");
     }
 
     private static Connection getConn() throws Exception {

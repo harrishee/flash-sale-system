@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 全局异常类，用于封装自定义异常
+ * GlobalException class is used to encapsulate custom exceptions for the application
  *
  * @author: harris
  * @time: 2023

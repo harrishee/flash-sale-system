@@ -17,19 +17,19 @@ public class MD5Utils {
         return DigestUtils.md5Hex(src);
     }
 
-    // 第一次 MD5：用户输入的密码 + 固定盐 -> 表单密码
+    // First MD5: User's input password + Fixed salt -> Form password
     public static String inputPassToFormPass(String input) {
         String str = "" + salt.charAt(0) + salt.charAt(2) + input + salt.charAt(5) + salt.charAt(4);
         return md5(str);
     }
 
-    // 第二次 MD5：表单密码 + 用户盐 -> 数据库密码
+    // Second MD5: Form password + User salt -> Database password
     public static String formPassToDBPass(String pass, String salt) {
         String str = "" + salt.charAt(0) + salt.charAt(2) + pass + salt.charAt(5) + salt.charAt(4);
         return md5(str);
     }
 
-    // 直接两次 MD5：用户输入的密码 + 固定盐 + 用户盐 -> 数据库密码
+    // Directly Two MD5: User's input password + Fixed salt + User salt -> Database password
     public static String inputPassToDBPass(String input, String salt) {
         String pass = inputPassToFormPass(input);
         return formPassToDBPass(pass, salt);

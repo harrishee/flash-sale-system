@@ -32,13 +32,7 @@ public class NewOrderListener implements RocketMQListener<MessageExt> {
     private ActivityMapper activityMapper;
 
     /**
-     * 处理新订单的创建
-     * 加 @Transactional 确保数据库事务:
-     * 1. 插入订单：orderMapper.insertOrder(order)
-     * 2. 锁定活动库存：lockStock(order.getActivityId())
-     * 要么全部成功提交，要么全部回滚
-     *
-     * @param messageExt 消息对象，包含了消息的内容、主题、标签等信息
+     * Process the creation of a new order
      */
     @Override
     @Transactional
@@ -47,14 +41,18 @@ public class NewOrderListener implements RocketMQListener<MessageExt> {
         Order order = JSON.parseObject(message, Order.class);
         order.setCreateTime(LocalDateTime.now());
 
-        // 订单状态：0:没有库存，无效订单，1:已创建等待支付，2: 已支付购买成功，-1: 未支付已关闭
+        // Order status:
+        // 0: No stock, invalid order
+        // 1: Created, awaiting payment
+        // 2: Paid, purchase successful
+        // -1: Unpaid, closed
         boolean lockStockResult = activityMapper.lockStockById(order.getActivityId());
         if (lockStockResult) {
             order.setOrderStatus(1);
         } else {
             order.setOrderStatus(0);
         }
-        log.info("***MQ*** 创建新订单: {}，状态：{}", order.getOrderNo(), order.getOrderStatus());
+        log.info("Creating new order, orderNo: [{}], orderStatus: [{}]", order.getOrderNo(), order.getOrderStatus());
         orderMapper.insertOrder(order);
     }
 }

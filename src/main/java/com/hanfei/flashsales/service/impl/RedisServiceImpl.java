@@ -27,7 +27,7 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public boolean stockDeductValidator(Long activityId) {
         String key = "activity:" + activityId;
-        // lua script: 检查库存，减库存，再返回扣减后的库存
+        // Lua script: check stock, deduct stock, and return the stock after deduction
         Long stock = redisTemplate.execute(redisScript, Collections.singletonList(key), Collections.EMPTY_LIST);
         return stock >= 0;
     }
@@ -40,7 +40,6 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public void addLimitMember(Long activityId, Long userId) {
         redisTemplate.opsForSet().add("activity_limited_users:" + activityId, userId);
-        // log.info("***Redis*** 添加到限购名单，userId: {}，activityId: {}", activityId, userId + " ***addLimitMember***");
     }
 
     @Override
@@ -51,6 +50,5 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public void removeLimitMember(Long activityId, Long userId) {
         redisTemplate.opsForSet().remove("activity_limited_users:" + activityId, userId);
-        // log.info("***Redis*** 从限购名单中移除，userId: {}，activityId: {}", activityId, userId + " ***removeLimitMember***");
     }
 }

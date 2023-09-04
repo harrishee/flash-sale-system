@@ -28,11 +28,17 @@ public class LoginController {
     @Autowired
     private UserService userService;
 
+    /**
+     * Render the login page
+     */
     @GetMapping("")
     public String toLogin() {
         return "login";
     }
 
+    /**
+     * Handle user login requests
+     */
     @ResponseBody
     @PostMapping("/processLogin")
     public Result processLogin(@Valid LoginVO loginVO, HttpServletRequest request, HttpServletResponse response) {

@@ -24,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Service
 @RocketMQMessageListener(topic = "pay_check", consumerGroup = "pay_check_group")
-public class PayCheckListener implements RocketMQListener<MessageExt> {
+public class PaymentCheckListener implements RocketMQListener<MessageExt> {
 
     @Autowired
     private OrderMapper orderMapper;
@@ -39,44 +39,34 @@ public class PayCheckListener implements RocketMQListener<MessageExt> {
     private RedisService redisService;
 
     /**
-     * 处理超时订单
-     *
-     * 加 @Transactional 确保数据库操作:
-     * 1. 更新数据库中的订单状态：orderMapper.updateOrder(orderInfo)
-     * 2. 恢复数据库中的可用库存和锁定库存：activityMapper.incAvailAndDeductLockById(order.getActivityId())
-     * 3. 增加 Redis 中的库存：redisService.incrementKey("stock:" + order.getActivityId())
-     * 4. 从 Redis 中已购名单中移除用户：redisService.removeLimitMember(order.getActivityId(), order.getUserId())
-     * 要么全部成功提交，要么全部回滚
-     *
-     * @param messageExt 消息对象
+     * Handle Timeout Orders
      */
     @Override
     @Transactional
     public void onMessage(MessageExt messageExt) {
         String message = new String(messageExt.getBody(), StandardCharsets.UTF_8);
-        // log.info("***MQ*** 接收到订单支付状态校验消息: " + message + " ***PayCheckListener***");
-
         Order orderNoInfo = JSON.parseObject(message, Order.class);
         Order orderInfo = orderMapper.selectOrderByOrderNo(orderNoInfo.getOrderNo());
+        log.info("Received order payment status check message: [{}]", orderInfo);
 
-        // 判断订单是否完成支付
-        // 订单状态：0:没有库存，无效订单，1:已创建等待支付，2: 已支付购买成功，-1: 未支付已关闭
+        // If the order is not paid, close the order
         if (orderInfo.getOrderStatus() != 2) {
-            log.info("***MQ*** 未完成支付，关闭订单，订单号: " + orderInfo.getOrderNo() + " ***PayCheckListener***");
+            log.info("Payment not completed, closing order, orderNo: [{}]", orderInfo.getOrderNo());
             orderInfo.setOrderStatus(-1);
             orderMapper.updateOrder(orderInfo);
 
-            // 1. 恢复数据库库存
+            // 1. Revert mysql stock
             activityMapper.revertStockById(orderNoInfo.getActivityId());
 
-            // 2. 恢复 redis 库存
+            // 2. Revert redis stock
             String key = "activity:" + orderNoInfo.getActivityId();
             redisService.incrementValueByKey(key);
 
-            // 3. 将用户从已购名单中移除
+            // 3. Remove user from the Redis list of purchased members
             redisService.removeLimitMember(orderNoInfo.getActivityId(), orderInfo.getUserId());
+            log.info("Remove from the purchased list, userId: [{}], activityId: [{}]", orderInfo.getUserId(), orderNoInfo.getActivityId());
 
-            // 4. 恢复内存标记
+            // 4. Revert in-memory flag
             saleController.getEmptyStockMap().put(orderNoInfo.getActivityId(), false);
         }
     }

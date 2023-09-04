@@ -65,8 +65,7 @@
         where activity_id = #{activityId}
     </update>
 
-    <!-- 锁定库存，将可用库存减1，锁定库存加1 -->
-    <!--简单的乐观锁：available_stock > 0，简单解决超卖现象-->
+    <!-- Simple optimistic lock: available_stock > 0, to address overselling issues -->
     <update id="lockStockById">
         update fs_activity
         set lock_stock      = lock_stock + 1,
@@ -75,14 +74,12 @@
           and available_stock > 0
     </update>
 
-    <!-- 减少锁定库存，将锁定库存减1 -->
     <update id="deductStockById">
         update fs_activity
         set lock_stock = lock_stock - 1
         where activity_id = #{activityId}
     </update>
 
-    <!-- 回滚库存，将可用库存加1，锁定库存减1 -->
     <update id="revertStockById">
         update fs_activity
         set available_stock = available_stock + 1,

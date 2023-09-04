@@ -40,41 +40,44 @@ public class UserServiceImpl implements UserService {
         String userId = loginVO.getUserId();
         String password = loginVO.getPassword();
 
-        // 数据库查询用户
+        // 1. Get user from mysql with userId
         User user = userMapper.selectUserById(userId);
         if (user == null) {
             throw new GlobalException(ResultEnum.USER_ID_NOT_EXIST);
         }
 
-        // 校验用户密码
+        // 2. Verify password
         if (!MD5Utils.formPassToDBPass(password, user.getSalt()).equals(user.getPassword())) {
             throw new GlobalException(ResultEnum.LOGIN_ERROR);
         }
 
-        // 用 UUID 生成 ticket
+        // 3. Generate ticket using UUID
         String ticket = UUIDUtils.generateUUID();
 
-        // 将 user:ticket 作为 key，用户信息作为 value，存入 Redis 中
+        // 4. Set user:ticket as key, user information as value, and store it in Redis
         redisTemplate.opsForValue().set("user:" + ticket, JSONObject.toJSONString(user));
 
-        // 把 ticket 作为 Cookie，返回给客户端
+        // 5. Set ticket as Cookie and return it to the client
         CookieUtils.setCookie(request, response, "ticket", ticket);
 
-        log.info("***Service*** 登陆成功，用户ID：{} 已生成 ticket：{}", userId, ticket);
+        log.info("Login success, userId: [{}], ticket: [{}]", userId, ticket);
         return Result.success(ticket);
     }
 
+    /**
+     * Retrieve a User object by ticket
+     */
     @Override
     public User getUserByTicket(String ticket, HttpServletRequest request, HttpServletResponse response) {
         if (StringUtils.isEmpty(ticket)) {
             return null;
         }
 
-        // 根据 ticket 从 Redis 中获取用户信息
+        // Retrieve user information from Redis based on the provided ticket
         String userJson = (String) redisTemplate.opsForValue().get("user:" + ticket);
         User user = JSONObject.parseObject(userJson, User.class);
 
-        // 更新用户的 Cookie，延长用户会话的有效期
+        // Update the user's Cookie to extend the session's validity if the user is found
         if (user != null) {
             CookieUtils.setCookie(request, response, "ticket", ticket);
         }

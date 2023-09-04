@@ -22,19 +22,20 @@ import java.nio.charset.StandardCharsets;
 @Service
 @Transactional
 @RocketMQMessageListener(topic = "pay_done", consumerGroup = "pay_done_group")
-public class PayDoneListener implements RocketMQListener<MessageExt> {
+public class PaymentDoneListener implements RocketMQListener<MessageExt> {
 
     @Autowired
     private ActivityMapper activityMapper;
 
     /**
-     * 处理创建订单请求
+     * Handle successful payment messages
      */
     @Override
     public void onMessage(MessageExt messageExt) {
         String message = new String(messageExt.getBody(), StandardCharsets.UTF_8);
         Order order = JSON.parseObject(message, Order.class);
-        log.info("***MQ*** 接收到付款成功消息: " + order.getOrderNo() + " ***PayDoneListener***");
+
+        log.info("Received payment done message: [{}]", order.getOrderNo());
         activityMapper.deductStockById(order.getActivityId());
     }
 }

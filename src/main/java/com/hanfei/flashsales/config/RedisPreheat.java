@@ -33,16 +33,18 @@ public class RedisPreheat implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        List<Activity> activityList = activityMapper.selectActivitiesByStatus(1);
-        if (CollectionUtils.isEmpty(activityList)) {
-            log.info("***Redis*** 预热，没有进行中的活动");
+        // Get all ongoing sale activities
+        List<Activity> activeActivities = activityMapper.selectActivitiesByStatus(1);
+        if (CollectionUtils.isEmpty(activeActivities)) {
+            log.info("Redis preheat fail! No active sale activities");
             return;
         }
-        activityList.forEach(activity -> {
+
+        activeActivities.forEach(activity -> {
             redisTemplate.opsForValue().set("activity:" + activity.getActivityId(), activity.getAvailableStock());
             saleController.getEmptyStockMap().put(activity.getActivityId(), false);
         });
-        log.info("***Redis*** 预热成功，有 {} 条进行中的活动", activityList.size());
-        log.info("***Redis*** 内存标记初始化成功，EmptyStockMap: {}", saleController.getEmptyStockMap());
+        log.info("Redis preheat success! [{}] active sale activities", activeActivities.size());
+        log.info("EmptyStockMap initialized! [{}]", saleController.getEmptyStockMap());
     }
 }

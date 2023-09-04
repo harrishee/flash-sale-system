@@ -19,24 +19,24 @@
 <div class="panel panel-default">
     <div class="panel-heading">Activity Detail</div>
     <div class="panel-body">
-        <span id="userTip"> 您还没有登录，请登陆后再操作<br/></span>
+        <span id="userTip">You are not logged in yet, please log in before proceeding<br/></span>
         Welcome back！User：<b id="userName"></b>
     </div>
     <table class="table" id="goods">
         <tr>
-            <td>活动名称</td>
+            <td>Activity Name</td>
             <td colspan="3"><b id="activityName"></b></td>
         </tr>
         <tr>
-            <td>商品名称</td>
+            <td>Commodity Name</td>
             <td colspan="3"><b id="commodityName"></b></td>
         </tr>
         <tr>
-            <td>商品图片</td>
+            <td>Commodity Image</td>
             <td colspan="3"><img id="commodityImg" width="200" height="200"/></td>
         </tr>
         <tr>
-            <td>开始时间</td>
+            <td>start Time</td>
             <td colspan="3"><b id="startTime"></b></td>
             <td>
                 <input type="hidden" id="remainSeconds">
@@ -48,7 +48,7 @@
                         <!--<img id="captchaImg" width="130" height="32" onclick="refreshCaptcha()" style="display: none">-->
                         <!--<input id="captcha" class="form-control" style="display: none">-->
                         <button class="btn btn-primary" type="submit" id="buyButton"
-                                onclick="processSale()">立即抢购
+                                onclick="processSale()">Buy Now
                             <!--onclick="getSalePath()">立即抢购-->
                             <input type="hidden" name="activityId" id="activityId">
                         </button>
@@ -57,19 +57,19 @@
             </td>
         </tr>
         <tr>
-            <td>结束时间</td>
+            <td>End Time</td>
             <td colspan="3"><b id="endTime"></b></td>
         </tr>
         <tr>
-            <td>商品原价</td>
+            <td>Old Price</td>
             <td colspan="3"><b id="oldPrice"></b></td>
         </tr>
         <tr>
-            <td>抢购价</td>
+            <td>Sale Price</td>
             <td colspan="3"><b id="salePrice"></b></td>
         </tr>
         <tr>
-            <td>库存数量</td>
+            <td>Stock</td>
             <td colspan="3"><b id="availableStock"></b></td>
         </tr>
     </table>
@@ -90,19 +90,21 @@
                     render(data.object);
                     countDown();
                 } else {
-                    layer.msg("客户端请求出错");
+                    layer.msg("Client request error");
                 }
             },
             error: function () {
-                layer.msg("客户端请求出错");
+                layer.msg("Client request error");
             }
         })
     }
 
+    // further use
     // function refreshCaptcha() {
     //     $("#captchaImg").attr("src", "/sale/captcha?activityId=" + $("#activityId").val() + "&time=" + new Date());
     // }
 
+    // further use
     function getSalePath() {
         var activityId = $("#activityId").val();
         // var captcha = $("#captcha").val();
@@ -123,16 +125,14 @@
                 }
             },
             error: function () {
-                layer.msg("1 客户端请求错误");
+                layer.msg("Client request error");
             }
         });
     }
 
-
-    // 抢购方法
     function processSale() {
         $.ajax({
-            url: 'sale/processSaleCache',
+            url: 'sale/processSaleCacheMq',
             type: "POST",
             data: {
                 activityId: $('#activityId').val()
@@ -144,7 +144,7 @@
                     layer.msg(data.message);
                 }
             }, error: function () {
-                layer.msg("客户端请求出错");
+                layer.msg("Client request error");
             }
 
         });
@@ -152,9 +152,9 @@
 
     function showOrderDetailPopup(orderNo) {
         layer.open({
-            title: '抢购成功！',
-            content: '您已成功抢购，是否查看订单详情？',
-            btn: ['查看订单详情', '取消'],
+            title: 'Purchase successful!',
+            content: 'You have successfully made a purchase. Would you like to view the order details?',
+            btn: ['See order detail', 'cancel'],
             yes: function () {
                 // window.open("/orderDetail.html?orderNo=" + orderNo, "_blank");
                 window.location.href = "/orderDetail.html?orderNo=" + orderNo;
@@ -172,7 +172,7 @@
         //抢购还未开始
         if (remainSeconds > 0) {
             $("#buyButton").attr("disabled", true);
-            $("#saleTip").html("抢购倒计时：" + remainSeconds + "秒");
+            $("#saleTip").html("Countdown to Purchase：" + remainSeconds + "s");
             timeout = setTimeout(function () {
                 $("#remainSeconds").val(remainSeconds - 1);
                 countDown();
@@ -183,13 +183,13 @@
             if (timeout) {
                 clearTimeout(timeout);
             }
-            $("#saleTip").html("抢购进行中")
+            $("#saleTip").html("Flash Sale in Progress")
             // refreshCaptcha();
             $("#captchaImg").show();
             $("#captcha").show();
         } else {
             $("#buyButton").attr("disabled", true);
-            $("#saleTip").html("抢购已经结束");
+            $("#saleTip").html("Flash Sale Ended");
             $("#captchaImg").hide();
             $("#captcha").hide();
         }

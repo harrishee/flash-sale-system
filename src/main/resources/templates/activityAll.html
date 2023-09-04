@@ -25,13 +25,13 @@
     <div class="panel-heading">Activity List</div>
     <table class="table" id="activityVOs">
         <tr>
-            <td>活动名称</td>
-            <td>商品名称</td>
-            <td>商品图片</td>
-            <td>活动原价</td>
-            <td>活动价格</td>
-            <td>库存数量</td>
-            <td>查看详情</td>
+            <td>Activity Name</td>
+            <td>Product Name</td>
+            <td>Product Image</td>
+            <td>Original Price</td>
+            <td>Discounted Price</td>
+            <td>Stock</td>
+            <td>View Details</td>
         </tr>
         <tr th:each="activity : ${activityVOs}">
             <td th:text="${activity.activityName}"></td>
@@ -40,7 +40,7 @@
             <td th:text="${activity.oldPrice}"></td>
             <td th:text="${activity.salePrice}"></td>
             <td th:text="${activity.availableStock}"></td>
-            <td><a th:href="'/activityDetail.html?activityId='+${activity.activityId}">详情</a></td>
+            <td><a th:href="'/activityDetail.html?activityId='+${activity.activityId}">Detail</a></td>
         </tr>
     </table>
 </div>

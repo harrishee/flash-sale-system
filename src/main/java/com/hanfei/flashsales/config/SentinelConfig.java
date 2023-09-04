@@ -20,31 +20,34 @@ import java.util.List;
 public class SentinelConfig {
 
     /**
-     * 定义限流规则
-     * 1.创建存放限流规则的集合
-     * 2.创建限流规则
-     * 3.将限流规则放到集合中
-     * 4.加载限流规则
+     * Define rate limiting rules:
+     * 1. Create a collection to store rate limiting rules
+     * 2. Create rate limiting rules
+     * 3. Add rate limiting rules to the collection
+     * 4. Load rate limiting rules
      *
-     * @PostConstruct 当前类的构造函数执行完之后执行
+     * @PostConstruct Executed after the constructor of this class
      */
     @PostConstruct
     public void seckillsFlow() {
 
         List<FlowRule> rules = new ArrayList<>();
 
-        // 2.创建限流规则
+        // 2. Create rate limiting rules
         FlowRule rule = new FlowRule();
-        rule.setResource("activityAll");           // 定义资源，表示 sentinel 会对那个资源生效
-        rule.setGrade(RuleConstant.FLOW_GRADE_QPS); // 定义限流规则类型,QPS 类型
-        rule.setCount(1);                           // 定义 QPS 每秒通过的请求数
+        // Define the resource for which Sentinel applies rate limiting
+        rule.setResource("activityAll");
+        // Define the rate limiting rule type (QPS type)
+        rule.setGrade(RuleConstant.FLOW_GRADE_QPS);
+        // Define the number of requests allowed per second (QPS)
+        rule.setCount(1);
 
-        // 3.将限流规则放到集合中
+        // 3. Add rate limiting rules to the collection
         rules.add(rule);
 
-        // 4.加载限流规则
+        // 4. Load rate limiting rules
         FlowRuleManager.loadRules(rules);
 
-        log.info("***Sentinel*** 限流规则加载成功");
+        log.info("Sentinel rate limiting rules loaded success!");
     }
 }

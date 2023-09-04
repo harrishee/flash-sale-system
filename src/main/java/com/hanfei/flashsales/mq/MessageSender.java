@@ -17,10 +17,10 @@ public class MessageSender {
     private RocketMQTemplate rocketMQTemplate;
 
     /**
-     * 发送消息
+     * Send a message
      *
-     * @param topic 消息的主题，用于标识消息的分类
-     * @param body  消息的内容，以字符串形式传递
+     * @param topic The topic of the message, used to categorize the message
+     * @param body  The content of the message in string format
      */
     public void sendMessage(String topic, String body) throws Exception {
         Message message = new Message(topic, body.getBytes());
@@ -28,16 +28,14 @@ public class MessageSender {
     }
 
     /**
-     * 发送延时消息
+     * Send a delayed message
      *
-     * @param topic          消息的主题，用于标识消息的分类
-     * @param body           消息的内容，以字符串形式传递
-     * @param delayTimeLevel 延时级别，表示延时时间（由配置决定）
+     * @param delayTimeLevel The delay level, representing the delay time (determined by configuration)
      */
     public void sendDelayMessage(String topic, String body, int delayTimeLevel) throws Exception {
         Message message = new Message(topic, body.getBytes());
 
-        // 开源 RocketMQ 默认支持 18 个 level 的延迟消息：
+        // RocketMQ supports 18 levels of delay messages by default:
         // delayTimeLevel = 1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h
         message.setDelayTimeLevel(delayTimeLevel);
         rocketMQTemplate.getProducer().send(message);

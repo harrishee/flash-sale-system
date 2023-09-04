@@ -14,37 +14,37 @@ import lombok.ToString;
 @AllArgsConstructor
 public enum ResultEnum {
 
-    // 通用
+    // Common
     SUCCESS(200, "SUCCESS"),
 
-    ERROR(500, "服务端异常"),
+    ERROR(500, "Server Error"),
 
-    // 登录模块 5002xx
-    LOGIN_ERROR(500210, "用户名或密码不正确"),
+    // Login Module 5002xx
+    LOGIN_ERROR(500210, "Invalid username or password"),
 
-    FORMAT_ERROR(500211, "手机号码格式不正确"),
+    FORMAT_ERROR(500211, "Invalid phone number format"),
 
-    BIND_ERROR(500212, "参数校验异常"),
+    BIND_ERROR(500212, "Parameter validation failed"),
 
-    USER_ID_NOT_EXIST(500213, "用户ID不存在"),
+    USER_ID_NOT_EXIST(500213, "User ID does not exist"),
 
-    SESSION_ERROR(500214, "session 不存在或者已经失效"),
+    SESSION_ERROR(500214, "Session does not exist or has expired"),
 
-    // 抢购模块 5005xx
-    EMPTY_STOCK(500500, "库存不足"),
+    // Flash Sale Module 5005xx
+    EMPTY_STOCK(500500, "Out of stock"),
 
-    REPEAT_ERROR(500501, "该商品每人限购一件"),
+    REPEAT_ERROR(500501, "One item per person limit reached"),
 
-    REQUEST_ILLEGAL(500502, "请求非法，请重新尝试"),
+    REQUEST_ILLEGAL(500502, "Illegal request, please try again"),
 
-    ERROR_CAPTCHA(500503, "验证码错误，请重新输入"),
+    ERROR_CAPTCHA(500503, "Incorrect captcha, please re-enter"),
 
-    ACCESS_LIMIT_REAHCED(500504, "访问过于频繁，请稍后再试"),
+    ACCESS_LIMIT_REACHED(500504, "Access rate limit exceeded, please try again later"),
 
-    // 订单模块 5003xx
-    ORDER_NOT_EXIST(500300, "订单信息不存在"),
+    // Order Module 5003xx
+    ORDER_NOT_EXIST(500300, "Order information does not exist"),
 
-    ORDER_WRONG_STATUS(500300, "订单状态无效");
+    ORDER_WRONG_STATUS(500301, "Invalid order status");
 
     private final Integer code;
 

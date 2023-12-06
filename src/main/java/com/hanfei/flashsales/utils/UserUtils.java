@@ -3,6 +3,8 @@ package com.hanfei.flashsales.utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hanfei.flashsales.pojo.User;
 import com.hanfei.flashsales.vo.Result;
+import io.github.pixee.security.HostValidator;
+import io.github.pixee.security.Urls;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -63,7 +65,7 @@ public class UserUtils {
         raf.seek(0);
         for (int i = 0; i < users.size(); i++) {
             User user = users.get(i);
-            URL url = new URL(urlString);
+            URL url = Urls.create(urlString, Urls.HTTP_PROTOCOLS, HostValidator.DENY_COMMON_INFRASTRUCTURE_TARGETS);
             HttpURLConnection co = (HttpURLConnection) url.openConnection();
             co.setRequestMethod("POST");
             co.setDoOutput(true);

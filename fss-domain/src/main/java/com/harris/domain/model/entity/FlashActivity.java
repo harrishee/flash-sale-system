@@ -5,16 +5,12 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.Date;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
 @Data
-public class FssActivity implements Serializable {
-    private Long Id;
+public class FlashActivity implements Serializable {
+    private Long id;
     private String activityName;
+    private String activityDesc;
+    private Integer status;
     private Date startTime;
     private Date endTime;
-    private Integer status;
-    private String activityDesc;
 }

@@ -9,10 +9,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
 @Component
 public class RedisCacheServiceImpl implements DistributedCacheService {
     @Resource

@@ -1,13 +1,10 @@
 package com.harris.infra.util;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
-public class StringUtil {
-    private StringUtil() {
-    }
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public class StringUtil {
     public static String link(Object... items) {
         if (items == null) {
             return null;

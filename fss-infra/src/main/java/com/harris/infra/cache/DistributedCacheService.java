@@ -2,10 +2,6 @@ package com.harris.infra.cache;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
 public interface DistributedCacheService {
     void put(String key, String value);
 

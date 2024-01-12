@@ -3,10 +3,6 @@ package com.harris.infra.controller.exception;
 import com.alibaba.cola.dto.ErrorCodeI;
 import lombok.Getter;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
 @Getter
 public enum ErrorCode implements ErrorCodeI {
     INVALID_TOKEN("INVALID_TOKEN", "无效token"),

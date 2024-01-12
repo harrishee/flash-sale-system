@@ -1,16 +1,12 @@
 package com.harris.infra.util;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.apache.commons.codec.binary.Base64;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Base64Util {
     private static final String ENCODING = "UTF-8";
-
-    private Base64Util() {
-    }
 
     public static String encode(String data) throws Exception {
         byte[] b = Base64.encodeBase64(data.getBytes(ENCODING));

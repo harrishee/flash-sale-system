@@ -9,10 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
 @Aspect
 @Component
 public class LogbackTrace {

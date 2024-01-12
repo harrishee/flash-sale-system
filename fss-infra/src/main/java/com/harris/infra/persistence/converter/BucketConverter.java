@@ -2,15 +2,12 @@ package com.harris.infra.persistence.converter;
 
 import com.harris.domain.model.entity.Bucket;
 import com.harris.infra.persistence.model.BucketDO;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BucketConverter {
-    private BucketConverter() {
-    }
 
     public static BucketDO toDataObject(Bucket bucket) {
         BucketDO bucketDO = new BucketDO();

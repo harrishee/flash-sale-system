@@ -1,5 +1,7 @@
 package com.harris.infra.util;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -7,19 +9,13 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
 @Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class IPUtil {
     private static final String IP_UTIL_FLAG = ",";
     private static final String UNKNOWN = "unknown";
     private static final String LOCALHOST_IP = "0:0:0:0:0:0:0:1";
     private static final String LOCALHOST_IP1 = "127.0.0.1";
-
-    private IPUtil() {
-    }
 
     public static String getIpAddr(HttpServletRequest req) {
         String ip = null;

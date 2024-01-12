@@ -5,23 +5,19 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.Date;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
 @Data
-public class FssItem implements Serializable {
+public class FlashItem implements Serializable {
     private Long id;
-    private Long activityId;
     private String itemTitle;
     private String itemSubTitle;
     private String itemDesc;
     private Integer initialStock;
     private Integer availableStock;
+    private Integer stockWarmUp;
     private Long originalPrice;
+    private Integer status;
     private Long flashPrice;
+    private Long activityId;
     private Date startTime;
     private Date endTime;
-    private Integer status;
-    private Integer stockWarmUp;
 }

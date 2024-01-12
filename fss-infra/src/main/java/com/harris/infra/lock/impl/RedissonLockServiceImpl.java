@@ -9,10 +9,6 @@ import org.redisson.api.RedissonClient;
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
 @Slf4j
 public class RedissonLockServiceImpl implements DistributedLockService {
     @Resource

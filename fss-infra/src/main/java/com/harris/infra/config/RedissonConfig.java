@@ -7,10 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
 @Configuration
 public class RedissonConfig {
     @Value("${spring.redis.address}")

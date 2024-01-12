@@ -1,26 +1,23 @@
 package com.harris.infra.persistence.converter;
 
-import com.harris.domain.model.entity.FssActivity;
-import com.harris.infra.persistence.model.FssActivityDO;
+import com.harris.domain.model.entity.FlashActivity;
+import com.harris.infra.persistence.model.FlashActivityDO;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
 
-/**
- * @author: harris
- * @summary: flash-sale-system
- */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FssActivityConverter {
-    private FssActivityConverter() {
+
+    public static FlashActivityDO toDataObject(FlashActivity flashActivity) {
+        FlashActivityDO flashActivityDO = new FlashActivityDO();
+        BeanUtils.copyProperties(flashActivity, flashActivityDO);
+        return flashActivityDO;
     }
 
-    public static FssActivityDO toDataObject(FssActivity fssActivity) {
-        FssActivityDO fssActivityDO = new FssActivityDO();
-        BeanUtils.copyProperties(fssActivity, fssActivityDO);
-        return fssActivityDO;
-    }
-
-    public static FssActivity toDomainObject(FssActivityDO fssActivityDO) {
-        FssActivity fssActivity = new FssActivity();
-        BeanUtils.copyProperties(fssActivityDO, fssActivity);
-        return fssActivity;
+    public static FlashActivity toDomainObject(FlashActivityDO flashActivityDO) {
+        FlashActivity flashActivity = new FlashActivity();
+        BeanUtils.copyProperties(flashActivityDO, flashActivity);
+        return flashActivity;
     }
 }

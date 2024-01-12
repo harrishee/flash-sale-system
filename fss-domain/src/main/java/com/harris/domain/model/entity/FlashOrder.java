@@ -17,4 +17,10 @@ public class FlashOrder implements Serializable {
     private Integer status;
     private Long userId;
     private Date createTime;
+
+    public boolean invalidParams() {
+        return itemId == null || activityId == null ||
+                quantity == null || quantity <= 0 ||
+                totalAmount == null || totalAmount < 0;
+    }
 }

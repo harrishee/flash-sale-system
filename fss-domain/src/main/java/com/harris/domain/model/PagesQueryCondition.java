@@ -15,7 +15,7 @@ public class PagesQueryCondition {
     private Long activityId;
     private Integer stockWarmUp;
 
-    public PagesQueryCondition buildParams() {
+    public PagesQueryCondition validateParams() {
         if (this.pageSize == null) {
             this.pageSize = 10;
         }

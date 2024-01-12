@@ -1,6 +1,6 @@
 package com.harris.domain.repository;
 
-import com.harris.domain.model.entity.Bucket;
+import com.harris.domain.model.Bucket;
 
 import java.util.List;
 

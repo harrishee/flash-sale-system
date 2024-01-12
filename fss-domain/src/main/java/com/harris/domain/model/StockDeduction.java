@@ -11,7 +11,7 @@ public class StockDeduction {
     private Long userId;
     private Integer serialNo;
 
-    public boolean validate() {
+    public boolean validParams() {
         return itemId != null && quantity != null && quantity > 0 && userId != null;
     }
 }

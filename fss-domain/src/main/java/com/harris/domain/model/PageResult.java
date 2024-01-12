@@ -1,12 +1,10 @@
 package com.harris.domain.model;
 
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 import java.util.List;
 
 @Data
-@Accessors(chain = true)
 public class PageResult<T> {
     private List<T> data;
     private int total;

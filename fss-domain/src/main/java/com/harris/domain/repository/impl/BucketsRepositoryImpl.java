@@ -1,10 +1,11 @@
 package com.harris.domain.repository.impl;
 
-import com.harris.domain.model.entity.Bucket;
+import com.harris.domain.model.Bucket;
 import com.harris.domain.repository.BucketsRepository;
 import com.harris.infra.persistence.converter.BucketConverter;
 import com.harris.infra.persistence.mapper.BucketMapper;
 import com.harris.infra.persistence.model.BucketDO;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
+@Component
 public class BucketsRepositoryImpl implements BucketsRepository {
     @Resource
     private BucketMapper bucketMapper;

@@ -11,5 +11,4 @@
     </parent>
     <artifactId>controller</artifactId>
     <name>fss-controller</name>
-
 </project>

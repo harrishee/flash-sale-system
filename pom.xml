@@ -19,6 +19,14 @@
         <docker.image.prefix>harris</docker.image.prefix>
     </properties>
 
+    <modules>
+        <module>fss-infra</module>
+        <module>fss-domain</module>
+        <module>fss-app</module>
+        <module>fss-controller</module>
+        <module>fss-start</module>
+    </modules>
+
     <dependencyManagement>
         <dependencies>
             <dependency>

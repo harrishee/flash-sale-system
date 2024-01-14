@@ -4,6 +4,7 @@ import com.harris.domain.model.entity.FlashItem;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -14,6 +15,7 @@ public class FlashItemsCache {
     private Long version;
     private boolean later;
     protected boolean exist;
+    protected boolean empty;
 
     public FlashItemsCache with(List<FlashItem> flashItems) {
         this.flashItems = flashItems;
@@ -33,6 +35,13 @@ public class FlashItemsCache {
 
     public FlashItemsCache notExist() {
         this.exist = false;
+        return this;
+    }
+
+    public FlashItemsCache empty() {
+        this.empty = true;
+        this.flashItems = new ArrayList<>();
+        this.total = 0;
         return this;
     }
 }

@@ -1,46 +1,220 @@
 package com.harris.app.service.impl;
 
+import com.harris.app.exception.BizException;
+import com.harris.app.model.auth.AuthResult;
+import com.harris.app.model.cache.FlashActivitiesCache;
+import com.harris.app.model.cache.FlashActivityCache;
 import com.harris.app.model.command.FlashActivityPublishCommand;
+import com.harris.app.model.converter.FlashActivityAppConverter;
 import com.harris.app.model.dto.FlashActivityDTO;
 import com.harris.app.model.query.FlashActivitiesQuery;
 import com.harris.app.model.result.AppMultiResult;
 import com.harris.app.model.result.AppResult;
 import com.harris.app.model.result.AppSingleResult;
+import com.harris.app.service.AuthAppService;
 import com.harris.app.service.FlashActivityAppService;
+import com.harris.app.service.cache.FlashActivitiesCacheService;
+import com.harris.app.service.cache.FlashActivityCacheService;
+import com.harris.domain.model.PageResult;
+import com.harris.domain.model.entity.FlashActivity;
+import com.harris.domain.service.FlashActivityDomainService;
+import com.harris.infra.controller.exception.AuthException;
+import com.harris.infra.lock.DistributedLock;
+import com.harris.infra.lock.DistributedLockService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static com.harris.app.exception.AppErrCode.*;
+import static com.harris.app.model.enums.ResourceEnum.ACTIVITY_CREATE;
+import static com.harris.app.model.enums.ResourceEnum.ACTIVITY_MODIFICATION;
+import static com.harris.infra.controller.exception.AuthErrCode.UNAUTHORIZED_ACCESS;
+import static com.harris.infra.util.StringUtil.link;
+
+@Slf4j
+@Service
 public class FlashActivityAppServiceImpl implements FlashActivityAppService {
+    public static final String ACTIVITY_CREATE_LOCK = "ACTIVITY_LOCK";
+    public static final String ACTIVITY_MODIFICATION_LOCK = "ACTIVITY_MODIFICATION_LOCK";
+
+    @Resource
+    private AuthAppService authAppService;
+
+    @Resource
+    private FlashActivityDomainService flashActivityDomainService;
+
+    @Resource
+    private FlashActivityCacheService flashActivityCacheService;
+
+    @Resource
+    private FlashActivitiesCacheService flashActivitiesCacheService;
+
+    @Resource
+    private DistributedLockService distributedLockService;
+
     @Override
     public AppSingleResult<FlashActivityDTO> getFlashActivity(Long userId, Long activityId, Long version) {
-        return null;
+        if (userId == null || activityId == null) {
+            throw new BizException(INVALID_PARAMS);
+        }
+        FlashActivityCache flashActivityCache = flashActivityCacheService.getActivityCache(activityId, version);
+        if (!flashActivityCache.isExist()) {
+            throw new BizException(ACTIVITY_NOT_FOUND.getErrDesc());
+        }
+        if (flashActivityCache.isLater()) {
+            return AppSingleResult.tryLater();
+        }
+        FlashActivityDTO flashActivityDTO = FlashActivityAppConverter.toDTO(flashActivityCache.getFlashActivity());
+        flashActivityDTO.setVersion(flashActivityCache.getVersion());
+        return AppSingleResult.ok(flashActivityDTO);
     }
 
     @Override
     public AppMultiResult<FlashActivityDTO> getFlashActivities(Long userId, FlashActivitiesQuery flashActivitiesQuery) {
-        return null;
+        List<FlashActivity> activities;
+        Integer total;
+        if (flashActivitiesQuery.isFirstPureQuery()) {
+            FlashActivitiesCache flashActivitiesCache = flashActivitiesCacheService.getActivitiesCache(flashActivitiesQuery.getPageNumber(), flashActivitiesQuery.getVersion());
+            if (flashActivitiesCache.isLater()) {
+                return AppMultiResult.tryLater();
+            }
+            activities = flashActivitiesCache.getFlashActivities();
+            total = flashActivitiesCache.getTotal();
+        } else {
+            PageResult<FlashActivity> flashActivityPageResult = flashActivityDomainService.getActivities(FlashActivityAppConverter.toQuery(flashActivitiesQuery));
+            activities = flashActivityPageResult.getData();
+            total = flashActivityPageResult.getTotal();
+        }
+        List<FlashActivityDTO> flashActivityDTOS = activities.stream().map(FlashActivityAppConverter::toDTO).collect(Collectors.toList());
+        return AppMultiResult.of(total, flashActivityDTOS);
     }
 
     @Override
     public AppResult publishFlashActivity(Long userId, FlashActivityPublishCommand flashActivityPublishCommand) {
-        return null;
+        if (userId == null || flashActivityPublishCommand == null || flashActivityPublishCommand.invalidParams()) {
+            throw new BizException(INVALID_PARAMS);
+        }
+        AuthResult authResult = authAppService.auth(userId, ACTIVITY_CREATE);
+        if (!authResult.isSuccess()) {
+            throw new AuthException(UNAUTHORIZED_ACCESS);
+        }
+        DistributedLock activityCreateLock = distributedLockService.getDistributedLock(buildActivityCreateKey(userId));
+        try {
+            boolean isLocked = activityCreateLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            if (!isLocked) {
+                throw new BizException(FREQUENTLY_ERROR);
+            }
+            flashActivityDomainService.publishActivity(userId, FlashActivityAppConverter.toDomainObject(flashActivityPublishCommand));
+            return AppResult.ok();
+        } catch (Exception e) {
+            throw new BizException("Publish activity failed");
+        } finally {
+            activityCreateLock.unlock();
+        }
     }
 
     @Override
     public AppResult modifyFlashActivity(Long userId, Long activityId, FlashActivityPublishCommand flashActivityPublishCommand) {
-        return null;
+        if (userId == null || flashActivityPublishCommand == null || flashActivityPublishCommand.invalidParams()) {
+            throw new BizException(INVALID_PARAMS);
+        }
+        AuthResult authResult = authAppService.auth(userId, ACTIVITY_MODIFICATION);
+        if (!authResult.isSuccess()) {
+            throw new AuthException(UNAUTHORIZED_ACCESS);
+        }
+        DistributedLock activityModificationLock = distributedLockService.getDistributedLock(buildActivityModificationKey(activityId));
+        try {
+            boolean isLocked = activityModificationLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            if (!isLocked) {
+                throw new BizException(FREQUENTLY_ERROR);
+            }
+            FlashActivity flashActivity = FlashActivityAppConverter.toDomainObject(flashActivityPublishCommand);
+            flashActivity.setId(activityId);
+            flashActivityDomainService.modifyActivity(userId, flashActivity);
+            return AppResult.ok();
+        } catch (Exception e) {
+            throw new BizException("Modify activity failed");
+        } finally {
+            activityModificationLock.unlock();
+        }
     }
 
     @Override
     public AppResult onlineFlashActivity(Long userId, Long activityId) {
-        return null;
+        if (userId == null || activityId == null) {
+            throw new BizException(INVALID_PARAMS);
+        }
+        AuthResult authResult = authAppService.auth(userId, ACTIVITY_CREATE);
+        if (!authResult.isSuccess()) {
+            throw new AuthException(UNAUTHORIZED_ACCESS);
+        }
+        DistributedLock activityModificationLock = distributedLockService.getDistributedLock(buildActivityModificationKey(activityId));
+        try {
+            boolean isLocked = activityModificationLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            if (!isLocked) {
+                throw new BizException(FREQUENTLY_ERROR);
+            }
+            flashActivityDomainService.onlineActivity(userId, activityId);
+            return AppResult.ok();
+        } catch (Exception e) {
+            throw new BizException("Modify activity online failed");
+        } finally {
+            activityModificationLock.unlock();
+        }
     }
 
     @Override
     public AppResult offlineFlashActivity(Long userId, Long activityId) {
-        return null;
+        if (userId == null || activityId == null) {
+            throw new BizException(INVALID_PARAMS);
+        }
+        AuthResult authResult = authAppService.auth(userId, ACTIVITY_MODIFICATION);
+        if (!authResult.isSuccess()) {
+            throw new AuthException(UNAUTHORIZED_ACCESS);
+        }
+        DistributedLock activityModificationLock = distributedLockService.getDistributedLock(buildActivityModificationKey(activityId));
+        try {
+            boolean isLockSuccess = activityModificationLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            if (!isLockSuccess) {
+                throw new BizException(FREQUENTLY_ERROR);
+            }
+            flashActivityDomainService.offlineActivity(userId, activityId);
+            return AppResult.ok();
+        } catch (Exception e) {
+            throw new BizException("Modify activity offline failed");
+        } finally {
+            activityModificationLock.unlock();
+        }
     }
 
     @Override
     public boolean isPlaceOrderAllowed(Long activityId) {
-        return false;
+        FlashActivityCache flashActivityCache = flashActivityCacheService.getActivityCache(activityId, null);
+        if (flashActivityCache.isLater()) {
+            return false;
+        }
+        if (!flashActivityCache.isExist() || flashActivityCache.getFlashActivity() == null) {
+            return false;
+        }
+        FlashActivity flashActivity = flashActivityCache.getFlashActivity();
+        if (!flashActivity.isOnline()) {
+            return false;
+        }
+        if (!flashActivity.isInProgress()) {
+            return false;
+        }
+        return true;
+    }
+
+    private String buildActivityCreateKey(Long userId) {
+        return link(ACTIVITY_CREATE_LOCK, userId);
+    }
+
+    private String buildActivityModificationKey(Long activityId) {
+        return link(ACTIVITY_MODIFICATION_LOCK, activityId);
     }
 }

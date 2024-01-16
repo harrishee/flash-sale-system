@@ -1,4 +1,4 @@
-package com.harris.app.service.main.impl;
+package com.harris.app.service.app.impl;
 
 import com.harris.app.auth.AuthAppService;
 import com.harris.app.auth.model.AuthResult;
@@ -18,7 +18,7 @@ import com.harris.app.model.result.AppSingleResult;
 import com.harris.app.service.cache.FlashItemCacheService;
 import com.harris.app.service.cache.FlashItemsCacheService;
 import com.harris.app.service.cache.ItemStockCacheService;
-import com.harris.app.service.main.FlashItemAppService;
+import com.harris.app.service.app.FlashItemAppService;
 import com.harris.domain.model.PageResult;
 import com.harris.domain.model.entity.FlashActivity;
 import com.harris.domain.model.entity.FlashItem;

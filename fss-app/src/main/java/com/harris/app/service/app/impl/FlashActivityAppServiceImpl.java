@@ -1,4 +1,4 @@
-package com.harris.app.service.main.impl;
+package com.harris.app.service.app.impl;
 
 import com.harris.app.exception.BizException;
 import com.harris.app.auth.model.AuthResult;
@@ -12,7 +12,7 @@ import com.harris.app.model.result.AppMultiResult;
 import com.harris.app.model.result.AppResult;
 import com.harris.app.model.result.AppSingleResult;
 import com.harris.app.auth.AuthAppService;
-import com.harris.app.service.main.FlashActivityAppService;
+import com.harris.app.service.app.FlashActivityAppService;
 import com.harris.app.service.cache.FlashActivitiesCacheService;
 import com.harris.app.service.cache.FlashActivityCacheService;
 import com.harris.domain.model.PageResult;

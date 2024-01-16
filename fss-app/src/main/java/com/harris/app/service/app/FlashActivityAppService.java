@@ -1,4 +1,4 @@
-package com.harris.app.service.main;
+package com.harris.app.service.app;
 
 import com.harris.app.model.command.FlashActivityPublishCommand;
 import com.harris.app.model.dto.FlashActivityDTO;

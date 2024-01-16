@@ -25,7 +25,7 @@ import static com.harris.infra.util.StringUtil.link;
 @Slf4j
 @Service
 @Conditional(PlaceOrderTypeCondition.class)
-public class StandardItemStockCacheServiceImpl implements ItemStockCacheService {
+public class StandardItemStockCacheService implements ItemStockCacheService {
     private static final int IN_STOCK_ALIGNING = -9;
     private static final String ITEM_STOCKS_CACHE_KEY = "ITEM_STOCKS_CACHE_KEY";
     private static final String ITEM_STOCK_ALIGN_LOCK_KEY = "ITEM_STOCK_ALIGN_LOCK_KEY";
@@ -144,7 +144,7 @@ public class StandardItemStockCacheServiceImpl implements ItemStockCacheService 
     }
 
     @Override
-    public boolean decreaseItemStock(StockDeduction stockDeduction) {
+    public boolean deductItemStock(StockDeduction stockDeduction) {
         if (stockDeduction == null || !stockDeduction.validParams()) {
             return false;
         }

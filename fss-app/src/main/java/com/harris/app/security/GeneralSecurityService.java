@@ -1,4 +1,4 @@
-package com.harris.app.security.impl;
+package com.harris.app.security;
 
 import com.harris.app.security.SecurityService;
 import org.springframework.stereotype.Service;

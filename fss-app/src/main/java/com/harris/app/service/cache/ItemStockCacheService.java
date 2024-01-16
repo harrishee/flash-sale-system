@@ -8,7 +8,7 @@ public interface ItemStockCacheService {
 
     boolean alignItemStocks(Long itemId);
 
-    boolean decreaseItemStock(StockDeduction stockDeduction);
+    boolean deductItemStock(StockDeduction stockDeduction);
 
     boolean increaseItemStock(StockDeduction stockDeduction);
 }

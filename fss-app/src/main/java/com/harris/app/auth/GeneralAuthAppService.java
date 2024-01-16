@@ -10,7 +10,7 @@ import com.harris.infra.util.Base64Util;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthAppServiceImpl implements AuthAppService {
+public class GeneralAuthAppService implements AuthAppService {
     @Override
     public AuthResult auth(String encryptedToken) {
         AuthToken authToken = parseToken(encryptedToken);

@@ -20,7 +20,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-@ConditionalOnProperty(name = "place_order_type", havingValue = "buckets", matchIfMissing = true)
+@ConditionalOnProperty(name = "place_order_type", havingValue = "bucket", matchIfMissing = true)
 public class BucketDomainServiceImpl implements BucketDomainService {
     @Resource
     private BucketsRepository bucketsRepository;

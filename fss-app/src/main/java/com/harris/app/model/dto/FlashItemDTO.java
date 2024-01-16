@@ -1,5 +1,6 @@
 package com.harris.app.model.dto;
 
+import com.harris.domain.model.enums.FlashItemStatus;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -21,4 +22,12 @@ public class FlashItemDTO {
     private Date startTime;
     private Date endTime;
     private Long version;
+
+    public boolean isOnSale() {
+        if (!FlashItemStatus.isOnline(status) || startTime == null || endTime == null) {
+            return false;
+        }
+        Date now = new Date();
+        return (startTime.equals(now) || startTime.before(now)) && endTime.after(now);
+    }
 }

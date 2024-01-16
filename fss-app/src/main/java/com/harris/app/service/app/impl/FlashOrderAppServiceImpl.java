@@ -18,7 +18,9 @@ import com.harris.domain.service.StockDomainService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -52,6 +54,7 @@ public class FlashOrderAppServiceImpl implements FlashOrderAppService {
     private DistributedLockService distributedLockService;
 
     @Override
+    @Transactional
     public AppSingleResult<PlaceOrderResult> placeOrder(Long userId, FlashPlaceOrderCommand flashPlaceOrderCommand) {
         if (userId == null || flashPlaceOrderCommand == null || flashPlaceOrderCommand.invalidParams()) {
             throw new BizException(INVALID_PARAMS);
@@ -81,8 +84,19 @@ public class FlashOrderAppServiceImpl implements FlashOrderAppService {
 
     @Override
     public AppSingleResult<OrderTaskHandleResult> getPlaceOrderTaskResult(Long userId, Long itemId, String placeOrderTaskId) {
-        // TODO with the queue
-        return null;
+        if (userId == null || itemId == null || StringUtils.isEmpty(placeOrderTaskId)) {
+            throw new BizException(INVALID_PARAMS);
+        }
+        if (placeOrderService instanceof QueuedPlaceOrderService) {
+            QueuedPlaceOrderService queuedPlaceOrderService = (QueuedPlaceOrderService) placeOrderService;
+            OrderTaskHandleResult orderTaskHandleResult = queuedPlaceOrderService.getPlaceOrderResult(userId, itemId, placeOrderTaskId);
+            if (!orderTaskHandleResult.isSuccess()) {
+                return AppSingleResult.error(orderTaskHandleResult.getCode(), orderTaskHandleResult.getMsg(), orderTaskHandleResult);
+            }
+            return AppSingleResult.ok(orderTaskHandleResult);
+        } else {
+            return AppSingleResult.error(ORDER_TYPE_NOT_SUPPORT);
+        }
     }
 
     @Override
@@ -93,6 +107,7 @@ public class FlashOrderAppServiceImpl implements FlashOrderAppService {
     }
 
     @Override
+    @Transactional
     public AppResult cancelOrder(Long userId, Long orderId) {
         if (userId == null || orderId == null) {
             throw new BizException(INVALID_PARAMS);

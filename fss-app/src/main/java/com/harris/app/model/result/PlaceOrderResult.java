@@ -17,6 +17,10 @@ public class PlaceOrderResult {
         return new PlaceOrderResult().setSuccess(true).setOrderId(orderId);
     }
 
+    public static PlaceOrderResult ok(String placeOrderTaskId) {
+        return new PlaceOrderResult().setSuccess(true).setPlaceOrderTaskId(placeOrderTaskId);
+    }
+
     public static PlaceOrderResult error(AppErrCode appErrorCode) {
         return new PlaceOrderResult()
                 .setSuccess(false)

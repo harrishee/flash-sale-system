@@ -8,4 +8,18 @@ import lombok.Data;
 public class FlashItemEvent implements DomainEventI {
     private FlashItem flashItem;
     private FlashItemEventType flashItemEventType;
+
+    public Long getId() {
+        if (flashItem == null) {
+            return null;
+        }
+        return flashItem.getId();
+    }
+
+    public Long getFlashActivityId() {
+        if (flashItem == null) {
+            return null;
+        }
+        return flashItem.getActivityId();
+    }
 }

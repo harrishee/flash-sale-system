@@ -3,7 +3,7 @@ package com.harris.infra.util;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class SnowFlakeUtil {
+public class SnowflakeIdWorker {
     private long workerId;
     private long datacenterId;
     private long sequence;
@@ -19,7 +19,7 @@ public class SnowFlakeUtil {
     private long timestampLeftShift = sequenceBits + workerIdBits + datacenterIdBits;
     private long lastTimestamp = -1L;
 
-    public SnowFlakeUtil(long workerId, long datacenterId, long sequence) {
+    public SnowflakeIdWorker(long workerId, long datacenterId, long sequence) {
         if (workerId > maxWorkerId || workerId < 0) {
             String errMsg = String.format("workerId can't be greater than %d or less than 0", maxWorkerId);
             log.error(errMsg);

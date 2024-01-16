@@ -3,11 +3,12 @@ package com.harris.app.model.dto;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.List;
+
 @Data
 @Accessors(chain = true)
-public class StockBucketDTO {
+public class StockBucketSummaryDTO {
     private Integer totalStock;
     private Integer availableStock;
-    private Integer status;
-    private Integer serialNo;
+    private List<StockBucketDTO> buckets;
 }

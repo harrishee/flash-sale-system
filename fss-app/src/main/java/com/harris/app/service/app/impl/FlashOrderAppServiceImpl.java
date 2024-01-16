@@ -1,19 +1,19 @@
-package com.harris.app.service.impl;
+package com.harris.app.service.main.impl;
 
-import com.harris.app.model.command.PlaceOrderCommand;
+import com.harris.app.model.command.FlashPlaceOrderCommand;
 import com.harris.app.model.dto.FlashOrderDTO;
 import com.harris.app.model.query.FlashOrdersQuery;
 import com.harris.app.model.result.*;
-import com.harris.app.service.FlashOrderAppService;
+import com.harris.app.service.main.FlashOrderAppService;
 
 public class FlashOrderAppServiceImpl implements FlashOrderAppService {
     @Override
-    public AppSingleResult<PlaceOrderResult> placeOrder(Long userId, PlaceOrderCommand placeOrderCommand) {
+    public AppSingleResult<PlaceOrderResult> placeOrder(Long userId, FlashPlaceOrderCommand flashPlaceOrderCommand) {
         return null;
     }
 
     @Override
-    public AppSingleResult<OrderTaskResult> getPlaceOrderTaskResult(Long userId, Long itemId, String placeOrderTaskId) {
+    public AppSingleResult<OrderTaskHandleResult> getPlaceOrderTaskResult(Long userId, Long itemId, String placeOrderTaskId) {
         return null;
     }
 

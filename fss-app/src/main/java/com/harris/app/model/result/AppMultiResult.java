@@ -24,8 +24,8 @@ public class AppMultiResult<T> extends AppResult {
     public static <T> AppMultiResult<T> tryLater() {
         AppMultiResult<T> multiResult = new AppMultiResult<>();
         multiResult.setSuccess(false);
-        multiResult.setErrCode(TRY_LATER.getErrCode());
-        multiResult.setErrMsg(TRY_LATER.getErrDesc());
+        multiResult.setCode(TRY_LATER.getErrCode());
+        multiResult.setMsg(TRY_LATER.getErrDesc());
         return multiResult;
     }
 

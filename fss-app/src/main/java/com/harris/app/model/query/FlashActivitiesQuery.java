@@ -13,7 +13,7 @@ public class FlashActivitiesQuery {
     private Integer status;
     private Long version;
 
-    public boolean isFirstPureQuery() {
+    public boolean isFirstPageQuery() {
         return StringUtils.isEmpty(keyword) && pageNumber != null && pageNumber == 1;
     }
 }

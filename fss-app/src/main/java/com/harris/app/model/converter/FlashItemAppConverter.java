@@ -11,7 +11,7 @@ import org.springframework.beans.BeanUtils;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FlashItemAppConverter {
-    public static FlashItem toDomainObject(FlashItemPublishCommand flashItemPublishCommand) {
+    public static FlashItem toDomainObj(FlashItemPublishCommand flashItemPublishCommand) {
         FlashItem flashItem = new FlashItem();
         BeanUtils.copyProperties(flashItemPublishCommand, flashItem);
         return flashItem;

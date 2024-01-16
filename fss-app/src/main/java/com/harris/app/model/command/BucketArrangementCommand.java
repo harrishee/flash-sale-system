@@ -5,8 +5,8 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class BucketArrangeCommand {
+public class BucketArrangementCommand {
     private Integer arrangeMode;
     private Integer bucketQuantity;
-    private Integer totalStocksAmount;
+    private Integer totalStock;
 }

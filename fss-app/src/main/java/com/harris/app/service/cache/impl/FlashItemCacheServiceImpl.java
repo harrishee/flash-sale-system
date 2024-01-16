@@ -18,8 +18,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.harris.app.model.CacheConstant.ITEM_CACHE_KEY;
-import static com.harris.app.model.CacheConstant.MINUTES_5;
+import static com.harris.app.model.cache.CacheConstant.ITEM_CACHE_KEY;
+import static com.harris.app.model.cache.CacheConstant.MINUTES_5;
 import static com.harris.infra.util.StringUtil.link;
 
 @Slf4j

@@ -20,14 +20,14 @@ public class FlashOrderRepositoryImpl implements FlashOrderRepository {
 
     @Override
     public boolean saveOrder(FlashOrder flashOrder) {
-        FlashOrderDO flashOrderDO = FlashOrderConverter.toDataObject(flashOrder);
+        FlashOrderDO flashOrderDO = FlashOrderConverter.toDO(flashOrder);
         int effectedRows = flashOrderMapper.insertOrder(flashOrderDO);
         return effectedRows == 1;
     }
 
     @Override
     public boolean updateStatusForOrder(FlashOrder flashOrder) {
-        FlashOrderDO flashOrderDO = FlashOrderConverter.toDataObject(flashOrder);
+        FlashOrderDO flashOrderDO = FlashOrderConverter.toDO(flashOrder);
         int effectedRows = flashOrderMapper.updateStatus(flashOrderDO);
         return effectedRows == 1;
     }
@@ -38,7 +38,7 @@ public class FlashOrderRepositoryImpl implements FlashOrderRepository {
         if (flashOrderDO == null) {
             return Optional.empty();
         }
-        FlashOrder flashOrder = FlashOrderConverter.toDomainObject(flashOrderDO);
+        FlashOrder flashOrder = FlashOrderConverter.toDomainObj(flashOrderDO);
         return Optional.of(flashOrder);
     }
 
@@ -46,7 +46,7 @@ public class FlashOrderRepositoryImpl implements FlashOrderRepository {
     public List<FlashOrder> findOrdersByCondition(PagesQueryCondition pagesQueryCondition) {
         return flashOrderMapper.getOrdersByCondition(pagesQueryCondition)
                 .stream()
-                .map(FlashOrderConverter::toDomainObject)
+                .map(FlashOrderConverter::toDomainObj)
                 .collect(Collectors.toList());
     }
 

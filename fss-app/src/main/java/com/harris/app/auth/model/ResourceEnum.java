@@ -1,4 +1,4 @@
-package com.harris.app.model.enums;
+package com.harris.app.auth.model;
 
 import lombok.Getter;
 

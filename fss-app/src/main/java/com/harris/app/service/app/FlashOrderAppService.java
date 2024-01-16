@@ -1,14 +1,14 @@
-package com.harris.app.service;
+package com.harris.app.service.main;
 
-import com.harris.app.model.command.PlaceOrderCommand;
+import com.harris.app.model.command.FlashPlaceOrderCommand;
 import com.harris.app.model.dto.FlashOrderDTO;
 import com.harris.app.model.query.FlashOrdersQuery;
 import com.harris.app.model.result.*;
 
 public interface FlashOrderAppService {
-    AppSingleResult<PlaceOrderResult> placeOrder(Long userId, PlaceOrderCommand placeOrderCommand);
+    AppSingleResult<PlaceOrderResult> placeOrder(Long userId, FlashPlaceOrderCommand flashPlaceOrderCommand);
 
-    AppSingleResult<OrderTaskResult> getPlaceOrderTaskResult(Long userId, Long itemId, String placeOrderTaskId);
+    AppSingleResult<OrderTaskHandleResult> getPlaceOrderTaskResult(Long userId, Long itemId, String placeOrderTaskId);
 
     AppMultiResult<FlashOrderDTO> getOrdersByUser(Long userId, FlashOrdersQuery flashOrdersQuery);
 

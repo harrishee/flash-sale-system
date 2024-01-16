@@ -1,10 +1,12 @@
 package com.harris.app.model.dto;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.util.Date;
 
 @Data
+@Accessors(chain = true)
 public class FlashOrderDTO {
     private Long id;
     private Long itemId;

@@ -20,7 +20,7 @@ public class FlashItemRepositoryImpl implements FlashItemRepository {
 
     @Override
     public int saveItem(FlashItem flashItem) {
-        FlashItemDO flashItemDO = FlashItemConverter.toDataObject(flashItem);
+        FlashItemDO flashItemDO = FlashItemConverter.toDO(flashItem);
         if (flashItem.getId() == null) {
             return flashItemMapper.insertItem(flashItemDO);
         }
@@ -33,7 +33,7 @@ public class FlashItemRepositoryImpl implements FlashItemRepository {
         if (flashItemDO == null) {
             return Optional.empty();
         }
-        FlashItem flashItem = FlashItemConverter.toDomainObject(flashItemDO);
+        FlashItem flashItem = FlashItemConverter.toDomainObj(flashItemDO);
         return Optional.of(flashItem);
     }
 
@@ -41,7 +41,7 @@ public class FlashItemRepositoryImpl implements FlashItemRepository {
     public List<FlashItem> findItemsByCondition(PagesQueryCondition pagesQueryCondition) {
         return flashItemMapper.getItemsByCondition(pagesQueryCondition)
                 .stream()
-                .map(FlashItemConverter::toDomainObject)
+                .map(FlashItemConverter::toDomainObj)
                 .collect(Collectors.toList());
     }
 

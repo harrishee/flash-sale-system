@@ -1,7 +1,7 @@
 package com.harris.infra.cache;
 
 import com.alibaba.fastjson.JSON;
-import com.harris.infra.cache.DistributedCacheService;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
+@Getter
 @Component
 public class RedisCacheService implements DistributedCacheService {
     @Resource
@@ -58,4 +59,5 @@ public class RedisCacheService implements DistributedCacheService {
             return null;
         }
     }
+
 }

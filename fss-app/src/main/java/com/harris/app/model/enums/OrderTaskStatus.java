@@ -1,5 +1,8 @@
 package com.harris.app.model.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum OrderTaskStatus {
     SUBMITTED(0, "初始提交"),
     SUCCESS(1, "下单成功"),

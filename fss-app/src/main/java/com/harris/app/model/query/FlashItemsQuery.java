@@ -1,7 +1,9 @@
 package com.harris.app.model.query;
 
+import com.harris.domain.model.enums.FlashItemStatus;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.apache.commons.lang3.StringUtils;
 
 @Data
 @Accessors(chain = true)
@@ -12,4 +14,8 @@ public class FlashItemsQuery {
     private Integer status;
     private Long version;
     private Long activityId;
+
+    public boolean isOnlineFirstPageQuery() {
+        return StringUtils.isEmpty(keyword) && pageNumber != null && pageNumber == 1 && FlashItemStatus.isOnline(status);
+    }
 }

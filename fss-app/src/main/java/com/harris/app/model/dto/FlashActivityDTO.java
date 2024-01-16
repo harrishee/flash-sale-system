@@ -1,12 +1,14 @@
 package com.harris.app.model.dto;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.util.Date;
 
 @Data
+@Accessors(chain = true)
 public class FlashActivityDTO {
-    private Long Id;
+    private Long id;
     private String activityName;
     private String activityDesc;
     private Integer status;

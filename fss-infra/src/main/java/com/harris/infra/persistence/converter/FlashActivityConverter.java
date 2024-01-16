@@ -9,13 +9,13 @@ import org.springframework.beans.BeanUtils;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FlashActivityConverter {
 
-    public static FlashActivityDO toDataObject(FlashActivity flashActivity) {
+    public static FlashActivityDO toDO(FlashActivity flashActivity) {
         FlashActivityDO flashActivityDO = new FlashActivityDO();
         BeanUtils.copyProperties(flashActivity, flashActivityDO);
         return flashActivityDO;
     }
 
-    public static FlashActivity toDomainObject(FlashActivityDO flashActivityDO) {
+    public static FlashActivity toDomainObj(FlashActivityDO flashActivityDO) {
         FlashActivity flashActivity = new FlashActivity();
         BeanUtils.copyProperties(flashActivityDO, flashActivity);
         return flashActivity;

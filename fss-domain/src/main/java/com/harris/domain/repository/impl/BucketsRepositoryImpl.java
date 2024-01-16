@@ -25,7 +25,7 @@ public class BucketsRepositoryImpl implements BucketsRepository {
         if (itemId == null || CollectionUtils.isEmpty(buckets)) {
             return false;
         }
-        List<BucketDO> bucketDOS = buckets.stream().map(BucketConverter::toDataObject).collect(Collectors.toList());
+        List<BucketDO> bucketDOS = buckets.stream().map(BucketConverter::toDO).collect(Collectors.toList());
         bucketMapper.deleteByItemId(itemId);
         bucketMapper.insertBatch(bucketDOS);
         return true;
@@ -53,7 +53,7 @@ public class BucketsRepositoryImpl implements BucketsRepository {
             return new ArrayList<>();
         }
         List<BucketDO> bucketDOS = bucketMapper.getBucketsByItemId(itemId);
-        return bucketDOS.stream().map(BucketConverter::toDomainObject).collect(toList());
+        return bucketDOS.stream().map(BucketConverter::toDomainObj).collect(toList());
     }
 
     @Override

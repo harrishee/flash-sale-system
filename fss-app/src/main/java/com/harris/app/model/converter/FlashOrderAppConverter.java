@@ -1,7 +1,7 @@
 package com.harris.app.model.converter;
 
 import com.harris.app.model.PlaceOrderTask;
-import com.harris.app.model.command.PlaceOrderCommand;
+import com.harris.app.model.command.FlashPlaceOrderCommand;
 import com.harris.app.model.dto.FlashOrderDTO;
 import com.harris.app.model.query.FlashOrdersQuery;
 import com.harris.domain.model.PagesQueryCondition;
@@ -12,21 +12,21 @@ import org.springframework.beans.BeanUtils;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FlashOrderAppConverter {
-    public static FlashOrder toDomainObject(PlaceOrderCommand placeOrderCommand) {
-        if (placeOrderCommand == null) {
+    public static FlashOrder toDomainObj(FlashPlaceOrderCommand flashPlaceOrderCommand) {
+        if (flashPlaceOrderCommand == null) {
             return null;
         }
         FlashOrder flashOrder = new FlashOrder();
-        BeanUtils.copyProperties(placeOrderCommand, flashOrder);
+        BeanUtils.copyProperties(flashPlaceOrderCommand, flashOrder);
         return flashOrder;
     }
 
-    public static FlashOrder toDomainObject(PlaceOrderTask PlaceOrderTask) {
-        if (PlaceOrderTask == null) {
+    public static FlashOrder toDomainObj(PlaceOrderTask placeOrderTask) {
+        if (placeOrderTask == null) {
             return null;
         }
         FlashOrder flashOrder = new FlashOrder();
-        BeanUtils.copyProperties(PlaceOrderTask, flashOrder);
+        BeanUtils.copyProperties(placeOrderTask, flashOrder);
         return flashOrder;
     }
 

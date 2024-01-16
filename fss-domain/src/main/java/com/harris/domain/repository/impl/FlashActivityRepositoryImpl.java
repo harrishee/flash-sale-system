@@ -20,7 +20,7 @@ public class FlashActivityRepositoryImpl implements FlashActivityRepository {
 
     @Override
     public int saveActivity(FlashActivity flashActivity) {
-        FlashActivityDO flashActivityDO = FlashActivityConverter.toDataObject(flashActivity);
+        FlashActivityDO flashActivityDO = FlashActivityConverter.toDO(flashActivity);
         if (flashActivityDO.getId() == null) {
             int effectedRows = flashActivityMapper.insertActivity(flashActivityDO);
             flashActivity.setId(flashActivityDO.getId());
@@ -35,7 +35,7 @@ public class FlashActivityRepositoryImpl implements FlashActivityRepository {
         if (flashActivityDO == null) {
             return Optional.empty();
         }
-        FlashActivity flashActivity = FlashActivityConverter.toDomainObject(flashActivityDO);
+        FlashActivity flashActivity = FlashActivityConverter.toDomainObj(flashActivityDO);
         return Optional.of(flashActivity);
     }
 
@@ -43,7 +43,7 @@ public class FlashActivityRepositoryImpl implements FlashActivityRepository {
     public List<FlashActivity> findActivitiesByCondition(PagesQueryCondition pagesQueryCondition) {
         return flashActivityMapper.getActivitiesByCondition(pagesQueryCondition)
                 .stream()
-                .map(FlashActivityConverter::toDomainObject)
+                .map(FlashActivityConverter::toDomainObj)
                 .collect(Collectors.toList());
     }
 

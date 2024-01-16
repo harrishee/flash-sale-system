@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum BucketStatus {
-    ENABLE(1),
+    ENABLED(1),
     DISABLED(0);
 
     private final Integer code;

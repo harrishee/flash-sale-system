@@ -11,7 +11,7 @@ import org.springframework.beans.BeanUtils;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FlashActivityAppConverter {
-    public static FlashActivity toDomainObject(FlashActivityPublishCommand flashActivityPublishCommand) {
+    public static FlashActivity toDomainObj(FlashActivityPublishCommand flashActivityPublishCommand) {
         if (flashActivityPublishCommand == null) {
             return null;
         }

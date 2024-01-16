@@ -1,11 +1,13 @@
 package com.harris.app.model.command;
 
 import lombok.Data;
+import lombok.experimental.Accessors;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 
 @Data
+@Accessors(chain = true)
 public class FlashActivityPublishCommand {
     private String activityName;
     private String activityDesc;
@@ -14,6 +16,8 @@ public class FlashActivityPublishCommand {
     private Date endTime;
 
     public boolean invalidParams() {
-        return !StringUtils.isNotEmpty(activityName) || startTime == null || endTime == null || !startTime.before(endTime);
+        return !StringUtils.isNotEmpty(activityName) ||
+                startTime == null || endTime == null ||
+                !startTime.before(endTime);
     }
 }

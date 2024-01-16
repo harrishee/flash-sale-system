@@ -1,5 +1,6 @@
 package com.harris.domain.model.entity;
 
+import com.harris.domain.model.enums.FlashItemStatus;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 
@@ -31,5 +32,14 @@ public class FlashItem implements Serializable {
                 activityId == null ||
                 startTime == null || endTime == null ||
                 endTime.before(startTime) || endTime.before(new Date());
+    }
+
+    public boolean isOnline() {
+        return FlashItemStatus.isOnline(status);
+    }
+
+    public boolean isInProgress() {
+        Date now = new Date();
+        return startTime.before(now) && endTime.after(now);
     }
 }

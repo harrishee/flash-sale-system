@@ -1,7 +1,7 @@
-package com.harris.app.service.impl;
+package com.harris.app.service.main.impl;
 
 import com.harris.app.exception.BizException;
-import com.harris.app.model.auth.AuthResult;
+import com.harris.app.auth.model.AuthResult;
 import com.harris.app.model.cache.FlashActivitiesCache;
 import com.harris.app.model.cache.FlashActivityCache;
 import com.harris.app.model.command.FlashActivityPublishCommand;
@@ -11,8 +11,8 @@ import com.harris.app.model.query.FlashActivitiesQuery;
 import com.harris.app.model.result.AppMultiResult;
 import com.harris.app.model.result.AppResult;
 import com.harris.app.model.result.AppSingleResult;
-import com.harris.app.service.AuthAppService;
-import com.harris.app.service.FlashActivityAppService;
+import com.harris.app.auth.AuthAppService;
+import com.harris.app.service.main.FlashActivityAppService;
 import com.harris.app.service.cache.FlashActivitiesCacheService;
 import com.harris.app.service.cache.FlashActivityCacheService;
 import com.harris.domain.model.PageResult;
@@ -30,8 +30,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.harris.app.exception.AppErrCode.*;
-import static com.harris.app.model.enums.ResourceEnum.ACTIVITY_CREATE;
-import static com.harris.app.model.enums.ResourceEnum.ACTIVITY_MODIFICATION;
+import static com.harris.app.auth.model.ResourceEnum.ACTIVITY_CREATE;
+import static com.harris.app.auth.model.ResourceEnum.ACTIVITY_MODIFICATION;
 import static com.harris.infra.controller.exception.AuthErrCode.UNAUTHORIZED_ACCESS;
 import static com.harris.infra.util.StringUtil.link;
 
@@ -77,7 +77,7 @@ public class FlashActivityAppServiceImpl implements FlashActivityAppService {
     public AppMultiResult<FlashActivityDTO> getFlashActivities(Long userId, FlashActivitiesQuery flashActivitiesQuery) {
         List<FlashActivity> activities;
         Integer total;
-        if (flashActivitiesQuery.isFirstPureQuery()) {
+        if (flashActivitiesQuery.isFirstPageQuery()) {
             FlashActivitiesCache flashActivitiesCache = flashActivitiesCacheService.getActivitiesCache(flashActivitiesQuery.getPageNumber(), flashActivitiesQuery.getVersion());
             if (flashActivitiesCache.isLater()) {
                 return AppMultiResult.tryLater();
@@ -108,10 +108,10 @@ public class FlashActivityAppServiceImpl implements FlashActivityAppService {
             if (!isLocked) {
                 throw new BizException(FREQUENTLY_ERROR);
             }
-            flashActivityDomainService.publishActivity(userId, FlashActivityAppConverter.toDomainObject(flashActivityPublishCommand));
+            flashActivityDomainService.publishActivity(userId, FlashActivityAppConverter.toDomainObj(flashActivityPublishCommand));
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("Publish activity failed");
+            throw new BizException("publishFlashActivity failed");
         } finally {
             activityCreateLock.unlock();
         }
@@ -132,12 +132,12 @@ public class FlashActivityAppServiceImpl implements FlashActivityAppService {
             if (!isLocked) {
                 throw new BizException(FREQUENTLY_ERROR);
             }
-            FlashActivity flashActivity = FlashActivityAppConverter.toDomainObject(flashActivityPublishCommand);
+            FlashActivity flashActivity = FlashActivityAppConverter.toDomainObj(flashActivityPublishCommand);
             flashActivity.setId(activityId);
             flashActivityDomainService.modifyActivity(userId, flashActivity);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("Modify activity failed");
+            throw new BizException("modifyFlashActivity failed");
         } finally {
             activityModificationLock.unlock();
         }
@@ -161,7 +161,7 @@ public class FlashActivityAppServiceImpl implements FlashActivityAppService {
             flashActivityDomainService.onlineActivity(userId, activityId);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("Modify activity online failed");
+            throw new BizException("onlineFlashActivity failed");
         } finally {
             activityModificationLock.unlock();
         }
@@ -185,7 +185,7 @@ public class FlashActivityAppServiceImpl implements FlashActivityAppService {
             flashActivityDomainService.offlineActivity(userId, activityId);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("Modify activity offline failed");
+            throw new BizException("offlineFlashActivity failed");
         } finally {
             activityModificationLock.unlock();
         }
@@ -195,16 +195,20 @@ public class FlashActivityAppServiceImpl implements FlashActivityAppService {
     public boolean isPlaceOrderAllowed(Long activityId) {
         FlashActivityCache flashActivityCache = flashActivityCacheService.getActivityCache(activityId, null);
         if (flashActivityCache.isLater()) {
+            log.info("isPlaceOrderAllowed, try later: {}", activityId);
             return false;
         }
         if (!flashActivityCache.isExist() || flashActivityCache.getFlashActivity() == null) {
+            log.info("isPlaceOrderAllowed, activity not exist: {}", activityId);
             return false;
         }
         FlashActivity flashActivity = flashActivityCache.getFlashActivity();
         if (!flashActivity.isOnline()) {
+            log.info("isPlaceOrderAllowed, activity not online: {}", activityId);
             return false;
         }
         if (!flashActivity.isInProgress()) {
+            log.info("isPlaceOrderAllowed, activity not in progress: {}", activityId);
             return false;
         }
         return true;

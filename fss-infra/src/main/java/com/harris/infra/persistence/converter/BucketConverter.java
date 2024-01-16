@@ -9,13 +9,13 @@ import org.springframework.beans.BeanUtils;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BucketConverter {
 
-    public static BucketDO toDataObject(Bucket bucket) {
+    public static BucketDO toDO(Bucket bucket) {
         BucketDO bucketDO = new BucketDO();
         BeanUtils.copyProperties(bucket, bucketDO);
         return bucketDO;
     }
 
-    public static Bucket toDomainObject(BucketDO bucketDO) {
+    public static Bucket toDomainObj(BucketDO bucketDO) {
         Bucket bucket = new Bucket();
         BeanUtils.copyProperties(bucketDO, bucket);
         return bucket;

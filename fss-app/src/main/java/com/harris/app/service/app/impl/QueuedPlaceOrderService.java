@@ -1,7 +1,11 @@
 package com.harris.app.service.app.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.harris.app.exception.BizException;
+import com.harris.app.model.OrderNoContext;
 import com.harris.app.model.PlaceOrderTask;
 import com.harris.app.model.command.FlashPlaceOrderCommand;
+import com.harris.app.model.converter.FlashOrderAppConverter;
 import com.harris.app.model.converter.PlaceOrderTaskConverter;
 import com.harris.app.model.dto.FlashItemDTO;
 import com.harris.app.model.enums.OrderTaskStatus;
@@ -15,6 +19,9 @@ import com.harris.app.service.app.PlaceOrderService;
 import com.harris.app.service.app.PlaceOrderTaskService;
 import com.harris.app.util.OrderNoService;
 import com.harris.app.util.OrderTaskIdService;
+import com.harris.domain.model.StockDeduction;
+import com.harris.domain.model.entity.FlashItem;
+import com.harris.domain.model.entity.FlashOrder;
 import com.harris.domain.service.FlashItemDomainService;
 import com.harris.domain.service.FlashOrderDomainService;
 import com.harris.domain.service.StockDomainService;
@@ -22,11 +29,13 @@ import com.harris.infra.cache.RedisCacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import static com.harris.app.exception.AppErrCode.*;
+import static com.harris.app.model.cache.CacheConstant.HOURS_24;
 
 @Slf4j
 @Service
@@ -115,5 +124,66 @@ public class QueuedPlaceOrderService implements PlaceOrderService {
         }
         Long orderId = redisCacheService.getObject(PLACE_ORDER_TASK_ORDER_ID_KEY + placeOrderTaskId, Long.class);
         return OrderTaskHandleResult.ok(orderId);
+    }
+
+    @Transactional
+    public void handlePlaceOrderTask(PlaceOrderTask placeOrderTask) {
+        try {
+            // Check if placing order allowed
+            Long userId = placeOrderTask.getUserId();
+            boolean isActivityAllowed = flashActivityAppService.isPlaceOrderAllowed(placeOrderTask.getActivityId());
+            if (!isActivityAllowed) {
+                log.info("handlePlaceOrderTask, activity rules failed: {},{}", placeOrderTask.getPlaceOrderTaskId(), placeOrderTask.getActivityId());
+                placeOrderTaskService.updateTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), false);
+                return;
+            }
+            boolean isItemAllowed = flashItemAppService.isPlaceOrderAllowed(placeOrderTask.getItemId());
+            if (!isItemAllowed) {
+                log.info("handlePlaceOrderTask, item rules failed: {},{}", placeOrderTask.getPlaceOrderTaskId(), placeOrderTask.getActivityId());
+                placeOrderTaskService.updateTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), false);
+                return;
+            }
+
+            // Get the flash item information
+            FlashItem flashItem = flashItemDomainService.getItem(placeOrderTask.getItemId());
+
+            // Generate the order ID and build the flash order object
+            Long orderId = orderNoService.generateOrderNo(new OrderNoContext());
+            FlashOrder flashOrderToPlace = FlashOrderAppConverter.toDomainObj(placeOrderTask);
+            flashOrderToPlace.setItemTitle(flashItem.getItemTitle());
+            flashOrderToPlace.setFlashPrice(flashItem.getFlashPrice());
+            flashOrderToPlace.setUserId(userId);
+            flashOrderToPlace.setId(orderId);
+
+            // Build the stock deduction object
+            StockDeduction stockDeduction = new StockDeduction()
+                    .setItemId(placeOrderTask.getItemId())
+                    .setQuantity(placeOrderTask.getQuantity());
+
+            // Deduct the stock
+            boolean decreaseStockSuccess = stockDomainService.decreaseItemStock(stockDeduction);
+            if (!decreaseStockSuccess) {
+                log.info("handlePlaceOrderTask, stock deduction failed: {},{}", placeOrderTask.getPlaceOrderTaskId(), JSON.toJSONString(placeOrderTask));
+                return;
+            }
+
+            // Place the order
+            boolean placeOrderSuccess = flashOrderDomainService.placeOrder(userId, flashOrderToPlace);
+            if (!placeOrderSuccess) {
+                throw new BizException(PLACE_ORDER_FAILED.getErrDesc());
+            }
+
+            // Update the task handle result
+            placeOrderTaskService.updateTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), true);
+
+            // Put the order ID into cache with a 24-hour expiration
+            redisCacheService.put(PLACE_ORDER_TASK_ORDER_ID_KEY + placeOrderTask.getPlaceOrderTaskId(), orderId, HOURS_24);
+            log.info("handlePlaceOrderTask, place order task success: {},{}", placeOrderTask.getPlaceOrderTaskId(), JSON.toJSONString(placeOrderTask));
+        } catch (Exception e) {
+            // Update the task handle result to false
+            placeOrderTaskService.updateTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), false);
+            log.error("handlePlaceOrderTask, place order task failed: {},{}", placeOrderTask.getPlaceOrderTaskId(), JSON.toJSONString(placeOrderTask), e);
+            throw new BizException(e.getMessage());
+        }
     }
 }

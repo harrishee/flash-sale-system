@@ -12,7 +12,7 @@ import java.util.UUID;
 @Aspect
 @Component
 public class LogbackTrace {
-    private static final String TRACE_ID = "traceId";
+    private static final String MDC_TRACE_ID = "traceId";
 
     @Pointcut("@annotation(com.harris.infra.config.annotation.MarkTrace)")
     public void traceMethod() {
@@ -20,13 +20,13 @@ public class LogbackTrace {
 
     @Before("traceMethod()")
     public void before() {
-        if (MDC.get(TRACE_ID) == null) {
-            MDC.put(TRACE_ID, UUID.randomUUID().toString().replace("-", ""));
+        if (MDC.get(MDC_TRACE_ID) == null) {
+            MDC.put(MDC_TRACE_ID, UUID.randomUUID().toString().replace("-", ""));
         }
     }
 
     @AfterReturning(pointcut = "traceMethod()")
     public void after() {
-        MDC.remove(TRACE_ID);
+        MDC.remove(MDC_TRACE_ID);
     }
 }

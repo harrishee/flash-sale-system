@@ -11,4 +11,25 @@
     </parent>
     <artifactId>controller</artifactId>
     <name>fss-controller</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.harris</groupId>
+            <artifactId>app</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 </project>

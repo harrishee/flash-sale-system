@@ -22,11 +22,11 @@ public class ResponseConverter {
         return response;
     }
 
-    public static <T> SingleResponse<T> withSingle(AppSingleResult<T> appResult) {
+    public static <T> SingleResponse<T> withSingle(AppSingleResult appResult) {
         if (appResult == null) {
             return new SingleResponse<>();
         }
-        SingleResponse<T> singleResponse = new SingleResponse<>();
+        SingleResponse singleResponse = new SingleResponse();
         singleResponse.setSuccess(appResult.isSuccess());
         singleResponse.setErrCode(appResult.getCode());
         singleResponse.setErrMessage(appResult.getMsg());
@@ -34,11 +34,11 @@ public class ResponseConverter {
         return singleResponse;
     }
 
-    public static <T> MultiResponse<T> withMulti(AppMultiResult<T> appResult) {
+    public static <T> MultiResponse<T> withMulti(AppMultiResult appResult) {
         if (appResult == null) {
             return new MultiResponse<>();
         }
-        MultiResponse<T> multiResponse = new MultiResponse<>();
+        MultiResponse multiResponse = new MultiResponse<>();
         multiResponse.setSuccess(appResult.isSuccess());
         multiResponse.setErrCode(appResult.getCode());
         multiResponse.setErrMessage(appResult.getMsg());

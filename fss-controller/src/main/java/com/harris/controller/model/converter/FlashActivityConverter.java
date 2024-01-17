@@ -34,7 +34,7 @@ public class FlashActivityConverter {
         return flashActivityResponse;
     }
 
-    public static List<FlashActivityResponse> toResponses(Collection<FlashActivityDTO> flashActivityDTOS) {
+    public static List<FlashActivityResponse> toResponse(Collection<FlashActivityDTO> flashActivityDTOS) {
         if (CollectionUtils.isEmpty(flashActivityDTOS)) {
             return new ArrayList<>();
         }

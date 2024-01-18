@@ -1,14 +1,15 @@
-package com.harris.controller.model.request;
+package com.harris.app.model.command;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.experimental.Accessors;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 
 @Data
 @Accessors(chain = true)
-public class FlashItemPublishRequest {
+public class SaleItemPublishCommand {
     private String itemTitle;
     private String itemSubTitle;
     private String itemDesc;
@@ -16,9 +17,18 @@ public class FlashItemPublishRequest {
     private Integer availableStock;
     private Long originalPrice;
     private Long flashPrice;
-    private Long activityId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date startTime;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date endTime;
+
+    public boolean invalidParams() {
+        return !StringUtils.isNotEmpty(itemTitle) || !StringUtils.isNotEmpty(itemSubTitle) ||
+                initialStock == null || initialStock <= 0 ||
+                availableStock == null || availableStock <= 0 ||
+                originalPrice == null || originalPrice <= 0 ||
+                flashPrice == null || flashPrice <= 0 ||
+                startTime == null || endTime == null ||
+                !startTime.before(endTime);
+    }
 }

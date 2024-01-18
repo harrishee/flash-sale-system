@@ -6,7 +6,7 @@ import com.harris.app.model.cache.FlashActivitiesCache;
 import com.harris.app.model.cache.FlashActivityCache;
 import com.harris.app.model.command.FlashActivityPublishCommand;
 import com.harris.app.model.converter.FlashActivityAppConverter;
-import com.harris.app.model.dto.FlashActivityDTO;
+import com.harris.app.model.dto.SaleActivityDTO;
 import com.harris.app.model.query.FlashActivitiesQuery;
 import com.harris.app.model.result.AppMultiResult;
 import com.harris.app.model.result.AppResult;
@@ -57,7 +57,7 @@ public class FlashActivityAppServiceImpl implements FlashActivityAppService {
     private DistributedLockService distributedLockService;
 
     @Override
-    public AppSingleResult<FlashActivityDTO> getFlashActivity(Long userId, Long activityId, Long version) {
+    public AppSingleResult<SaleActivityDTO> getFlashActivity(Long userId, Long activityId, Long version) {
         if (userId == null || activityId == null) {
             throw new BizException(INVALID_PARAMS);
         }
@@ -68,13 +68,13 @@ public class FlashActivityAppServiceImpl implements FlashActivityAppService {
         if (flashActivityCache.isLater()) {
             return AppSingleResult.tryLater();
         }
-        FlashActivityDTO flashActivityDTO = FlashActivityAppConverter.toDTO(flashActivityCache.getFlashActivity());
-        flashActivityDTO.setVersion(flashActivityCache.getVersion());
-        return AppSingleResult.ok(flashActivityDTO);
+        SaleActivityDTO saleActivityDTO = FlashActivityAppConverter.toDTO(flashActivityCache.getFlashActivity());
+        saleActivityDTO.setVersion(flashActivityCache.getVersion());
+        return AppSingleResult.ok(saleActivityDTO);
     }
 
     @Override
-    public AppMultiResult<FlashActivityDTO> getFlashActivities(Long userId, FlashActivitiesQuery flashActivitiesQuery) {
+    public AppMultiResult<SaleActivityDTO> getFlashActivities(Long userId, FlashActivitiesQuery flashActivitiesQuery) {
         List<FlashActivity> activities;
         Integer total;
         if (flashActivitiesQuery.isFirstPageQuery()) {
@@ -89,8 +89,8 @@ public class FlashActivityAppServiceImpl implements FlashActivityAppService {
             activities = flashActivityPageResult.getData();
             total = flashActivityPageResult.getTotal();
         }
-        List<FlashActivityDTO> flashActivityDTOS = activities.stream().map(FlashActivityAppConverter::toDTO).collect(Collectors.toList());
-        return AppMultiResult.of(total, flashActivityDTOS);
+        List<SaleActivityDTO> saleActivityDTOS = activities.stream().map(FlashActivityAppConverter::toDTO).collect(Collectors.toList());
+        return AppMultiResult.of(total, saleActivityDTOS);
     }
 
     @Override

@@ -3,7 +3,6 @@ package com.harris.controller.exception.handler;
 import com.alibaba.csp.sentinel.slots.block.degrade.DegradeException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.fastjson.JSON;
-import com.harris.controller.model.response.ExceptionResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -16,26 +15,32 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.lang.reflect.UndeclaredThrowableException;
 
-import static com.harris.controller.model.ExceptionCode.DEGRADE_BLOCK;
-import static com.harris.controller.model.ExceptionCode.LIMIT_BLOCK;
+import static com.harris.controller.exception.handler.ErrCode.DEGRADE_BLOCK;
+import static com.harris.controller.exception.handler.ErrCode.LIMIT_ERROR;
 
 @Slf4j
 @ControllerAdvice
 public class SentinelExceptionHandler extends ResponseEntityExceptionHandler {
-    @ExceptionHandler(value = {UndeclaredThrowableException.class})
+    @ExceptionHandler(UndeclaredThrowableException.class)
     protected ResponseEntity<Object> handleConflict(UndeclaredThrowableException e, WebRequest request) {
-        ExceptionResponse exceptionResponse = new ExceptionResponse();
+        ErrResponse errResponse = new ErrResponse();
         if (e.getUndeclaredThrowable() instanceof FlowException) {
-            exceptionResponse.setErrCode(LIMIT_BLOCK.getCode());
-            exceptionResponse.setErrCode(LIMIT_BLOCK.getDesc());
+            // Handling for FlowException
+            errResponse.setErrCode(LIMIT_ERROR.getCode());
+            errResponse.setErrCode(LIMIT_ERROR.getMsg());
         }
         if (e.getUndeclaredThrowable() instanceof DegradeException) {
-            exceptionResponse.setErrCode(DEGRADE_BLOCK.getCode());
-            exceptionResponse.setErrCode(DEGRADE_BLOCK.getDesc());
+            // Handling for DegradeException
+            errResponse.setErrCode(DEGRADE_BLOCK.getCode());
+            errResponse.setErrCode(DEGRADE_BLOCK.getMsg());
         }
-        log.error("SentinelExceptionHandler: {}", e.getMessage(), e);
+        log.error("SentinelExceptionHandler: ", e);
+
+        // Creating HttpHeaders, setting content type to JSON
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        return handleExceptionInternal(e, JSON.toJSONString(exceptionResponse), httpHeaders, HttpStatus.BAD_REQUEST, request);
+        // Returning error response with 400 BAD_REQUEST status
+        return handleExceptionInternal(e, JSON.toJSONString(errResponse),
+                httpHeaders, HttpStatus.BAD_REQUEST, request);
     }
 }

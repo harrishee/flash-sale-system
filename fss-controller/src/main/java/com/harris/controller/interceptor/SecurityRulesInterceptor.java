@@ -18,10 +18,12 @@ public class SecurityRulesInterceptor implements HandlerInterceptor {
     @Resource
     private List<SecurityRuleChainService> securityRuleChainServices;
 
-    private List<SecurityRuleChainService> getSecurityRuleChainServices() {
+    private List<SecurityRuleChainService> getSortedSecurityRules() {
+        // Get the list of security rule chain services
         if (CollectionUtils.isEmpty(securityRuleChainServices)) {
             return new ArrayList<>();
         }
+        // Sort the security rule chain services based on their order
         return securityRuleChainServices.stream()
                 .sorted(Comparator.comparing(SecurityRuleChainService::getOrder))
                 .collect(Collectors.toList());
@@ -29,7 +31,8 @@ public class SecurityRulesInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        for (SecurityRuleChainService securityRuleChainService : getSecurityRuleChainServices()) {
+        // Iterate through the security rule chain services
+        for (SecurityRuleChainService securityRuleChainService : getSortedSecurityRules()) {
             if (!securityRuleChainService.run(request, response)) {
                 return false;
             }

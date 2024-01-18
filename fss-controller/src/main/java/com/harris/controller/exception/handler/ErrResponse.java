@@ -1,11 +1,11 @@
-package com.harris.controller.model.response;
+package com.harris.controller.exception.handler;
 
 import lombok.Data;
 import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class ExceptionResponse {
+public class ErrResponse {
     private String errCode;
     private String errMsg;
 }

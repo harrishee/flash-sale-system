@@ -10,10 +10,10 @@ import java.util.Date;
 public class FlashOrderDTO {
     private Long id;
     private Long itemId;
-    private Long activityId;
-    private Integer quantity;
-    private Long totalAmount;
-    private Integer status;
     private Long userId;
+    private Long activityId;
+    private Long totalAmount;
+    private Integer quantity;
+    private Integer status;
     private Date createTime;
 }

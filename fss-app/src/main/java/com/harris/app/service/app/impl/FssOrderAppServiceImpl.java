@@ -3,7 +3,7 @@ package com.harris.app.service.app.impl;
 import com.harris.app.exception.BizException;
 import com.harris.app.model.command.FlashPlaceOrderCommand;
 import com.harris.app.model.converter.FlashOrderAppConverter;
-import com.harris.app.model.dto.FlashOrderDTO;
+import com.harris.app.model.dto.SaleOrderDTO;
 import com.harris.app.model.query.FlashOrdersQuery;
 import com.harris.app.model.result.*;
 import com.harris.app.security.SecurityService;
@@ -100,10 +100,10 @@ public class FlashOrderAppServiceImpl implements FlashOrderAppService {
     }
 
     @Override
-    public AppMultiResult<FlashOrderDTO> getOrdersByUser(Long userId, FlashOrdersQuery flashOrdersQuery) {
+    public AppMultiResult<SaleOrderDTO> getOrdersByUser(Long userId, FlashOrdersQuery flashOrdersQuery) {
         PageResult<FlashOrder> flashOrderPageResult = flashOrderDomainService.getOrdersByUserId(userId, FlashOrderAppConverter.toQuery(flashOrdersQuery));
-        List<FlashOrderDTO> flashOrderDTOS = flashOrderPageResult.getData().stream().map(FlashOrderAppConverter::toDTO).collect(Collectors.toList());
-        return AppMultiResult.of(flashOrderPageResult.getTotal(), flashOrderDTOS);
+        List<SaleOrderDTO> saleOrderDTOS = flashOrderPageResult.getData().stream().map(FlashOrderAppConverter::toDTO).collect(Collectors.toList());
+        return AppMultiResult.of(flashOrderPageResult.getTotal(), saleOrderDTOS);
     }
 
     @Override

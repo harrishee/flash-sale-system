@@ -3,14 +3,14 @@ package com.harris.domain.model.enums;
 import lombok.Getter;
 
 @Getter
-public enum FlashActivityStatus {
+public enum SaleActivityStatu {
     PUBLISHED(0),
     ONLINE(1),
     OFFLINE(-1);
 
     private final Integer code;
 
-    FlashActivityStatus(Integer code) {
+    SaleActivityStatu(Integer code) {
         this.code = code;
     }
 

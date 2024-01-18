@@ -2,7 +2,6 @@ package com.harris.controller.exception.handler;
 
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.fastjson.JSON;
-import com.harris.controller.model.response.ExceptionResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,28 +14,33 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.lang.reflect.UndeclaredThrowableException;
 
-import static com.harris.controller.model.ExceptionCode.INTERNAL_ERROR;
-import static com.harris.controller.model.ExceptionCode.LIMIT_BLOCK;
+import static com.harris.controller.exception.handler.ErrCode.INTERNAL_ERROR;
+import static com.harris.controller.exception.handler.ErrCode.LIMIT_ERROR;
 
 @Slf4j
 @ControllerAdvice
 public class InternalExceptionHandler extends ResponseEntityExceptionHandler {
-    @ExceptionHandler(value = {Exception.class, RuntimeException.class})
+    @ExceptionHandler({Exception.class, RuntimeException.class})
     protected ResponseEntity<Object> handleConflict(Exception e, WebRequest request) {
-        ExceptionResponse exceptionResponse = new ExceptionResponse();
+        ErrResponse errResponse = new ErrResponse();
         if (e instanceof UndeclaredThrowableException) {
+            // Handling for UndeclaredThrowableException wrapping a FlowException
             if (((UndeclaredThrowableException) e).getUndeclaredThrowable() instanceof FlowException) {
-                exceptionResponse.setErrCode(LIMIT_BLOCK.getCode());
-                exceptionResponse.setErrMsg(LIMIT_BLOCK.getDesc());
+                errResponse.setErrCode(LIMIT_ERROR.getCode());
+                errResponse.setErrMsg(LIMIT_ERROR.getMsg());
             }
         } else {
-            exceptionResponse.setErrCode(INTERNAL_ERROR.getCode());
-            exceptionResponse.setErrMsg(INTERNAL_ERROR.getDesc());
+            // Handling for other exceptions
+            errResponse.setErrCode(INTERNAL_ERROR.getCode());
+            errResponse.setErrMsg(INTERNAL_ERROR.getMsg());
         }
+        log.error("InternalExceptionHandler: ", e);
 
-        log.error("InternalExceptionHandler: {}", e.getClass());
+        // Creating HttpHeaders, setting content type to JSON
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        return handleExceptionInternal(e, JSON.toJSONString(exceptionResponse), httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR, request);
+        // Returning error response with 500 INTERNAL_SERVER_ERROR status
+        return handleExceptionInternal(e, JSON.toJSONString(errResponse),
+                httpHeaders, HttpStatus.INTERNAL_SERVER_ERROR, request);
     }
 }

@@ -7,13 +7,13 @@ import java.util.Date;
 
 @Data
 @Accessors(chain = true)
-public class FlashOrderResponse {
+public class SaleOrderResponse {
     private Long id;
     private Long itemId;
-    private Long activityId;
-    private Integer quantity;
-    private Long totalAmount;
-    private Integer status;
     private Long userId;
+    private Long activityId;
+    private Long totalAmount;
+    private Integer quantity;
+    private Integer status;
     private Date createTime;
 }

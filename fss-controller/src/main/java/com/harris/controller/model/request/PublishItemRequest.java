@@ -8,10 +8,15 @@ import java.util.Date;
 
 @Data
 @Accessors(chain = true)
-public class FlashActivityPublishRequest {
-    private String activityName;
-    private String activityDesc;
-    private Integer status;
+public class PublishItemRequest {
+    private String itemTitle;
+    private String itemSubTitle;
+    private String itemDesc;
+    private Integer initialStock;
+    private Integer availableStock;
+    private Long originalPrice;
+    private Long flashPrice;
+    private Long activityId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date startTime;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

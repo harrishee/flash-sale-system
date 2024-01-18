@@ -6,7 +6,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class BucketArrangementRequest {
-    private Integer totalStocksAmount;
-    private Integer bucketsQuantity;
-    private Integer arrangementMode;
+    private Integer arrangeMode;
+    private Integer bucketQuantity;
+    private Integer totalStock;
 }

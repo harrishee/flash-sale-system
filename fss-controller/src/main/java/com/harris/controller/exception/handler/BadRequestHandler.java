@@ -3,7 +3,6 @@ package com.harris.controller.exception.handler;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.fastjson.JSON;
 import com.harris.app.exception.BizException;
-import com.harris.controller.model.response.ExceptionResponse;
 import com.harris.domain.exception.DomainException;
 import com.harris.infra.controller.exception.AuthException;
 import lombok.extern.slf4j.Slf4j;
@@ -18,31 +17,37 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.lang.reflect.UndeclaredThrowableException;
 
-import static com.harris.controller.model.ExceptionCode.*;
-import static com.harris.controller.model.ExceptionCode.AUTH_ERROR;
+import static com.harris.controller.exception.handler.ErrCode.*;
 
 @Slf4j
 @ControllerAdvice
 public class BadRequestHandler extends ResponseEntityExceptionHandler {
-    @ExceptionHandler(value = {BizException.class, FlowException.class, AuthException.class, DomainException.class})
+    @ExceptionHandler({FlowException.class, AuthException.class, BizException.class, DomainException.class})
     protected ResponseEntity<Object> handleConflict(RuntimeException e, WebRequest request) {
-        ExceptionResponse exceptionResponse = new ExceptionResponse();
+        ErrResponse errResponse = new ErrResponse();
+
         if (e instanceof UndeclaredThrowableException) {
+            // Handling for UndeclaredThrowableException wrapping a FlowException
             if (((UndeclaredThrowableException) e).getUndeclaredThrowable() instanceof FlowException) {
-                exceptionResponse.setErrCode(LIMIT_BLOCK.getCode());
-                exceptionResponse.setErrMsg(LIMIT_BLOCK.getDesc());
+                errResponse.setErrCode(LIMIT_ERROR.getCode());
+                errResponse.setErrMsg(LIMIT_ERROR.getMsg());
             }
         } else if (e instanceof BizException || e instanceof DomainException) {
-            exceptionResponse.setErrCode(BIZ_ERROR.getCode());
-            exceptionResponse.setErrMsg(e.getMessage());
+            // Handling for business and domain exceptions
+            errResponse.setErrCode(BIZ_ERROR.getCode());
+            errResponse.setErrMsg(e.getMessage());
         } else if (e instanceof AuthException) {
-            exceptionResponse.setErrCode(AUTH_ERROR.getCode());
-            exceptionResponse.setErrMsg(AUTH_ERROR.getDesc());
+            // Handling for authentication exceptions
+            errResponse.setErrCode(AUTH_ERROR.getCode());
+            errResponse.setErrMsg(AUTH_ERROR.getMsg());
         }
+        log.error("BadRequestHandler: ", e);
 
-        log.error("BadRequestHandler: {}", e.getMessage(), e);
+        // Creating HttpHeaders, setting content type to JSON
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        return handleExceptionInternal(e, JSON.toJSONString(exceptionResponse), httpHeaders, HttpStatus.BAD_REQUEST, request);
+        // Returning error response with 400 BAD_REQUEST status
+        return handleExceptionInternal(e, JSON.toJSONString(errResponse),
+                httpHeaders, HttpStatus.BAD_REQUEST, request);
     }
 }

@@ -7,7 +7,7 @@ import java.util.Date;
 
 @Data
 @Accessors(chain = true)
-public class FlashItemResponse {
+public class SaleItemResponse {
     private Long id;
     private String itemTitle;
     private String itemSubTitle;

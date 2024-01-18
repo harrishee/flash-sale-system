@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ResponseConverter {
-    public static Response with(AppResult appResult) {
+    public static Response toResponse(AppResult appResult) {
         if (appResult == null) {
             return new Response();
         }
@@ -22,27 +22,27 @@ public class ResponseConverter {
         return response;
     }
 
-    public static <T> SingleResponse<T> withSingle(AppSingleResult appResult) {
-        if (appResult == null) {
+    public static <T> SingleResponse<T> toSingleResponse(AppSingleResult appSingleResult) {
+        if (appSingleResult == null) {
             return new SingleResponse<>();
         }
         SingleResponse singleResponse = new SingleResponse();
-        singleResponse.setSuccess(appResult.isSuccess());
-        singleResponse.setErrCode(appResult.getCode());
-        singleResponse.setErrMessage(appResult.getMsg());
-        singleResponse.setData(appResult.getData());
+        singleResponse.setSuccess(appSingleResult.isSuccess());
+        singleResponse.setErrCode(appSingleResult.getCode());
+        singleResponse.setErrMessage(appSingleResult.getMsg());
+        singleResponse.setData(appSingleResult.getData());
         return singleResponse;
     }
 
-    public static <T> MultiResponse<T> withMulti(AppMultiResult appResult) {
-        if (appResult == null) {
+    public static <T> MultiResponse<T> toMultiResponse(AppMultiResult appMultiResult) {
+        if (appMultiResult == null) {
             return new MultiResponse<>();
         }
         MultiResponse multiResponse = new MultiResponse<>();
-        multiResponse.setSuccess(appResult.isSuccess());
-        multiResponse.setErrCode(appResult.getCode());
-        multiResponse.setErrMessage(appResult.getMsg());
-        multiResponse.setData(appResult.getData());
+        multiResponse.setSuccess(appMultiResult.isSuccess());
+        multiResponse.setErrCode(appMultiResult.getCode());
+        multiResponse.setErrMessage(appMultiResult.getMsg());
+        multiResponse.setData(appMultiResult.getData());
         return multiResponse;
     }
 }

@@ -10,7 +10,7 @@ import com.harris.app.model.cache.FlashItemsCache;
 import com.harris.app.model.cache.ItemStockCache;
 import com.harris.app.model.command.FlashItemPublishCommand;
 import com.harris.app.model.converter.FlashItemAppConverter;
-import com.harris.app.model.dto.FlashItemDTO;
+import com.harris.app.model.dto.SaleItemDTO;
 import com.harris.app.model.query.FlashItemsQuery;
 import com.harris.app.model.result.AppMultiResult;
 import com.harris.app.model.result.AppResult;
@@ -65,7 +65,7 @@ public class FlashItemAppServiceImpl implements FlashItemAppService {
     private DistributedLockService distributedLockService;
 
     @Override
-    public AppSingleResult<FlashItemDTO> getFlashItem(Long itemId) {
+    public AppSingleResult<SaleItemDTO> getFlashItem(Long itemId) {
         FlashItemCache flashItemCache = flashItemCacheService.getItemCache(itemId, null);
         if (flashItemCache.isLater()) {
             return AppSingleResult.tryLater();
@@ -74,13 +74,13 @@ public class FlashItemAppServiceImpl implements FlashItemAppService {
             throw new BizException(ITEM_NOT_FOUND.getErrDesc());
         }
         updateLatestItemStock(null, flashItemCache.getFlashItem());
-        FlashItemDTO flashItemDTO = FlashItemAppConverter.toDTO(flashItemCache.getFlashItem());
-        flashItemDTO.setVersion(flashItemCache.getVersion());
-        return AppSingleResult.ok(flashItemDTO);
+        SaleItemDTO saleItemDTO = FlashItemAppConverter.toDTO(flashItemCache.getFlashItem());
+        saleItemDTO.setVersion(flashItemCache.getVersion());
+        return AppSingleResult.ok(saleItemDTO);
     }
 
     @Override
-    public AppSingleResult<FlashItemDTO> getFlashItem(Long userId, Long activityId, Long itemId, Long version) {
+    public AppSingleResult<SaleItemDTO> getFlashItem(Long userId, Long activityId, Long itemId, Long version) {
         FlashItemCache flashItemCache = flashItemCacheService.getItemCache(itemId, version);
         if (flashItemCache.isLater()) {
             return AppSingleResult.tryLater();
@@ -89,13 +89,13 @@ public class FlashItemAppServiceImpl implements FlashItemAppService {
             throw new BizException(ITEM_NOT_FOUND.getErrDesc());
         }
         updateLatestItemStock(userId, flashItemCache.getFlashItem());
-        FlashItemDTO flashItemDTO = FlashItemAppConverter.toDTO(flashItemCache.getFlashItem());
-        flashItemDTO.setVersion(flashItemCache.getVersion());
-        return AppSingleResult.ok(flashItemDTO);
+        SaleItemDTO saleItemDTO = FlashItemAppConverter.toDTO(flashItemCache.getFlashItem());
+        saleItemDTO.setVersion(flashItemCache.getVersion());
+        return AppSingleResult.ok(saleItemDTO);
     }
 
     @Override
-    public AppMultiResult<FlashItemDTO> getFlashItems(Long userId, Long activityId, FlashItemsQuery flashItemsQuery) {
+    public AppMultiResult<SaleItemDTO> getFlashItems(Long userId, Long activityId, FlashItemsQuery flashItemsQuery) {
         if (flashItemsQuery == null) {
             return AppMultiResult.empty();
         }
@@ -120,8 +120,8 @@ public class FlashItemAppServiceImpl implements FlashItemAppService {
         if (CollectionUtils.isEmpty(items)) {
             return AppMultiResult.empty();
         }
-        List<FlashItemDTO> flashItemDTOS = items.stream().map(FlashItemAppConverter::toDTO).collect(Collectors.toList());
-        return AppMultiResult.of(total, flashItemDTOS);
+        List<SaleItemDTO> saleItemDTOS = items.stream().map(FlashItemAppConverter::toDTO).collect(Collectors.toList());
+        return AppMultiResult.of(total, saleItemDTOS);
     }
 
     @Override

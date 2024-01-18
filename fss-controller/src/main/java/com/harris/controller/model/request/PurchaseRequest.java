@@ -5,10 +5,10 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class PlaceOrderRequest {
+public class PurchaseRequest {
     private Long id;
     private Long itemId;
     private Long activityId;
-    private Integer quantity;
     private Long totalAmount;
+    private Integer quantity;
 }

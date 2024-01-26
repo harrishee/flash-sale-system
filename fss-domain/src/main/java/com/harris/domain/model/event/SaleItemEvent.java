@@ -1,13 +1,14 @@
-package com.harris.domain.event.flashItem;
+package com.harris.domain.model.event;
 
 import com.alibaba.cola.event.DomainEventI;
 import com.harris.domain.model.entity.SaleItem;
+import com.harris.domain.model.enums.SaleItemEventType;
 import lombok.Data;
 
 @Data
-public class FlashItemEvent implements DomainEventI {
+public class SaleItemEvent implements DomainEventI {
     private SaleItem saleItem;
-    private FlashItemEventType flashItemEventType;
+    private SaleItemEventType saleItemEventType;
 
     public Long getId() {
         if (saleItem == null) {
@@ -16,7 +17,7 @@ public class FlashItemEvent implements DomainEventI {
         return saleItem.getId();
     }
 
-    public Long getFlashActivityId() {
+    public Long getActivityId() {
         if (saleItem == null) {
             return null;
         }

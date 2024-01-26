@@ -15,7 +15,7 @@ import com.harris.domain.model.PageQueryCondition;
 import com.harris.domain.model.PageResult;
 import com.harris.domain.model.StockDeduction;
 import com.harris.domain.model.entity.SaleOrder;
-import com.harris.domain.service.FssOrderDomainService;
+import com.harris.domain.service.SaleOrderDomainService;
 import com.harris.domain.service.StockDomainService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
@@ -40,7 +40,7 @@ public class FssOrderAppServiceImpl implements FssOrderAppService {
     private SecurityService securityService;
 
     @Resource
-    private FssOrderDomainService fssOrderDomainService;
+    private SaleOrderDomainService saleOrderDomainService;
 
     @Resource
     private StockDomainService stockDomainService;
@@ -128,7 +128,7 @@ public class FssOrderAppServiceImpl implements FssOrderAppService {
 
         // Get orders and convert to DTOs
         PageQueryCondition condition = FssOrderAppConverter.toQuery(saleOrdersQuery);
-        PageResult<SaleOrder> orderPageResult = fssOrderDomainService.getOrdersByUserId(userId, condition);
+        PageResult<SaleOrder> orderPageResult = saleOrderDomainService.getOrdersByUserId(userId, condition);
         List<SaleOrderDTO> saleOrderDTOS = orderPageResult
                 .getData()
                 .stream()
@@ -148,13 +148,13 @@ public class FssOrderAppServiceImpl implements FssOrderAppService {
         }
 
         // Get order and validate
-        SaleOrder saleOrder = fssOrderDomainService.getOrder(userId, orderId);
+        SaleOrder saleOrder = saleOrderDomainService.getOrder(userId, orderId);
         if (saleOrder == null) {
             throw new BizException(AppErrCode.ORDER_NOT_FOUND);
         }
 
         // Cancel order
-        boolean isCancelled = fssOrderDomainService.cancelOrder(userId, orderId);
+        boolean isCancelled = saleOrderDomainService.cancelOrder(userId, orderId);
         if (!isCancelled) {
             log.info("App cancelOrder failed: {},{}", userId, orderId);
             return AppResult.error(AppErrCode.ORDER_CANCEL_FAILED);

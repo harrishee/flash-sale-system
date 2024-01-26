@@ -3,7 +3,7 @@ package com.harris.domain.model.enums;
 import lombok.Getter;
 
 @Getter
-public enum FlashOrderStatus {
+public enum SaleOrderStatus {
     CREATED(1),
     PAID(2),
     CANCELED(0),
@@ -11,7 +11,7 @@ public enum FlashOrderStatus {
 
     private final Integer code;
 
-    FlashOrderStatus(Integer code) {
+    SaleOrderStatus(Integer code) {
         this.code = code;
     }
 

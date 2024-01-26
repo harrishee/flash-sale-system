@@ -6,7 +6,7 @@ import com.google.common.cache.CacheBuilder;
 import com.harris.app.model.cache.SaleActivityCache;
 import com.harris.app.service.cache.FssActivityCacheService;
 import com.harris.domain.model.entity.SaleActivity;
-import com.harris.domain.service.FssActivityDomainService;
+import com.harris.domain.service.SaleActivityDomainService;
 import com.harris.infra.cache.DistributedCacheService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
@@ -41,7 +41,7 @@ public class FssActivityCacheServiceImpl implements FssActivityCacheService {
     private DistributedLockService distributedLockService;
 
     @Resource
-    private FssActivityDomainService fssActivityDomainService;
+    private SaleActivityDomainService saleActivityDomainService;
 
     @Override
     public SaleActivityCache getActivityCache(Long activityId, Long version) {
@@ -61,7 +61,7 @@ public class FssActivityCacheServiceImpl implements FssActivityCacheService {
             if (!isLocked) {
                 return new SaleActivityCache().tryLater();
             }
-            SaleActivity saleActivity = fssActivityDomainService.getActivity(activityId);
+            SaleActivity saleActivity = saleActivityDomainService.getActivity(activityId);
             SaleActivityCache saleActivityCache = (saleActivity != null)
                     ? new SaleActivityCache().with(saleActivity).withVersion(System.currentTimeMillis())
                     : new SaleActivityCache().notExist();

@@ -5,7 +5,7 @@ import com.harris.domain.model.PageResult;
 import com.harris.domain.model.PageQueryCondition;
 import com.harris.domain.model.entity.SaleItem;
 import com.harris.domain.model.enums.SaleItemStatus;
-import com.harris.domain.service.FssItemDomainService;
+import com.harris.domain.service.SaleItemDomainService;
 import com.harris.infra.config.MarkTrace;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,7 +17,7 @@ import javax.annotation.Resource;
 @Component
 public class StocksAlignScheduler {
     @Resource
-    private FssItemDomainService fssItemDomainService;
+    private SaleItemDomainService saleItemDomainService;
     
     @Resource
     private StockCacheService stockCacheService;
@@ -28,7 +28,7 @@ public class StocksAlignScheduler {
         log.info("StocksAlignScheduler starts");
         PageQueryCondition pageQueryCondition = new PageQueryCondition();
         pageQueryCondition.setStatus(SaleItemStatus.ONLINE.getCode());
-        PageResult<SaleItem> pageResult = fssItemDomainService.getItems(pageQueryCondition);
+        PageResult<SaleItem> pageResult = saleItemDomainService.getItems(pageQueryCondition);
 
         // Iterate through the flash items
         pageResult.getData().forEach(flashItem -> {

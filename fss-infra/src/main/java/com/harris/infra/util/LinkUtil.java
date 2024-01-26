@@ -3,6 +3,11 @@ package com.harris.infra.util;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * Utility class for creating concatenated strings.
+ * This class provides a static method to concatenate various objects
+ * into a single string, separated by underscores.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LinkUtil {
     public static String link(Object... items) {

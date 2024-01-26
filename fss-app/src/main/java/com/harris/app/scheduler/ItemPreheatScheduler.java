@@ -4,7 +4,7 @@ import com.harris.app.service.cache.StockCacheService;
 import com.harris.domain.model.PageResult;
 import com.harris.domain.model.PageQueryCondition;
 import com.harris.domain.model.entity.SaleItem;
-import com.harris.domain.service.FssItemDomainService;
+import com.harris.domain.service.SaleItemDomainService;
 import com.harris.infra.config.MarkTrace;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,7 +16,7 @@ import javax.annotation.Resource;
 @Component
 public class ItemPreheatScheduler {
     @Resource
-    private FssItemDomainService fssItemDomainService;
+    private SaleItemDomainService saleItemDomainService;
 
     @Resource
     private StockCacheService stockCacheService;
@@ -27,7 +27,7 @@ public class ItemPreheatScheduler {
         log.info("ItemPreheatScheduler starts");
         PageQueryCondition pageQueryCondition = new PageQueryCondition();
         pageQueryCondition.setStockWarmUp(0);
-        PageResult<SaleItem> pageResult = fssItemDomainService.getItems(pageQueryCondition);
+        PageResult<SaleItem> pageResult = saleItemDomainService.getItems(pageQueryCondition);
 
         // Iterate through the flash items
         pageResult.getData().forEach(flashItem -> {
@@ -40,7 +40,7 @@ public class ItemPreheatScheduler {
 
             // Set the stock warm-up status and publish the item
             flashItem.setStockWarmUp(1);
-            fssItemDomainService.publishItem(flashItem);
+            saleItemDomainService.publishItem(flashItem);
             log.info("Item init preheat success: {}", flashItem.getId());
         });
     }

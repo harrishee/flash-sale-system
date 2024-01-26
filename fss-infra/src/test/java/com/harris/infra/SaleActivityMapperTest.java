@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SaleActivityMapperTest {
+class SaleActivityMapperTest {
     private static SqlSessionFactory sqlSessionFactory;
     private SqlSession session;
     private SaleActivityMapper saleActivityMapper;

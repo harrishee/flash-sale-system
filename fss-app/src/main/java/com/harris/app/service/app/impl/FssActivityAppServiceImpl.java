@@ -20,7 +20,7 @@ import com.harris.app.service.cache.FssActivityCacheService;
 import com.harris.domain.model.PageResult;
 import com.harris.domain.model.PageQueryCondition;
 import com.harris.domain.model.entity.SaleActivity;
-import com.harris.domain.service.FssActivityDomainService;
+import com.harris.domain.service.SaleActivityDomainService;
 import com.harris.infra.controller.exception.AuthErrorCode;
 import com.harris.infra.controller.exception.AuthException;
 import com.harris.infra.lock.DistributedLock;
@@ -45,7 +45,7 @@ public class FssActivityAppServiceImpl implements FssActivityAppService {
     private AuthAppService authAppService;
 
     @Resource
-    private FssActivityDomainService fssActivityDomainService;
+    private SaleActivityDomainService saleActivityDomainService;
 
     @Resource
     private FssActivityCacheService fssActivityCacheService;
@@ -107,7 +107,7 @@ public class FssActivityAppServiceImpl implements FssActivityAppService {
         } else {
             // Otherwise, set values from domain service
             PageQueryCondition condition = SaleActivityAppConverter.toCondition(saleActivitiesQuery);
-            PageResult<SaleActivity> activitiesPageResult = fssActivityDomainService.getActivities(condition);
+            PageResult<SaleActivity> activitiesPageResult = saleActivityDomainService.getActivities(condition);
             activities = activitiesPageResult.getData();
             total = activitiesPageResult.getTotal();
         }
@@ -145,7 +145,7 @@ public class FssActivityAppServiceImpl implements FssActivityAppService {
 
             // Publish activity
             SaleActivity saleActivity = SaleActivityAppConverter.toDomainModel(publishActivityCommand);
-            fssActivityDomainService.publishActivity(userId, saleActivity);
+            saleActivityDomainService.publishActivity(userId, saleActivity);
 
             log.info("App publishActivity ok: {},{}", userId, publishActivityCommand);
             return AppResult.ok();
@@ -183,7 +183,7 @@ public class FssActivityAppServiceImpl implements FssActivityAppService {
             // Modify activity
             SaleActivity saleActivity = SaleActivityAppConverter.toDomainModel(publishActivityCommand);
             saleActivity.setId(activityId);
-            fssActivityDomainService.modifyActivity(userId, saleActivity);
+            saleActivityDomainService.modifyActivity(userId, saleActivity);
 
             log.info("App modifyActivity ok: {},{},{}", userId, activityId, publishActivityCommand);
             return AppResult.ok();
@@ -219,7 +219,7 @@ public class FssActivityAppServiceImpl implements FssActivityAppService {
             }
 
             // Online activity
-            fssActivityDomainService.onlineActivity(userId, activityId);
+            saleActivityDomainService.onlineActivity(userId, activityId);
             log.info("App onlineActivity ok: {},{}", userId, activityId);
             return AppResult.ok();
         } catch (Exception e) {
@@ -253,7 +253,7 @@ public class FssActivityAppServiceImpl implements FssActivityAppService {
             }
 
             // Offline activity
-            fssActivityDomainService.offlineActivity(userId, activityId);
+            saleActivityDomainService.offlineActivity(userId, activityId);
             log.info("App offlineActivity ok: {},{}", userId, activityId);
             return AppResult.ok();
         } catch (Exception e) {

@@ -29,17 +29,17 @@ public class Bucket {
         return this;
     }
 
-    public void addAvailableStocks(int availableStocksAmount) {
+    public void addAvailableStock(int availableStockAmount) {
         if (this.availableStocksAmount == null) {
             return;
         }
-        this.availableStocksAmount += availableStocksAmount;
+        this.availableStocksAmount += availableStockAmount;
     }
 
-    public void increaseTotalStocksAmount(Integer incrementalStocksAmount) {
-        if (incrementalStocksAmount == null) {
+    public void increaseTotalStockAmount(Integer increaseStockAmount) {
+        if (increaseStockAmount == null) {
             return;
         }
-        this.totalStocksAmount += incrementalStocksAmount;
+        this.totalStocksAmount += increaseStockAmount;
     }
 }

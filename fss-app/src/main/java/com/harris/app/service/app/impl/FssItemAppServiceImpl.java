@@ -23,8 +23,8 @@ import com.harris.domain.model.PageQueryCondition;
 import com.harris.domain.model.PageResult;
 import com.harris.domain.model.entity.SaleActivity;
 import com.harris.domain.model.entity.SaleItem;
-import com.harris.domain.service.FssActivityDomainService;
-import com.harris.domain.service.FssItemDomainService;
+import com.harris.domain.service.SaleActivityDomainService;
+import com.harris.domain.service.SaleItemDomainService;
 import com.harris.infra.controller.exception.AuthErrorCode;
 import com.harris.infra.controller.exception.AuthException;
 import com.harris.infra.lock.DistributedLock;
@@ -50,10 +50,10 @@ public class FssItemAppServiceImpl implements FssItemAppService {
     private AuthAppService authAppService;
 
     @Resource
-    private FssItemDomainService fssItemDomainService;
+    private SaleItemDomainService saleItemDomainService;
 
     @Resource
-    private FssActivityDomainService fssActivityDomainService;
+    private SaleActivityDomainService saleActivityDomainService;
 
     @Resource
     private FssItemCacheService fssItemCacheService;
@@ -158,7 +158,7 @@ public class FssItemAppServiceImpl implements FssItemAppService {
         } else {
             // Otherwise, set values from domain service
             PageQueryCondition condition = FssItemAppConverter.toQuery(saleItemsQuery);
-            PageResult<SaleItem> itemsPageResult = fssItemDomainService.getItems(condition);
+            PageResult<SaleItem> itemsPageResult = saleItemDomainService.getItems(condition);
             items = itemsPageResult.getData();
             total = itemsPageResult.getTotal();
         }
@@ -198,7 +198,7 @@ public class FssItemAppServiceImpl implements FssItemAppService {
             }
 
             // Get activity and validate
-            SaleActivity saleActivity = fssActivityDomainService.getActivity(activityId);
+            SaleActivity saleActivity = saleActivityDomainService.getActivity(activityId);
             if (saleActivity == null) {
                 throw new BizException(AppErrCode.ACTIVITY_NOT_FOUND);
             }
@@ -207,7 +207,7 @@ public class FssItemAppServiceImpl implements FssItemAppService {
             SaleItem saleItem = FssItemAppConverter.toDomainModel(publishItemCommand);
             saleItem.setActivityId(activityId);
             saleItem.setStockWarmUp(0);
-            fssItemDomainService.publishItem(saleItem);
+            saleItemDomainService.publishItem(saleItem);
 
             log.info("App publishItem ok: {},{},{}", userId, activityId, publishItemCommand);
             return AppResult.ok();
@@ -243,7 +243,7 @@ public class FssItemAppServiceImpl implements FssItemAppService {
             }
 
             // Online item
-            fssItemDomainService.onlineItem(itemId);
+            saleItemDomainService.onlineItem(itemId);
 
             log.info("App onlineItem ok: {},{},{}", userId, activityId, itemId);
             return AppResult.ok();
@@ -278,7 +278,7 @@ public class FssItemAppServiceImpl implements FssItemAppService {
             }
 
             // Offline item
-            fssItemDomainService.offlineItem(itemId);
+            saleItemDomainService.offlineItem(itemId);
 
             log.info("App offlineItem ok: {},{},{}", userId, activityId, itemId);
             return AppResult.ok();

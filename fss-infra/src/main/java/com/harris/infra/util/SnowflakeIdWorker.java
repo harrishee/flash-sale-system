@@ -2,6 +2,11 @@ package com.harris.infra.util;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Implementation of Twitter's Snowflake algorithm to generate globally unique IDs.
+ * This class provides a method to generate long type IDs based on the concept
+ * of datacenter and worker IDs along with a sequence number.
+ */
 @Slf4j
 public class SnowflakeIdWorker {
     private long workerId;

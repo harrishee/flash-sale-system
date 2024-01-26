@@ -1,4 +1,4 @@
-package com.harris.domain.event.bucket;
+package com.harris.domain.model.enums;
 
 public enum BucketEventType {
     DISABLED(0),

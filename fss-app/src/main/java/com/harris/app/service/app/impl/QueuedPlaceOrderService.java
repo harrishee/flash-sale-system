@@ -22,8 +22,8 @@ import com.harris.app.util.OrderTaskIdService;
 import com.harris.domain.model.StockDeduction;
 import com.harris.domain.model.entity.SaleItem;
 import com.harris.domain.model.entity.SaleOrder;
-import com.harris.domain.service.FssItemDomainService;
-import com.harris.domain.service.FssOrderDomainService;
+import com.harris.domain.service.SaleItemDomainService;
+import com.harris.domain.service.SaleOrderDomainService;
 import com.harris.domain.service.StockDomainService;
 import com.harris.infra.cache.RedisCacheService;
 import lombok.extern.slf4j.Slf4j;
@@ -47,10 +47,10 @@ public class QueuedPlaceOrderService implements PlaceOrderService {
     private RedisCacheService redisCacheService;
 
     @Resource
-    private FssItemDomainService fssItemDomainService;
+    private SaleItemDomainService saleItemDomainService;
 
     @Resource
-    private FssOrderDomainService fssOrderDomainService;
+    private SaleOrderDomainService saleOrderDomainService;
 
     @Resource
     private StockDomainService stockDomainService;
@@ -160,7 +160,7 @@ public class QueuedPlaceOrderService implements PlaceOrderService {
             }
 
             // Retrieve sale item details
-            SaleItem saleItem = fssItemDomainService.getItem(placeOrderTask.getItemId());
+            SaleItem saleItem = saleItemDomainService.getItem(placeOrderTask.getItemId());
 
             // Generate the order ID
             Long orderId = orderNoService.generateOrderNo(new OrderNoContext());
@@ -168,7 +168,7 @@ public class QueuedPlaceOrderService implements PlaceOrderService {
 
             // Build the new order object
             saleOrderToPlace.setItemTitle(saleItem.getItemTitle());
-            saleOrderToPlace.setSalePrice(saleItem.getFlashPrice());
+            saleOrderToPlace.setSalePrice(saleItem.getSalePrice());
             saleOrderToPlace.setUserId(userId);
             saleOrderToPlace.setId(orderId);
 
@@ -186,7 +186,7 @@ public class QueuedPlaceOrderService implements PlaceOrderService {
             }
 
             // Place the order
-            boolean placeOrderSuccess = fssOrderDomainService.placeOrder(userId, saleOrderToPlace);
+            boolean placeOrderSuccess = saleOrderDomainService.placeOrder(userId, saleOrderToPlace);
             if (!placeOrderSuccess) {
                 log.info("Queued placeOrder, place order failed: {},{}",
                         placeOrderTask.getPlaceOrderTaskId(), JSON.toJSONString(placeOrderTask));

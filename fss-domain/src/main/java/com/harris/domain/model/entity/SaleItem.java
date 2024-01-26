@@ -18,7 +18,7 @@ public class SaleItem implements Serializable {
     private Integer stockWarmUp;
     private Long originalPrice;
     private Integer status;
-    private Long flashPrice;
+    private Long salePrice;
     private Long activityId;
     private Date startTime;
     private Date endTime;
@@ -28,7 +28,7 @@ public class SaleItem implements Serializable {
                 initialStock == null || initialStock <= 0 ||
                 availableStock == null || availableStock <= 0 || availableStock > initialStock ||
                 originalPrice == null || originalPrice < 0 ||
-                flashPrice == null || flashPrice < 0 ||
+                salePrice == null || salePrice < 0 ||
                 activityId == null ||
                 startTime == null || endTime == null ||
                 endTime.before(startTime) || endTime.before(new Date());

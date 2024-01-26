@@ -9,6 +9,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+/**
+ * Utility class for extracting IP address from HttpServletRequest.
+ * It handles various scenarios where the IP address might be present in different
+ * headers due to proxies and load balancers.
+ */
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class IPUtil {

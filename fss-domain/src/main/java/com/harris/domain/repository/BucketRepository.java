@@ -4,7 +4,7 @@ import com.harris.domain.model.Bucket;
 
 import java.util.List;
 
-public interface BucketsRepository {
+public interface BucketRepository {
     List<Bucket> findBucketsByItemId(Long itemId);
 
     boolean saveBuckets(Long itemId, List<Bucket> buckets);

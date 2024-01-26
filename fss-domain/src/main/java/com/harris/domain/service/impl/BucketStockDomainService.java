@@ -1,10 +1,10 @@
 package com.harris.domain.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.harris.domain.exception.DomainErrCode;
+import com.harris.domain.exception.DomainErrorCode;
 import com.harris.domain.exception.DomainException;
 import com.harris.domain.model.StockDeduction;
-import com.harris.domain.repository.BucketsRepository;
+import com.harris.domain.repository.BucketRepository;
 import com.harris.domain.service.StockDomainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,29 +15,33 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 @ConditionalOnProperty(name = "place_order_type", havingValue = "bucket", matchIfMissing = true)
-public class BucketStockServiceImpl implements StockDomainService {
+public class BucketStockDomainService implements StockDomainService {
     @Resource
-    private BucketsRepository bucketsRepository;
+    private BucketRepository bucketRepository;
 
     @Override
     public boolean deductStock(StockDeduction stockDeduction) {
-        log.info("BUCKET decreaseItemStock: {}", JSON.toJSONString(stockDeduction));
+        log.info("Bucket deductStock: {}", JSON.toJSONString(stockDeduction));
+
+        // Validate params
         if (stockDeduction == null || stockDeduction.getItemId() == null ||
                 stockDeduction.getQuantity() == null || stockDeduction.getSerialNo() == null) {
-            throw new DomainException(DomainErrCode.INVALID_PARAMS);
+            throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
-        return bucketsRepository.deductStockForItem(stockDeduction.getItemId(),
+        return bucketRepository.deductStockForItem(stockDeduction.getItemId(),
                 stockDeduction.getQuantity(), stockDeduction.getSerialNo());
     }
 
     @Override
     public boolean revertStock(StockDeduction stockDeduction) {
-        log.info("BUCKET increaseItemStock: {}", JSON.toJSONString(stockDeduction));
+        log.info("Bucket revertStock: {}", JSON.toJSONString(stockDeduction));
+
+        // Validate params
         if (stockDeduction == null || stockDeduction.getItemId() == null ||
                 stockDeduction.getQuantity() == null || stockDeduction.getSerialNo() == null) {
-            throw new DomainException(DomainErrCode.INVALID_PARAMS);
+            throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
-        return bucketsRepository.revertStockForItem(stockDeduction.getItemId(),
+        return bucketRepository.revertStockForItem(stockDeduction.getItemId(),
                 stockDeduction.getQuantity(), stockDeduction.getSerialNo());
     }
 }

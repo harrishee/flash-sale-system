@@ -16,7 +16,7 @@ import com.harris.app.util.OrderNoService;
 import com.harris.app.util.PlaceOrderTypeCondition;
 import com.harris.domain.model.StockDeduction;
 import com.harris.domain.model.entity.SaleOrder;
-import com.harris.domain.service.FssOrderDomainService;
+import com.harris.domain.service.SaleOrderDomainService;
 import com.harris.domain.service.StockDomainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Conditional;
@@ -32,7 +32,7 @@ import static com.harris.app.exception.AppErrCode.*;
 @Conditional(PlaceOrderTypeCondition.class)
 public class StandardPlaceOrderService implements PlaceOrderService {
     @Resource
-    private FssOrderDomainService fssOrderDomainService;
+    private SaleOrderDomainService saleOrderDomainService;
 
     @Resource
     private StockDomainService stockDomainService;
@@ -124,7 +124,7 @@ public class StandardPlaceOrderService implements PlaceOrderService {
             }
 
             // 3. Place the order
-            boolean placeOrderResult = fssOrderDomainService.placeOrder(userId, newOrder);
+            boolean placeOrderResult = saleOrderDomainService.placeOrder(userId, newOrder);
             if (!placeOrderResult) {
                 throw new BizException(PLACE_ORDER_FAILED.getErrDesc());
             }

@@ -20,16 +20,20 @@ public class SaleActivityRepositoryImpl implements SaleActivityRepository {
 
     @Override
     public Optional<SaleActivity> findActivityById(Long activityId) {
+        // Get the DO from the mapper and validate
         SaleActivityDO saleActivityDO = saleActivityMapper.getActivityById(activityId);
         if (saleActivityDO == null) {
             return Optional.empty();
         }
+
+        // Convert the DO to a domain model
         SaleActivity saleActivity = SaleActivityToDOConverter.toDomainModel(saleActivityDO);
         return Optional.of(saleActivity);
     }
 
     @Override
     public List<SaleActivity> findActivitiesByCondition(PageQueryCondition pageQueryCondition) {
+        // Get the DOs from the mapper and convert to domain models
         return saleActivityMapper.getActivitiesByCondition(pageQueryCondition)
                 .stream()
                 .map(SaleActivityToDOConverter::toDomainModel)
@@ -43,12 +47,17 @@ public class SaleActivityRepositoryImpl implements SaleActivityRepository {
 
     @Override
     public int saveActivity(SaleActivity saleActivity) {
+        // Convert the domain model to a DO
         SaleActivityDO saleActivityDO = SaleActivityToDOConverter.toDO(saleActivity);
+
+        // If the ID is null, insert the new activity with its ID
         if (saleActivityDO.getId() == null) {
             int effectedRows = saleActivityMapper.insertActivity(saleActivityDO);
             saleActivity.setId(saleActivityDO.getId());
             return effectedRows;
         }
+
+        // Otherwise, update the existed activity
         return saleActivityMapper.updateActivity(saleActivityDO);
     }
 }

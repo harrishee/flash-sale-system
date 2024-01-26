@@ -9,7 +9,7 @@ import com.harris.domain.model.PageResult;
 import com.harris.domain.model.PageQueryCondition;
 import com.harris.domain.model.entity.SaleItem;
 import com.harris.domain.model.enums.SaleItemStatus;
-import com.harris.domain.service.FssItemDomainService;
+import com.harris.domain.service.SaleItemDomainService;
 import com.harris.infra.cache.DistributedCacheService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
@@ -44,7 +44,7 @@ public class FssItemsCacheServiceImpl implements FssItemsCacheService {
     private DistributedLockService distributedLockService;
 
     @Resource
-    private FssItemDomainService fssItemDomainService;
+    private SaleItemDomainService saleItemDomainService;
 
     @Override
     public SaleItemsCache getItemsCache(Long activityId, Long version) {
@@ -67,7 +67,7 @@ public class FssItemsCacheServiceImpl implements FssItemsCacheService {
             PageQueryCondition pageQueryCondition = new PageQueryCondition();
             pageQueryCondition.setActivityId(activityId);
             pageQueryCondition.setStatus(SaleItemStatus.ONLINE.getCode());
-            PageResult<SaleItem> flashItemPageResult = fssItemDomainService.getItems(pageQueryCondition);
+            PageResult<SaleItem> flashItemPageResult = saleItemDomainService.getItems(pageQueryCondition);
             SaleItemsCache saleItemsCache = (flashItemPageResult != null)
                     ? new SaleItemsCache()
                     .setTotal(flashItemPageResult.getTotal())

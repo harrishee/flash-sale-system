@@ -1,9 +1,9 @@
-package com.harris.domain.event.flashActivity;
+package com.harris.domain.model.enums;
 
 import lombok.Getter;
 
 @Getter
-public enum FlashActivityEventType {
+public enum SaleActivityEventType {
     PUBLISHED(0),
 
     ONLINE(1),
@@ -14,7 +14,7 @@ public enum FlashActivityEventType {
 
     private final Integer code;
 
-    FlashActivityEventType(Integer code) {
+    SaleActivityEventType(Integer code) {
         this.code = code;
     }
 }

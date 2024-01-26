@@ -4,6 +4,10 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.commons.codec.binary.Base64;
 
+/**
+ * Utility class for Base64 encoding and decoding.
+ * Provides static methods to encode and decode strings using Base64.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Base64Util {
     private static final String ENCODING = "UTF-8";

@@ -8,7 +8,7 @@ import com.harris.app.service.cache.FssActivitiesCacheService;
 import com.harris.domain.model.PageResult;
 import com.harris.domain.model.PageQueryCondition;
 import com.harris.domain.model.entity.SaleActivity;
-import com.harris.domain.service.FssActivityDomainService;
+import com.harris.domain.service.SaleActivityDomainService;
 import com.harris.infra.cache.DistributedCacheService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
@@ -43,7 +43,7 @@ public class FssActivitiesCacheServiceImpl implements FssActivitiesCacheService 
     private DistributedLockService distributedLockService;
 
     @Resource
-    private FssActivityDomainService fssActivityDomainService;
+    private SaleActivityDomainService saleActivityDomainService;
 
     @Override
     public SaleActivitiesCache getActivitiesCache(Integer pageNumber, Long version) {
@@ -67,7 +67,7 @@ public class FssActivitiesCacheServiceImpl implements FssActivitiesCacheService 
                 return new SaleActivitiesCache().tryLater();
             }
             PageQueryCondition pageQueryCondition = new PageQueryCondition();
-            PageResult<SaleActivity> flashActivityPageResult = fssActivityDomainService.getActivities(pageQueryCondition);
+            PageResult<SaleActivity> flashActivityPageResult = saleActivityDomainService.getActivities(pageQueryCondition);
             SaleActivitiesCache saleActivitiesCache = (flashActivityPageResult != null)
                     ? new SaleActivitiesCache()
                     .setTotal(flashActivityPageResult.getTotal())

@@ -1,6 +1,7 @@
-package com.harris.domain.event.bucket;
+package com.harris.domain.model.event;
 
 import com.alibaba.cola.event.DomainEventI;
+import com.harris.domain.model.enums.BucketEventType;
 
 import java.util.Objects;
 

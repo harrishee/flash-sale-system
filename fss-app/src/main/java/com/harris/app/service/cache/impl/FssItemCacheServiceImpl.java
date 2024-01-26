@@ -6,7 +6,7 @@ import com.google.common.cache.CacheBuilder;
 import com.harris.app.model.cache.SaleItemCache;
 import com.harris.app.service.cache.FssItemCacheService;
 import com.harris.domain.model.entity.SaleItem;
-import com.harris.domain.service.FssItemDomainService;
+import com.harris.domain.service.SaleItemDomainService;
 import com.harris.infra.cache.DistributedCacheService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
@@ -41,7 +41,7 @@ public class FssItemCacheServiceImpl implements FssItemCacheService {
     private DistributedLockService distributedLockService;
 
     @Resource
-    private FssItemDomainService fssItemDomainService;
+    private SaleItemDomainService saleItemDomainService;
 
     @Override
     public SaleItemCache getItemCache(Long itemId, Long version) {
@@ -65,7 +65,7 @@ public class FssItemCacheServiceImpl implements FssItemCacheService {
             if (distributedSaleItemCache != null) {
                 return distributedSaleItemCache;
             }
-            SaleItem saleItem = fssItemDomainService.getItem(itemId);
+            SaleItem saleItem = saleItemDomainService.getItem(itemId);
             SaleItemCache saleItemCache = (saleItem != null)
                     ? new SaleItemCache().with(saleItem).withVersion(System.currentTimeMillis())
                     : new SaleItemCache().notExist();

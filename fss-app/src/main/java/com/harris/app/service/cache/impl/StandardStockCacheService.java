@@ -8,7 +8,7 @@ import com.harris.app.service.cache.StockCacheService;
 import com.harris.app.util.PlaceOrderTypeCondition;
 import com.harris.domain.model.StockDeduction;
 import com.harris.domain.model.entity.SaleItem;
-import com.harris.domain.service.FssItemDomainService;
+import com.harris.domain.service.SaleItemDomainService;
 import com.harris.infra.cache.DistributedCacheService;
 import com.harris.infra.cache.RedisCacheService;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +86,7 @@ public class StandardStockCacheService implements StockCacheService {
     private DistributedCacheService distributedCacheService;
 
     @Resource
-    private FssItemDomainService fssItemDomainService;
+    private SaleItemDomainService saleItemDomainService;
 
     @Override
     public ItemStockCache getAvailableStock(Long userId, Long itemId) {
@@ -110,7 +110,7 @@ public class StandardStockCacheService implements StockCacheService {
             return false;
         }
         try {
-            SaleItem saleItem = fssItemDomainService.getItem(itemId);
+            SaleItem saleItem = saleItemDomainService.getItem(itemId);
             if (saleItem == null) {
                 log.info("alignItemStocks, item not exist: {}", itemId);
                 return false;
@@ -145,7 +145,7 @@ public class StandardStockCacheService implements StockCacheService {
 
     @Override
     public boolean deductStock(StockDeduction stockDeduction) {
-        if (stockDeduction == null || !stockDeduction.validParams()) {
+        if (stockDeduction == null || stockDeduction.invalidParams()) {
             return false;
         }
         try {
@@ -179,7 +179,7 @@ public class StandardStockCacheService implements StockCacheService {
 
     @Override
     public boolean revertStock(StockDeduction stockDeduction) {
-        if (stockDeduction == null || !stockDeduction.validParams()) {
+        if (stockDeduction == null || stockDeduction.invalidParams()) {
             return false;
         }
         try {

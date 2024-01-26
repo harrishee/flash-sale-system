@@ -13,6 +13,7 @@ public class LocalDomainEventPublisher implements DomainEventPublisher {
 
     @Override
     public void publish(DomainEventI domainEvent) {
+        // Publish the domain event to the event bus
         eventBus.fire((domainEvent));
     }
 }

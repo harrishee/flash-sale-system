@@ -7,7 +7,7 @@ import java.util.Date;
 
 @Data
 @Accessors(chain = true)
-public class FlashOrderDTO {
+public class SaleOrderDTO {
     private Long id;
     private Long itemId;
     private Long userId;

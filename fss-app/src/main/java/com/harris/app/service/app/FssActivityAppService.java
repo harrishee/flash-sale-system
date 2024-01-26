@@ -1,24 +1,24 @@
 package com.harris.app.service.app;
 
-import com.harris.app.model.command.FlashActivityPublishCommand;
+import com.harris.app.model.command.PublishActivityCommand;
 import com.harris.app.model.dto.SaleActivityDTO;
-import com.harris.app.model.query.FlashActivitiesQuery;
+import com.harris.app.model.query.SaleActivitiesQuery;
 import com.harris.app.model.result.AppMultiResult;
 import com.harris.app.model.result.AppResult;
 import com.harris.app.model.result.AppSingleResult;
 
-public interface FlashActivityAppService {
-    AppSingleResult<SaleActivityDTO> getFlashActivity(Long userId, Long activityId, Long version);
+public interface FssActivityAppService {
+    AppSingleResult<SaleActivityDTO> getActivity(Long userId, Long activityId, Long version);
 
-    AppMultiResult<SaleActivityDTO> getFlashActivities(Long userId, FlashActivitiesQuery flashActivitiesQuery);
+    AppMultiResult<SaleActivityDTO> listActivities(Long userId, SaleActivitiesQuery saleActivitiesQuery);
 
-    AppResult publishFlashActivity(Long userId, FlashActivityPublishCommand flashActivityPublishCommand);
+    AppResult publishActivity(Long userId, PublishActivityCommand publishActivityCommand);
 
-    AppResult modifyFlashActivity(Long userId, Long activityId, FlashActivityPublishCommand flashActivityPublishCommand);
+    AppResult modifyActivity(Long userId, Long activityId, PublishActivityCommand publishActivityCommand);
 
-    AppResult onlineFlashActivity(Long userId, Long activityId);
+    AppResult onlineActivity(Long userId, Long activityId);
 
-    AppResult offlineFlashActivity(Long userId, Long activityId);
+    AppResult offlineActivity(Long userId, Long activityId);
 
     boolean isPlaceOrderAllowed(Long activityId);
 }

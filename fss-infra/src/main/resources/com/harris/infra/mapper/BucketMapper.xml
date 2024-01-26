@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.harris.infra.persistence.mapper.BucketMapper">
+<mapper namespace="com.harris.infra.mapper.BucketMapper">
     <sql id="ALL_COLUMNS">
         item_id,
         total_stocks_amount,
@@ -14,8 +14,15 @@
         create_time
     </sql>
 
-    <insert id="insertBatch">
-        INSERT INTO flash_bucket(
+    <select id="getBucketsByItemId" resultType="com.harris.infra.model.BucketDO"
+            parameterType="java.lang.Long">
+        SELECT *
+        FROM sale_bucket
+        WHERE item_id = #{itemId}
+    </select>
+
+    <insert id="insertBuckets">
+        INSERT INTO sale_bucket(
         item_id,
         total_stocks_amount,
         available_stocks_amount,
@@ -36,28 +43,21 @@
         </foreach>
     </insert>
 
-    <select id="getBucketsByItemId" resultType="com.harris.infra.persistence.model.BucketDO"
-            parameterType="java.lang.Long">
-        SELECT *
-        FROM flash_bucket
-        WHERE item_id = #{itemId}
-    </select>
-
-    <update id="updateStatusByItemId">
-        UPDATE flash_bucket
+    <update id="updateBucketStatusByItemId">
+        UPDATE sale_bucket
         SET modified_time = now(),
             status        = #{status}
         WHERE item_id = #{itemId}
     </update>
 
-    <update id="deleteByItemId">
+    <update id="deleteBucketByItemId">
         DELETE
-        FROM flash_bucket
+        FROM sale_bucket
         WHERE item_id = #{itemId}
     </update>
 
-    <update id="decreaseStockByItemId">
-        UPDATE flash_bucket
+    <update id="reduceStockByItemId">
+        UPDATE sale_bucket
         SET modified_time           = now(),
             available_stocks_amount = available_stocks_amount - #{quantity}
         where item_id = #{itemId}
@@ -66,8 +66,8 @@
           and status = 1
     </update>
 
-    <update id="increaseStockByItemId">
-        UPDATE flash_bucket
+    <update id="addStockByItemId">
+        UPDATE sale_bucket
         SET modified_time           = now(),
             available_stocks_amount = available_stocks_amount + #{quantity}
         where item_id = #{itemId}

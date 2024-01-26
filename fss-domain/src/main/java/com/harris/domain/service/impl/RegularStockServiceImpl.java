@@ -20,20 +20,20 @@ public class RegularStockServiceImpl implements StockDomainService {
     private FlashItemRepository flashItemRepository;
 
     @Override
-    public boolean decreaseItemStock(StockDeduction stockDeduction) {
+    public boolean deductStock(StockDeduction stockDeduction) {
         log.info("REGULAR decreaseItemStock: {}", JSON.toJSONString(stockDeduction));
         if (stockDeduction == null || stockDeduction.getItemId() == null || stockDeduction.getQuantity() == null) {
             throw new DomainException(DomainErrCode.INVALID_PARAMS);
         }
-        return flashItemRepository.decreaseStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
+        return flashItemRepository.deductStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
     }
 
     @Override
-    public boolean increaseItemStock(StockDeduction stockDeduction) {
+    public boolean revertStock(StockDeduction stockDeduction) {
         log.info("REGULAR increaseItemStock: {}", JSON.toJSONString(stockDeduction));
         if (stockDeduction == null || stockDeduction.getItemId() == null || stockDeduction.getQuantity() == null) {
             throw new DomainException(DomainErrCode.INVALID_PARAMS);
         }
-        return flashItemRepository.increaseStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
+        return flashItemRepository.revertStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
     }
 }

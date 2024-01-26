@@ -1,7 +1,6 @@
 package com.harris.infra.cache;
 
 import com.alibaba.fastjson.JSON;
-import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -9,7 +8,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.concurrent.TimeUnit;
 
-@Getter
 @Component
 public class RedisCacheService implements DistributedCacheService {
     @Resource
@@ -32,11 +30,11 @@ public class RedisCacheService implements DistributedCacheService {
     }
 
     @Override
-    public void put(String key, Object value, long expireTime) {
+    public void put(String key, Object value, long timeout) {
         if (StringUtils.isEmpty(key) || value == null) {
             return;
         }
-        redisTemplate.opsForValue().set(key, value, expireTime, TimeUnit.SECONDS);
+        redisTemplate.opsForValue().set(key, value, timeout, TimeUnit.SECONDS);
     }
 
     @Override
@@ -49,15 +47,17 @@ public class RedisCacheService implements DistributedCacheService {
 
     @Override
     public <T> T getObject(String key, Class<T> targetClass) {
+        // Retrieve the object from Redis and validate
         Object res = redisTemplate.opsForValue().get(key);
         if (res == null) {
             return null;
         }
+
+        // Parse the object (expected to be a String in JSON format) to the specified class type
         try {
             return JSON.parseObject((String) res, targetClass);
         } catch (Exception e) {
             return null;
         }
     }
-
 }

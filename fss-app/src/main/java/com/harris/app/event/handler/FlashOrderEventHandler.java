@@ -5,7 +5,7 @@ import com.alibaba.cola.event.EventHandler;
 import com.alibaba.cola.event.EventHandlerI;
 import com.alibaba.fastjson.JSON;
 import com.harris.domain.event.flashOrder.FlashOrderEvent;
-import com.harris.infra.config.annotation.MarkTrace;
+import com.harris.infra.config.MarkTrace;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

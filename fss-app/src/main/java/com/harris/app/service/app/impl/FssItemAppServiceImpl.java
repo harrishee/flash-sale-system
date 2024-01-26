@@ -5,25 +5,27 @@ import com.harris.app.auth.model.AuthResult;
 import com.harris.app.auth.model.ResourceEnum;
 import com.harris.app.exception.AppErrCode;
 import com.harris.app.exception.BizException;
-import com.harris.app.model.cache.FlashItemCache;
-import com.harris.app.model.cache.FlashItemsCache;
+import com.harris.app.model.cache.SaleItemCache;
+import com.harris.app.model.cache.SaleItemsCache;
 import com.harris.app.model.cache.ItemStockCache;
-import com.harris.app.model.command.FlashItemPublishCommand;
-import com.harris.app.model.converter.FlashItemAppConverter;
+import com.harris.app.model.command.PublishItemCommand;
+import com.harris.app.model.converter.FssItemAppConverter;
 import com.harris.app.model.dto.SaleItemDTO;
-import com.harris.app.model.query.FlashItemsQuery;
+import com.harris.app.model.query.SaleItemsQuery;
 import com.harris.app.model.result.AppMultiResult;
 import com.harris.app.model.result.AppResult;
 import com.harris.app.model.result.AppSingleResult;
-import com.harris.app.service.cache.FlashItemCacheService;
-import com.harris.app.service.cache.FlashItemsCacheService;
-import com.harris.app.service.cache.ItemStockCacheService;
-import com.harris.app.service.app.FlashItemAppService;
+import com.harris.app.service.cache.FssItemCacheService;
+import com.harris.app.service.cache.FssItemsCacheService;
+import com.harris.app.service.cache.StockCacheService;
+import com.harris.app.service.app.FssItemAppService;
+import com.harris.domain.model.PageQueryCondition;
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.entity.FlashActivity;
-import com.harris.domain.model.entity.FlashItem;
-import com.harris.domain.service.FlashActivityDomainService;
-import com.harris.domain.service.FlashItemDomainService;
+import com.harris.domain.model.entity.SaleActivity;
+import com.harris.domain.model.entity.SaleItem;
+import com.harris.domain.service.FssActivityDomainService;
+import com.harris.domain.service.FssItemDomainService;
+import com.harris.infra.controller.exception.AuthErrorCode;
 import com.harris.infra.controller.exception.AuthException;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
@@ -36,210 +38,286 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.harris.app.exception.AppErrCode.*;
-import static com.harris.infra.controller.exception.AuthErrCode.UNAUTHORIZED_ACCESS;
-import static com.harris.infra.util.StringUtil.link;
+import static com.harris.infra.util.LinkUtil.link;
 
 @Slf4j
 @Service
-public class FlashItemAppServiceImpl implements FlashItemAppService {
+public class FssItemAppServiceImpl implements FssItemAppService {
+    private static final String ITEM_CREATE_LOCK_KEY = "ITEM_CREATE_LOCK_KEY";
+    private static final String ITEM_MODIFICATION_LOCK_KEY = "ITEM_MODIFICATION_LOCK_KEY";
+
     @Resource
     private AuthAppService authAppService;
 
     @Resource
-    private FlashItemDomainService flashItemDomainService;
+    private FssItemDomainService fssItemDomainService;
 
     @Resource
-    private FlashActivityDomainService flashActivityDomainService;
+    private FssActivityDomainService fssActivityDomainService;
 
     @Resource
-    private FlashItemCacheService flashItemCacheService;
+    private FssItemCacheService fssItemCacheService;
 
     @Resource
-    private FlashItemsCacheService flashItemsCacheService;
+    private FssItemsCacheService fssItemsCacheService;
 
     @Resource
-    private ItemStockCacheService itemStockCacheService;
+    private StockCacheService stockCacheService;
 
     @Resource
     private DistributedLockService distributedLockService;
 
     @Override
-    public AppSingleResult<SaleItemDTO> getFlashItem(Long itemId) {
-        FlashItemCache flashItemCache = flashItemCacheService.getItemCache(itemId, null);
-        if (flashItemCache.isLater()) {
+    public AppSingleResult<SaleItemDTO> getItem(Long itemId) {
+        log.info("App getItem: {}", itemId);
+        if (itemId == null) {
+            throw new BizException(AppErrCode.INVALID_PARAMS);
+        }
+
+        // Retrieve item from cache and validate
+        SaleItemCache saleItemCache = fssItemCacheService.getItemCache(itemId, null);
+        if (saleItemCache.isLater()) {
+            log.info("App getItem tryLater: {}", itemId);
             return AppSingleResult.tryLater();
         }
-        if (!flashItemCache.isExist() || flashItemCache.getFlashItem() == null) {
-            throw new BizException(ITEM_NOT_FOUND.getErrDesc());
+        if (!saleItemCache.isExist() || saleItemCache.getSaleItem() == null) {
+            throw new BizException(AppErrCode.ITEM_NOT_FOUND.getErrDesc());
         }
-        updateLatestItemStock(null, flashItemCache.getFlashItem());
-        SaleItemDTO saleItemDTO = FlashItemAppConverter.toDTO(flashItemCache.getFlashItem());
-        saleItemDTO.setVersion(flashItemCache.getVersion());
+
+        // Update the latest item stock
+        updateLatestItemStock(null, saleItemCache.getSaleItem());
+        SaleItemDTO saleItemDTO = FssItemAppConverter.toDTO(saleItemCache.getSaleItem());
+        saleItemDTO.setVersion(saleItemCache.getVersion());
+
+        log.info("App getItem ok: {}", itemId);
         return AppSingleResult.ok(saleItemDTO);
     }
 
     @Override
-    public AppSingleResult<SaleItemDTO> getFlashItem(Long userId, Long activityId, Long itemId, Long version) {
-        FlashItemCache flashItemCache = flashItemCacheService.getItemCache(itemId, version);
-        if (flashItemCache.isLater()) {
+    public AppSingleResult<SaleItemDTO> getItem(Long userId, Long activityId, Long itemId, Long version) {
+        log.info("App getItem: {},{},{}", userId, activityId, itemId);
+        if (userId == null || activityId == null || itemId == null) {
+            throw new BizException(AppErrCode.INVALID_PARAMS);
+        }
+
+        // Retrieve item from cache and validate
+        SaleItemCache saleItemCache = fssItemCacheService.getItemCache(itemId, version);
+        if (saleItemCache.isLater()) {
+            log.info("App getItem tryLater: {},{},{}", userId, activityId, itemId);
             return AppSingleResult.tryLater();
         }
-        if (!flashItemCache.isExist() || flashItemCache.getFlashItem() == null) {
-            throw new BizException(ITEM_NOT_FOUND.getErrDesc());
+        if (!saleItemCache.isExist() || saleItemCache.getSaleItem() == null) {
+            throw new BizException(AppErrCode.ITEM_NOT_FOUND.getErrDesc());
         }
-        updateLatestItemStock(userId, flashItemCache.getFlashItem());
-        SaleItemDTO saleItemDTO = FlashItemAppConverter.toDTO(flashItemCache.getFlashItem());
-        saleItemDTO.setVersion(flashItemCache.getVersion());
+
+        // Update the latest item stock
+        updateLatestItemStock(userId, saleItemCache.getSaleItem());
+        SaleItemDTO saleItemDTO = FssItemAppConverter.toDTO(saleItemCache.getSaleItem());
+        saleItemDTO.setVersion(saleItemCache.getVersion());
+
+        log.info("App getItem ok: {},{},{}", userId, activityId, itemId);
         return AppSingleResult.ok(saleItemDTO);
     }
 
+    private void updateLatestItemStock(Long userId, SaleItem saleItem) {
+        if (saleItem == null) {
+            return;
+        }
+
+        // Get the available item stock cache, and update the available stock if cache is valid
+        ItemStockCache itemStockCache = stockCacheService.getAvailableStock(userId, saleItem.getId());
+        if (itemStockCache != null && itemStockCache.isSuccess() && itemStockCache.getAvailableStock() != null) {
+            saleItem.setAvailableStock(itemStockCache.getAvailableStock());
+        }
+    }
+
     @Override
-    public AppMultiResult<SaleItemDTO> getFlashItems(Long userId, Long activityId, FlashItemsQuery flashItemsQuery) {
-        if (flashItemsQuery == null) {
+    public AppMultiResult<SaleItemDTO> listItems(Long userId, Long activityId, SaleItemsQuery saleItemsQuery) {
+        log.info("App listItems: {},{},{}", userId, activityId, saleItemsQuery);
+        if (saleItemsQuery == null) {
+            log.info("App listItems empty: {},{},{}", userId, activityId, null);
             return AppMultiResult.empty();
         }
-        flashItemsQuery.setActivityId(activityId);
-        List<FlashItem> items;
+        saleItemsQuery.setActivityId(activityId);
+
+        List<SaleItem> items;
         Integer total;
-        if (flashItemsQuery.isOnlineFirstPageQuery()) {
-            FlashItemsCache flashItemsCache = flashItemsCacheService.getItemsCache(activityId, flashItemsQuery.getVersion());
-            if (flashItemsCache.isLater()) {
+        if (saleItemsQuery.isOnlineFirstPageQuery()) {
+            // Set values from cache if it is first page query
+            SaleItemsCache saleItemsCache = fssItemsCacheService.getItemsCache(activityId, saleItemsQuery.getVersion());
+            if (saleItemsCache.isLater()) {
+                log.info("App listItems tryLater: {},{},{}", userId, activityId, saleItemsQuery);
                 return AppMultiResult.tryLater();
             }
-            if (flashItemsCache.isEmpty()) {
+            if (saleItemsCache.isEmpty()) {
+                log.info("App listItems empty: {},{},{}", userId, activityId, saleItemsQuery);
                 return AppMultiResult.empty();
             }
-            items = flashItemsCache.getFlashItems();
-            total = flashItemsCache.getTotal();
+            items = saleItemsCache.getSaleItems();
+            total = saleItemsCache.getTotal();
         } else {
-            PageResult<FlashItem> flashItemPageResult = flashItemDomainService.getItems(FlashItemAppConverter.toQuery(flashItemsQuery));
-            items = flashItemPageResult.getData();
-            total = flashItemPageResult.getTotal();
+            // Otherwise, set values from domain service
+            PageQueryCondition condition = FssItemAppConverter.toQuery(saleItemsQuery);
+            PageResult<SaleItem> itemsPageResult = fssItemDomainService.getItems(condition);
+            items = itemsPageResult.getData();
+            total = itemsPageResult.getTotal();
         }
+
+        // Return empty result if no items found
         if (CollectionUtils.isEmpty(items)) {
+            log.info("App listItems ok: {},{},{}", userId, activityId, saleItemsQuery);
             return AppMultiResult.empty();
         }
-        List<SaleItemDTO> saleItemDTOS = items.stream().map(FlashItemAppConverter::toDTO).collect(Collectors.toList());
-        return AppMultiResult.of(total, saleItemDTOS);
+
+        // Convert to DTOs
+        List<SaleItemDTO> saleItemDTOS = items.stream().map(FssItemAppConverter::toDTO).collect(Collectors.toList());
+        log.info("App listItems ok: {}, {}, {}", userId, activityId, saleItemsQuery);
+        return AppMultiResult.of(saleItemDTOS, total);
     }
 
     @Override
-    public AppResult publishFlashItem(Long userId, Long activityId, FlashItemPublishCommand flashItemPublishCommand) {
-        if (userId == null || activityId == null || flashItemPublishCommand == null || flashItemPublishCommand.invalidParams()) {
-            throw new BizException(INVALID_PARAMS);
+    public AppResult publishItem(Long userId, Long activityId, PublishItemCommand publishItemCommand) {
+        log.info("App publishItem: {},{},{}", userId, activityId, publishItemCommand);
+        if (userId == null || activityId == null || publishItemCommand == null || publishItemCommand.invalidParams()) {
+            throw new BizException(AppErrCode.INVALID_PARAMS);
         }
+
+        // Authenticate user
         AuthResult authResult = authAppService.auth(userId, ResourceEnum.ITEM_CREATE);
         if (!authResult.isSuccess()) {
-            throw new AuthException(UNAUTHORIZED_ACCESS);
+            throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         }
-        DistributedLock itemCreateLock = distributedLockService.getDistributedLock(buildItemCreateLockKey(userId));
+
+        // Get distributed lock
+        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildCreateLockKey(userId));
         try {
-            boolean isLocked = itemCreateLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            // Try to acquire lock, wait for 500 milliseconds, timeout is 1000 milliseconds
+            boolean isLocked = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!isLocked) {
-                throw new BizException(AppErrCode.FREQUENTLY_ERROR);
+                throw new BizException(AppErrCode.LOCK_FAILED);
             }
-            FlashActivity flashActivity = flashActivityDomainService.getActivity(activityId);
-            if (flashActivity == null) {
+
+            // Get activity and validate
+            SaleActivity saleActivity = fssActivityDomainService.getActivity(activityId);
+            if (saleActivity == null) {
                 throw new BizException(AppErrCode.ACTIVITY_NOT_FOUND);
             }
-            FlashItem flashItem = FlashItemAppConverter.toDomainObj(flashItemPublishCommand);
-            flashItem.setActivityId(activityId);
-            flashItem.setStockWarmUp(0);
-            flashItemDomainService.publishItem(flashItem);
+
+            // Publish item
+            SaleItem saleItem = FssItemAppConverter.toDomainModel(publishItemCommand);
+            saleItem.setActivityId(activityId);
+            saleItem.setStockWarmUp(0);
+            fssItemDomainService.publishItem(saleItem);
+
+            log.info("App publishItem ok: {},{},{}", userId, activityId, publishItemCommand);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("publishFlashItem failed");
+            log.error("App publishItem failed: {},{},{}", userId, activityId, publishItemCommand, e);
+            throw new BizException(AppErrCode.ITEM_PUBLISH_FAILED);
         } finally {
-            itemCreateLock.unlock();
+            // Release lock
+            distributedLock.unlock();
         }
     }
 
     @Override
-    public AppResult onlineFlashItem(Long userId, Long activityId, Long itemId) {
+    public AppResult onlineItem(Long userId, Long activityId, Long itemId) {
+        log.info("App onlineItem: {},{},{}", userId, activityId, itemId);
         if (userId == null || activityId == null || itemId == null) {
-            throw new BizException(INVALID_PARAMS);
+            throw new BizException(AppErrCode.INVALID_PARAMS);
         }
+
+        // Authenticate user
         AuthResult authResult = authAppService.auth(userId, ResourceEnum.ITEM_MODIFICATION);
         if (!authResult.isSuccess()) {
-            throw new AuthException(UNAUTHORIZED_ACCESS);
+            throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         }
-        DistributedLock itemModificationLock = distributedLockService.getDistributedLock(buildItemModificationLockKey(userId));
+
+        // Get distributed lock
+        DistributedLock itemModificationLock = distributedLockService.getDistributedLock(buildModificationLockKey(userId));
         try {
+            // Try to acquire lock, wait for 500 milliseconds, timeout is 1000 milliseconds
             boolean isLocked = itemModificationLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!isLocked) {
-                throw new BizException(LOCK_FAILED_ERROR);
+                throw new BizException(AppErrCode.LOCK_FAILED);
             }
-            flashItemDomainService.onlineItem(itemId);
+
+            // Online item
+            fssItemDomainService.onlineItem(itemId);
+
+            log.info("App onlineItem ok: {},{},{}", userId, activityId, itemId);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("onlineFlashItem failed");
+            log.error("App onlineItem failed: {},{},{}", userId, activityId, itemId, e);
+            throw new BizException(AppErrCode.ACTIVITY_MODIFY_FAILED);
         } finally {
+            // Release lock
             itemModificationLock.unlock();
         }
     }
 
     @Override
-    public AppResult offlineFlashItem(Long userId, Long activityId, Long itemId) {
+    public AppResult offlineItem(Long userId, Long activityId, Long itemId) {
+        log.info("App offlineItem: {},{},{}", userId, activityId, itemId);
         if (userId == null || activityId == null || itemId == null) {
-            throw new BizException(INVALID_PARAMS);
+            throw new BizException(AppErrCode.INVALID_PARAMS);
         }
+
+        // Authenticate user
         AuthResult authResult = authAppService.auth(userId, ResourceEnum.ITEM_MODIFICATION);
         if (!authResult.isSuccess()) {
-            throw new AuthException(UNAUTHORIZED_ACCESS);
+            throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         }
-        DistributedLock itemModificationLock = distributedLockService.getDistributedLock(buildItemModificationLockKey(userId));
+
+        // Get distributed lock
+        DistributedLock itemModificationLock = distributedLockService.getDistributedLock(buildModificationLockKey(userId));
         try {
-            boolean isLockSuccess = itemModificationLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
-            if (!isLockSuccess) {
-                throw new BizException(LOCK_FAILED_ERROR);
+            boolean isLocked = itemModificationLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            if (!isLocked) {
+                throw new BizException(AppErrCode.LOCK_FAILED);
             }
-            flashItemDomainService.offlineItem(itemId);
+
+            // Offline item
+            fssItemDomainService.offlineItem(itemId);
+
+            log.info("App offlineItem ok: {},{},{}", userId, activityId, itemId);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("offlineFlashItem failed");
+            log.error("App offlineItem failed: {},{},{}", userId, activityId, itemId, e);
+            throw new BizException(AppErrCode.ACTIVITY_MODIFY_FAILED);
         } finally {
+            // Release lock
             itemModificationLock.unlock();
         }
     }
 
     @Override
     public boolean isPlaceOrderAllowed(Long itemId) {
-        FlashItemCache flashItemCache = flashItemCacheService.getItemCache(itemId, null);
-        if (flashItemCache.isLater()) {
-            log.info("isAllowPlaceOrderOrNot, try later: {}", itemId);
+        SaleItemCache saleItemCache = fssItemCacheService.getItemCache(itemId, null);
+        if (saleItemCache.isLater()) {
+            log.info("App isPlaceOrderAllowed tryLater: {}", itemId);
             return false;
         }
-        if (!flashItemCache.isExist() || flashItemCache.getFlashItem() == null) {
-            log.info("isAllowPlaceOrderOrNot, item not exist: {}", itemId);
+        if (!saleItemCache.isExist() || saleItemCache.getSaleItem() == null) {
+            log.info("App isPlaceOrderAllowed item not found: {}", itemId);
             return false;
         }
-        if (!flashItemCache.getFlashItem().isOnline()) {
-            log.info("isAllowPlaceOrderOrNot, item not online: {}", itemId);
+        if (!saleItemCache.getSaleItem().isOnline()) {
+            log.info("App isPlaceOrderAllowed item not online: {}", itemId);
             return false;
         }
-        if (!flashItemCache.getFlashItem().isInProgress()) {
-            log.info("isAllowPlaceOrderOrNot, item not in progress: {}", itemId);
+        if (!saleItemCache.getSaleItem().isInProgress()) {
+            log.info("App isPlaceOrderAllowed item not in progress: {}", itemId);
             return false;
         }
         return true;
     }
 
-    private void updateLatestItemStock(Long userId, FlashItem flashItem) {
-        if (flashItem == null) {
-            return;
-        }
-        ItemStockCache itemStockCache = itemStockCacheService.getAvailableItemStock(userId, flashItem.getId());
-        if (itemStockCache != null && itemStockCache.isSuccess() && itemStockCache.getAvailableStock() != null) {
-            flashItem.setAvailableStock(itemStockCache.getAvailableStock());
-        }
+    private String buildCreateLockKey(Long userId) {
+        return link(ITEM_CREATE_LOCK_KEY, userId);
     }
 
-    private String buildItemCreateLockKey(Long userId) {
-        return link("ITEM_CREATE_LOCK_KEY", userId);
-    }
-
-    private String buildItemModificationLockKey(Long itemId) {
-        return link("ITEM_MODIFICATION_LOCK_KEY", itemId);
+    private String buildModificationLockKey(Long itemId) {
+        return link(ITEM_MODIFICATION_LOCK_KEY, itemId);
     }
 }

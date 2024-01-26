@@ -9,29 +9,29 @@ import static com.harris.app.model.enums.OrderTaskStatus.SUCCESS;
 
 @Data
 @Accessors(chain = true)
-public class OrderTaskHandleResult {
+public class OrderHandleResult {
     private boolean success;
     private OrderTaskStatus orderTaskStatus;
     private Long orderId;
     private String code;
     private String msg;
 
-    public static OrderTaskHandleResult ok(Long orderId) {
-        return new OrderTaskHandleResult()
+    public static OrderHandleResult ok(Long orderId) {
+        return new OrderHandleResult()
                 .setSuccess(true)
                 .setOrderTaskStatus(SUCCESS)
                 .setOrderId(orderId);
     }
 
-    public static OrderTaskHandleResult error(AppErrCode appErrCode) {
-        return new OrderTaskHandleResult()
+    public static OrderHandleResult error(AppErrCode appErrCode) {
+        return new OrderHandleResult()
                 .setSuccess(false)
                 .setCode(appErrCode.getErrCode())
                 .setMsg(appErrCode.getErrDesc());
     }
 
-    public static OrderTaskHandleResult error(OrderTaskStatus orderTaskStatus) {
-        return new OrderTaskHandleResult()
+    public static OrderHandleResult error(OrderTaskStatus orderTaskStatus) {
+        return new OrderHandleResult()
                 .setSuccess(false)
                 .setOrderTaskStatus(orderTaskStatus);
     }

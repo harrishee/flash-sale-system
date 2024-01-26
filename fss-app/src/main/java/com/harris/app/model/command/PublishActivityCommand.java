@@ -8,7 +8,7 @@ import java.util.Date;
 
 @Data
 @Accessors(chain = true)
-public class SaleActivityPublishCommand {
+public class PublishActivityCommand {
     private String activityName;
     private String activityDesc;
     private Integer status;

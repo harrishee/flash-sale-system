@@ -4,10 +4,10 @@ import com.alibaba.cola.dto.Response;
 import com.alibaba.cola.event.EventHandler;
 import com.alibaba.cola.event.EventHandlerI;
 import com.alibaba.fastjson.JSON;
-import com.harris.app.service.cache.FlashActivitiesCacheService;
-import com.harris.app.service.cache.FlashActivityCacheService;
+import com.harris.app.service.cache.FssActivitiesCacheService;
+import com.harris.app.service.cache.FssActivityCacheService;
 import com.harris.domain.event.flashActivity.FlashActivityEvent;
-import com.harris.infra.config.annotation.MarkTrace;
+import com.harris.infra.config.MarkTrace;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -16,10 +16,10 @@ import javax.annotation.Resource;
 @EventHandler
 public class FlashActivityEventHandler implements EventHandlerI<Response, FlashActivityEvent> {
     @Resource
-    private FlashActivityCacheService flashActivityCacheService;
+    private FssActivityCacheService fssActivityCacheService;
 
     @Resource
-    private FlashActivitiesCacheService flashActivitiesCacheService;
+    private FssActivitiesCacheService fssActivitiesCacheService;
 
     @Override
     @MarkTrace
@@ -29,8 +29,8 @@ public class FlashActivityEventHandler implements EventHandlerI<Response, FlashA
             log.info("FlashActivityEventHandler, invalid params");
             return Response.buildSuccess();
         }
-        flashActivityCacheService.tryUpdateActivityCacheByLock(flashActivityEvent.getId());
-        flashActivitiesCacheService.tryUpdateActivitiesCacheByLock(1);
+        fssActivityCacheService.tryUpdateActivityCacheByLock(flashActivityEvent.getId());
+        fssActivitiesCacheService.tryUpdateActivitiesCacheByLock(1);
         return Response.buildSuccess();
     }
 }

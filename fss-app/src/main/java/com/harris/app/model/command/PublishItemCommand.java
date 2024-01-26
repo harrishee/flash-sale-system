@@ -9,7 +9,7 @@ import java.util.Date;
 
 @Data
 @Accessors(chain = true)
-public class SaleItemPublishCommand {
+public class PublishItemCommand {
     private String itemTitle;
     private String itemSubTitle;
     private String itemDesc;

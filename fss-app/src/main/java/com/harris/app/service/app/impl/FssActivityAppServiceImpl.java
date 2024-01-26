@@ -1,23 +1,27 @@
 package com.harris.app.service.app.impl;
 
-import com.harris.app.exception.BizException;
+import com.harris.app.auth.AuthAppService;
 import com.harris.app.auth.model.AuthResult;
-import com.harris.app.model.cache.FlashActivitiesCache;
-import com.harris.app.model.cache.FlashActivityCache;
-import com.harris.app.model.command.FlashActivityPublishCommand;
-import com.harris.app.model.converter.FlashActivityAppConverter;
+import com.harris.app.auth.model.ResourceEnum;
+import com.harris.app.exception.AppErrCode;
+import com.harris.app.exception.BizException;
+import com.harris.app.model.cache.SaleActivitiesCache;
+import com.harris.app.model.cache.SaleActivityCache;
+import com.harris.app.model.command.PublishActivityCommand;
+import com.harris.app.model.converter.SaleActivityAppConverter;
 import com.harris.app.model.dto.SaleActivityDTO;
-import com.harris.app.model.query.FlashActivitiesQuery;
+import com.harris.app.model.query.SaleActivitiesQuery;
 import com.harris.app.model.result.AppMultiResult;
 import com.harris.app.model.result.AppResult;
 import com.harris.app.model.result.AppSingleResult;
-import com.harris.app.auth.AuthAppService;
-import com.harris.app.service.app.FlashActivityAppService;
-import com.harris.app.service.cache.FlashActivitiesCacheService;
-import com.harris.app.service.cache.FlashActivityCacheService;
+import com.harris.app.service.app.FssActivityAppService;
+import com.harris.app.service.cache.FssActivitiesCacheService;
+import com.harris.app.service.cache.FssActivityCacheService;
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.entity.FlashActivity;
-import com.harris.domain.service.FlashActivityDomainService;
+import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.entity.SaleActivity;
+import com.harris.domain.service.FssActivityDomainService;
+import com.harris.infra.controller.exception.AuthErrorCode;
 import com.harris.infra.controller.exception.AuthException;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
@@ -29,196 +33,266 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.harris.app.exception.AppErrCode.*;
-import static com.harris.app.auth.model.ResourceEnum.ACTIVITY_CREATE;
-import static com.harris.app.auth.model.ResourceEnum.ACTIVITY_MODIFICATION;
-import static com.harris.infra.controller.exception.AuthErrCode.UNAUTHORIZED_ACCESS;
-import static com.harris.infra.util.StringUtil.link;
+import static com.harris.infra.util.LinkUtil.link;
 
 @Slf4j
 @Service
-public class FlashActivityAppServiceImpl implements FlashActivityAppService {
-    public static final String ACTIVITY_CREATE_LOCK = "ACTIVITY_LOCK";
+public class FssActivityAppServiceImpl implements FssActivityAppService {
+    public static final String ACTIVITY_CREATE_LOCK = "ACTIVITY_CREATE_LOCK";
     public static final String ACTIVITY_MODIFICATION_LOCK = "ACTIVITY_MODIFICATION_LOCK";
 
     @Resource
     private AuthAppService authAppService;
 
     @Resource
-    private FlashActivityDomainService flashActivityDomainService;
+    private FssActivityDomainService fssActivityDomainService;
 
     @Resource
-    private FlashActivityCacheService flashActivityCacheService;
+    private FssActivityCacheService fssActivityCacheService;
 
     @Resource
-    private FlashActivitiesCacheService flashActivitiesCacheService;
+    private FssActivitiesCacheService fssActivitiesCacheService;
 
     @Resource
     private DistributedLockService distributedLockService;
 
     @Override
-    public AppSingleResult<SaleActivityDTO> getFlashActivity(Long userId, Long activityId, Long version) {
+    public AppSingleResult<SaleActivityDTO> getActivity(Long userId, Long activityId, Long version) {
+        log.info("App getActivity: {},{},{}", userId, activityId, version);
         if (userId == null || activityId == null) {
-            throw new BizException(INVALID_PARAMS);
+            throw new BizException(AppErrCode.INVALID_PARAMS);
         }
-        FlashActivityCache flashActivityCache = flashActivityCacheService.getActivityCache(activityId, version);
-        if (!flashActivityCache.isExist()) {
-            throw new BizException(ACTIVITY_NOT_FOUND.getErrDesc());
+
+        // Retrieve activity from cache and check if it exists
+        SaleActivityCache saleActivityCache = fssActivityCacheService.getActivityCache(activityId, version);
+        if (!saleActivityCache.isExist()) {
+            throw new BizException(AppErrCode.ACTIVITY_NOT_FOUND.getErrDesc());
         }
-        if (flashActivityCache.isLater()) {
+
+        // Return tryLater if the cache signal is later
+        if (saleActivityCache.isLater()) {
+            log.info("App getActivity tryLater: {},{},{}", userId, activityId, version);
             return AppSingleResult.tryLater();
         }
-        SaleActivityDTO saleActivityDTO = FlashActivityAppConverter.toDTO(flashActivityCache.getFlashActivity());
-        saleActivityDTO.setVersion(flashActivityCache.getVersion());
+
+        // Get SaleActivity object and convert it to DTO with version
+        SaleActivity saleActivity = saleActivityCache.getSaleActivity();
+        SaleActivityDTO saleActivityDTO = SaleActivityAppConverter.toDTO(saleActivity);
+        saleActivityDTO.setVersion(saleActivityCache.getVersion());
+
+        log.info("App getActivity ok: {},{},{}", userId, activityId, version);
         return AppSingleResult.ok(saleActivityDTO);
     }
 
     @Override
-    public AppMultiResult<SaleActivityDTO> getFlashActivities(Long userId, FlashActivitiesQuery flashActivitiesQuery) {
-        List<FlashActivity> activities;
+    public AppMultiResult<SaleActivityDTO> listActivities(Long userId, SaleActivitiesQuery saleActivitiesQuery) {
+        log.info("App listActivities: {},{}", userId, saleActivitiesQuery);
+        if (saleActivitiesQuery == null) {
+            return AppMultiResult.empty();
+        }
+
+        List<SaleActivity> activities;
         Integer total;
-        if (flashActivitiesQuery.isFirstPageQuery()) {
-            FlashActivitiesCache flashActivitiesCache = flashActivitiesCacheService.getActivitiesCache(flashActivitiesQuery.getPageNumber(), flashActivitiesQuery.getVersion());
-            if (flashActivitiesCache.isLater()) {
+        if (saleActivitiesQuery.isFirstPageQuery()) {
+            // Set values from cache if it is the first page query
+            Integer pageNumber = saleActivitiesQuery.getPageNumber();
+            Long version = saleActivitiesQuery.getVersion();
+            SaleActivitiesCache saleActivitiesCache = fssActivitiesCacheService.getActivitiesCache(pageNumber, version);
+            if (saleActivitiesCache.isLater()) {
+                log.info("App listActivities tryLater: {},{}", userId, saleActivitiesQuery);
                 return AppMultiResult.tryLater();
             }
-            activities = flashActivitiesCache.getFlashActivities();
-            total = flashActivitiesCache.getTotal();
+            activities = saleActivitiesCache.getSaleActivities();
+            total = saleActivitiesCache.getTotal();
         } else {
-            PageResult<FlashActivity> flashActivityPageResult = flashActivityDomainService.getActivities(FlashActivityAppConverter.toQuery(flashActivitiesQuery));
-            activities = flashActivityPageResult.getData();
-            total = flashActivityPageResult.getTotal();
+            // Otherwise, set values from domain service
+            PageQueryCondition condition = SaleActivityAppConverter.toCondition(saleActivitiesQuery);
+            PageResult<SaleActivity> activitiesPageResult = fssActivityDomainService.getActivities(condition);
+            activities = activitiesPageResult.getData();
+            total = activitiesPageResult.getTotal();
         }
-        List<SaleActivityDTO> saleActivityDTOS = activities.stream().map(FlashActivityAppConverter::toDTO).collect(Collectors.toList());
-        return AppMultiResult.of(total, saleActivityDTOS);
+
+        // Convert to DTOs
+        List<SaleActivityDTO> saleActivityDTOS = activities
+                .stream()
+                .map(SaleActivityAppConverter::toDTO)
+                .collect(Collectors.toList());
+        log.info("App listActivities ok: {},{}", userId, saleActivitiesQuery);
+        return AppMultiResult.of(saleActivityDTOS, total);
     }
 
     @Override
-    public AppResult publishFlashActivity(Long userId, FlashActivityPublishCommand flashActivityPublishCommand) {
-        if (userId == null || flashActivityPublishCommand == null || flashActivityPublishCommand.invalidParams()) {
-            throw new BizException(INVALID_PARAMS);
+    public AppResult publishActivity(Long userId, PublishActivityCommand publishActivityCommand) {
+        log.info("App publishActivity: {},{}", userId, publishActivityCommand);
+        if (userId == null || publishActivityCommand == null || publishActivityCommand.invalidParams()) {
+            throw new BizException(AppErrCode.INVALID_PARAMS);
         }
-        AuthResult authResult = authAppService.auth(userId, ACTIVITY_CREATE);
+
+        // Authenticate user
+        AuthResult authResult = authAppService.auth(userId, ResourceEnum.ACTIVITY_CREATE);
         if (!authResult.isSuccess()) {
-            throw new AuthException(UNAUTHORIZED_ACCESS);
+            throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         }
-        DistributedLock activityCreateLock = distributedLockService.getDistributedLock(buildActivityCreateKey(userId));
+
+        // Get distributed lock
+        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildCreateKey(userId));
         try {
-            boolean isLocked = activityCreateLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            // Try to acquire lock, wait for 500 milliseconds, timeout is 1000 milliseconds
+            boolean isLocked = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!isLocked) {
-                throw new BizException(FREQUENTLY_ERROR);
+                throw new BizException(AppErrCode.LOCK_FAILED);
             }
-            flashActivityDomainService.publishActivity(userId, FlashActivityAppConverter.toDomainObj(flashActivityPublishCommand));
+
+            // Publish activity
+            SaleActivity saleActivity = SaleActivityAppConverter.toDomainModel(publishActivityCommand);
+            fssActivityDomainService.publishActivity(userId, saleActivity);
+
+            log.info("App publishActivity ok: {},{}", userId, publishActivityCommand);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("publishFlashActivity failed");
+            log.error("App publishActivity failed: {},{}", userId, publishActivityCommand, e);
+            throw new BizException(AppErrCode.ACTIVITY_PUBLISH_FAILED);
         } finally {
-            activityCreateLock.unlock();
+            // Release lock
+            distributedLock.unlock();
         }
     }
 
     @Override
-    public AppResult modifyFlashActivity(Long userId, Long activityId, FlashActivityPublishCommand flashActivityPublishCommand) {
-        if (userId == null || flashActivityPublishCommand == null || flashActivityPublishCommand.invalidParams()) {
-            throw new BizException(INVALID_PARAMS);
+    public AppResult modifyActivity(Long userId, Long activityId, PublishActivityCommand publishActivityCommand) {
+        log.info("App modifyActivity: {},{},{}", userId, activityId, publishActivityCommand);
+        if (userId == null || publishActivityCommand == null || publishActivityCommand.invalidParams()) {
+            throw new BizException(AppErrCode.INVALID_PARAMS);
         }
-        AuthResult authResult = authAppService.auth(userId, ACTIVITY_MODIFICATION);
+
+        // Authenticate user
+        AuthResult authResult = authAppService.auth(userId, ResourceEnum.ACTIVITY_MODIFICATION);
         if (!authResult.isSuccess()) {
-            throw new AuthException(UNAUTHORIZED_ACCESS);
+            throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         }
-        DistributedLock activityModificationLock = distributedLockService.getDistributedLock(buildActivityModificationKey(activityId));
+
+        // Get distributed lock
+        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildModificationKey(activityId));
         try {
-            boolean isLocked = activityModificationLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            // Try to acquire lock, wait for 500 milliseconds, timeout is 1000 milliseconds
+            boolean isLocked = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!isLocked) {
-                throw new BizException(FREQUENTLY_ERROR);
+                throw new BizException(AppErrCode.LOCK_FAILED);
             }
-            FlashActivity flashActivity = FlashActivityAppConverter.toDomainObj(flashActivityPublishCommand);
-            flashActivity.setId(activityId);
-            flashActivityDomainService.modifyActivity(userId, flashActivity);
+
+            // Modify activity
+            SaleActivity saleActivity = SaleActivityAppConverter.toDomainModel(publishActivityCommand);
+            saleActivity.setId(activityId);
+            fssActivityDomainService.modifyActivity(userId, saleActivity);
+
+            log.info("App modifyActivity ok: {},{},{}", userId, activityId, publishActivityCommand);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("modifyFlashActivity failed");
+            log.error("App modifyActivity failed: {},{},{}", userId, activityId, publishActivityCommand, e);
+            throw new BizException(AppErrCode.ACTIVITY_MODIFY_FAILED);
         } finally {
-            activityModificationLock.unlock();
+            // Release lock
+            distributedLock.unlock();
         }
     }
 
     @Override
-    public AppResult onlineFlashActivity(Long userId, Long activityId) {
+    public AppResult onlineActivity(Long userId, Long activityId) {
+        log.info("App onlineActivity: {},{}", userId, activityId);
         if (userId == null || activityId == null) {
-            throw new BizException(INVALID_PARAMS);
+            throw new BizException(AppErrCode.INVALID_PARAMS);
         }
-        AuthResult authResult = authAppService.auth(userId, ACTIVITY_CREATE);
+
+        // Authenticate user
+        AuthResult authResult = authAppService.auth(userId, ResourceEnum.ACTIVITY_CREATE);
         if (!authResult.isSuccess()) {
-            throw new AuthException(UNAUTHORIZED_ACCESS);
+            throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         }
-        DistributedLock activityModificationLock = distributedLockService.getDistributedLock(buildActivityModificationKey(activityId));
+
+        // Get distributed lock
+        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildModificationKey(activityId));
         try {
-            boolean isLocked = activityModificationLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            // Try to acquire lock, wait for 500 milliseconds, timeout is 1000 milliseconds
+            boolean isLocked = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!isLocked) {
-                throw new BizException(FREQUENTLY_ERROR);
+                throw new BizException(AppErrCode.LOCK_FAILED);
             }
-            flashActivityDomainService.onlineActivity(userId, activityId);
+
+            // Online activity
+            fssActivityDomainService.onlineActivity(userId, activityId);
+            log.info("App onlineActivity ok: {},{}", userId, activityId);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("onlineFlashActivity failed");
+            throw new BizException(AppErrCode.ACTIVITY_MODIFY_FAILED);
         } finally {
-            activityModificationLock.unlock();
+            // Release lock
+            distributedLock.unlock();
         }
     }
 
     @Override
-    public AppResult offlineFlashActivity(Long userId, Long activityId) {
+    public AppResult offlineActivity(Long userId, Long activityId) {
+        log.info("App offlineActivity: {},{}", userId, activityId);
         if (userId == null || activityId == null) {
-            throw new BizException(INVALID_PARAMS);
+            throw new BizException(AppErrCode.INVALID_PARAMS);
         }
-        AuthResult authResult = authAppService.auth(userId, ACTIVITY_MODIFICATION);
+
+        // Authenticate user
+        AuthResult authResult = authAppService.auth(userId, ResourceEnum.ACTIVITY_MODIFICATION);
         if (!authResult.isSuccess()) {
-            throw new AuthException(UNAUTHORIZED_ACCESS);
+            throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         }
-        DistributedLock activityModificationLock = distributedLockService.getDistributedLock(buildActivityModificationKey(activityId));
+
+        // Get distributed lock
+        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildModificationKey(activityId));
         try {
-            boolean isLockSuccess = activityModificationLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            // Try to acquire lock, wait for 500 milliseconds, timeout is 1000 milliseconds
+            boolean isLockSuccess = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!isLockSuccess) {
-                throw new BizException(FREQUENTLY_ERROR);
+                throw new BizException(AppErrCode.LOCK_FAILED);
             }
-            flashActivityDomainService.offlineActivity(userId, activityId);
+
+            // Offline activity
+            fssActivityDomainService.offlineActivity(userId, activityId);
+            log.info("App offlineActivity ok: {},{}", userId, activityId);
             return AppResult.ok();
         } catch (Exception e) {
-            throw new BizException("offlineFlashActivity failed");
+            throw new BizException(AppErrCode.ACTIVITY_MODIFY_FAILED);
         } finally {
-            activityModificationLock.unlock();
+            // Release lock
+            distributedLock.unlock();
         }
     }
 
     @Override
     public boolean isPlaceOrderAllowed(Long activityId) {
-        FlashActivityCache flashActivityCache = flashActivityCacheService.getActivityCache(activityId, null);
-        if (flashActivityCache.isLater()) {
-            log.info("isPlaceOrderAllowed, try later: {}", activityId);
+        SaleActivityCache saleActivityCache = fssActivityCacheService.getActivityCache(activityId, null);
+        if (saleActivityCache.isLater()) {
+            log.info("App isPlaceOrderAllowed tryLater: {}", activityId);
             return false;
         }
-        if (!flashActivityCache.isExist() || flashActivityCache.getFlashActivity() == null) {
-            log.info("isPlaceOrderAllowed, activity not exist: {}", activityId);
+        if (!saleActivityCache.isExist() || saleActivityCache.getSaleActivity() == null) {
+            log.info("App isPlaceOrderAllowed activity not found: {}", activityId);
             return false;
         }
-        FlashActivity flashActivity = flashActivityCache.getFlashActivity();
-        if (!flashActivity.isOnline()) {
-            log.info("isPlaceOrderAllowed, activity not online: {}", activityId);
+
+        SaleActivity saleActivity = saleActivityCache.getSaleActivity();
+        if (!saleActivity.isOnline()) {
+            log.info("App isPlaceOrderAllowed activity not online: {}", activityId);
             return false;
         }
-        if (!flashActivity.isInProgress()) {
-            log.info("isPlaceOrderAllowed, activity not in progress: {}", activityId);
+        if (!saleActivity.isInProgress()) {
+            log.info("App isPlaceOrderAllowed activity not in progress: {}", activityId);
             return false;
         }
         return true;
     }
 
-    private String buildActivityCreateKey(Long userId) {
+    private String buildCreateKey(Long userId) {
         return link(ACTIVITY_CREATE_LOCK, userId);
     }
 
-    private String buildActivityModificationKey(Long activityId) {
+    private String buildModificationKey(Long activityId) {
         return link(ACTIVITY_MODIFICATION_LOCK, activityId);
     }
 }

@@ -20,24 +20,24 @@ public class BucketStockServiceImpl implements StockDomainService {
     private BucketsRepository bucketsRepository;
 
     @Override
-    public boolean decreaseItemStock(StockDeduction stockDeduction) {
+    public boolean deductStock(StockDeduction stockDeduction) {
         log.info("BUCKET decreaseItemStock: {}", JSON.toJSONString(stockDeduction));
         if (stockDeduction == null || stockDeduction.getItemId() == null ||
                 stockDeduction.getQuantity() == null || stockDeduction.getSerialNo() == null) {
             throw new DomainException(DomainErrCode.INVALID_PARAMS);
         }
-        return bucketsRepository.decreaseStockForItem(stockDeduction.getItemId(),
+        return bucketsRepository.deductStockForItem(stockDeduction.getItemId(),
                 stockDeduction.getQuantity(), stockDeduction.getSerialNo());
     }
 
     @Override
-    public boolean increaseItemStock(StockDeduction stockDeduction) {
+    public boolean revertStock(StockDeduction stockDeduction) {
         log.info("BUCKET increaseItemStock: {}", JSON.toJSONString(stockDeduction));
         if (stockDeduction == null || stockDeduction.getItemId() == null ||
                 stockDeduction.getQuantity() == null || stockDeduction.getSerialNo() == null) {
             throw new DomainException(DomainErrCode.INVALID_PARAMS);
         }
-        return bucketsRepository.increaseStockForItem(stockDeduction.getItemId(),
+        return bucketsRepository.revertStockForItem(stockDeduction.getItemId(),
                 stockDeduction.getQuantity(), stockDeduction.getSerialNo());
     }
 }

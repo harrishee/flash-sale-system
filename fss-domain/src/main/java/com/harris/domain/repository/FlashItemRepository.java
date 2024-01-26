@@ -1,21 +1,21 @@
 package com.harris.domain.repository;
 
-import com.harris.domain.model.PagesQueryCondition;
-import com.harris.domain.model.entity.FlashItem;
+import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.entity.SaleItem;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface FlashItemRepository {
-    int saveItem(FlashItem flashItem);
+    Optional<SaleItem> findItemById(Long itemId);
 
-    Optional<FlashItem> findItemById(Long itemId);
+    List<SaleItem> findItemsByCondition(PageQueryCondition pageQueryCondition);
 
-    List<FlashItem> findItemsByCondition(PagesQueryCondition pagesQueryCondition);
+    Integer countItemsByCondition(PageQueryCondition pageQueryCondition);
 
-    Integer countItemsByCondition(PagesQueryCondition pagesQueryCondition);
+    int saveItem(SaleItem saleItem);
 
-    boolean decreaseStockForItem(Long itemId, Integer quantity);
+    boolean deductStockForItem(Long itemId, Integer quantity);
 
-    boolean increaseStockForItem(Long itemId, Integer quantity);
+    boolean revertStockForItem(Long itemId, Integer quantity);
 }

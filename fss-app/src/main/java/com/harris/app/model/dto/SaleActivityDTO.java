@@ -7,7 +7,7 @@ import java.util.Date;
 
 @Data
 @Accessors(chain = true)
-public class FlashActivityDTO {
+public class SaleActivityDTO {
     private Long id;
     private String activityName;
     private String activityDesc;

@@ -15,4 +15,16 @@ public enum OrderTaskStatus {
         this.status = status;
         this.desc = desc;
     }
+
+    public static OrderTaskStatus getStatusByCode(Integer status) {
+        if (status == null) {
+            return null;
+        }
+        for (OrderTaskStatus taskStatus : OrderTaskStatus.values()) {
+            if (taskStatus.getStatus().equals(status)) {
+                return taskStatus;
+            }
+        }
+        return null;
+    }
 }

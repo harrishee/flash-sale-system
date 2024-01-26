@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class FlashPlaceOrderCommand {
+public class PurchaseCommand {
     private Long id;
     private Long itemId;
     private Long activityId;

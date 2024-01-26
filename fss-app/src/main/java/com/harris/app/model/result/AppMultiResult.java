@@ -13,7 +13,7 @@ public class AppMultiResult<T> extends AppResult {
     private Integer total;
     private Collection<T> data;
 
-    public static <T> AppMultiResult<T> of(Integer total, Collection<T> data) {
+    public static <T> AppMultiResult<T> of(Collection<T> data, Integer total) {
         AppMultiResult<T> appMultiResult = new AppMultiResult<>();
         appMultiResult.setSuccess(true);
         appMultiResult.setTotal(total);

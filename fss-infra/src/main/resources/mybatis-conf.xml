@@ -10,8 +10,8 @@
 
     <mappers>
         <mapper resource="com.harris.infra.mapper/BucketMapper.xml"/>
-        <mapper resource="com.harris.infra.mapper/FlashActivityMapper.xml"/>
-        <mapper resource="com.harris.infra.mapper/FlashItemMapper.xml"/>
-        <mapper resource="com.harris.infra.mapper/FlashOrderMapper.xml"/>
+        <mapper resource="com.harris.infra.mapper/SaleActivityMapper.xml"/>
+        <mapper resource="com.harris.infra.mapper/SaleItemMapper.xml"/>
+        <mapper resource="com.harris.infra.mapper/SaleOrderMapper.xml"/>
     </mappers>
 </configuration>

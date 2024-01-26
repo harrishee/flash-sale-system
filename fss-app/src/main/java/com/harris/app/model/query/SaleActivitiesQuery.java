@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 @Data
 @Accessors(chain = true)
-public class FlashActivitiesQuery {
+public class SaleActivitiesQuery {
     private String keyword;
     private Integer pageSize;
     private Integer pageNumber;

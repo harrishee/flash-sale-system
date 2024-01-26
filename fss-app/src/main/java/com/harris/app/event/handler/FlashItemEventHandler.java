@@ -4,8 +4,8 @@ import com.alibaba.cola.dto.Response;
 import com.alibaba.cola.event.EventHandler;
 import com.alibaba.cola.event.EventHandlerI;
 import com.alibaba.fastjson.JSON;
-import com.harris.app.service.cache.FlashItemCacheService;
-import com.harris.app.service.cache.FlashItemsCacheService;
+import com.harris.app.service.cache.FssItemCacheService;
+import com.harris.app.service.cache.FssItemsCacheService;
 import com.harris.domain.event.flashItem.FlashItemEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,10 +15,10 @@ import javax.annotation.Resource;
 @EventHandler
 public class FlashItemEventHandler implements EventHandlerI<Response, FlashItemEvent> {
     @Resource
-    private FlashItemCacheService flashItemCacheService;
+    private FssItemCacheService fssItemCacheService;
 
     @Resource
-    private FlashItemsCacheService flashItemsCacheService;
+    private FssItemsCacheService fssItemsCacheService;
 
     @Override
     public Response execute(FlashItemEvent flashItemEvent) {
@@ -27,8 +27,8 @@ public class FlashItemEventHandler implements EventHandlerI<Response, FlashItemE
             log.info("FlashItemEventHandler, invalid params");
             return Response.buildSuccess();
         }
-        flashItemCacheService.tryUpdateItemCacheByLock(flashItemEvent.getId());
-        flashItemsCacheService.tryUpdateItemsCacheByLock(flashItemEvent.getFlashActivityId());
+        fssItemCacheService.tryUpdateItemCacheByLock(flashItemEvent.getId());
+        fssItemsCacheService.tryUpdateItemsCacheByLock(flashItemEvent.getFlashActivityId());
         return Response.buildSuccess();
     }
 }

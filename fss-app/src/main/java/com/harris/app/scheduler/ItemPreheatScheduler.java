@@ -1,11 +1,11 @@
 package com.harris.app.scheduler;
 
-import com.harris.app.service.cache.ItemStockCacheService;
+import com.harris.app.service.cache.StockCacheService;
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.PagesQueryCondition;
-import com.harris.domain.model.entity.FlashItem;
-import com.harris.domain.service.FlashItemDomainService;
-import com.harris.infra.config.annotation.MarkTrace;
+import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.entity.SaleItem;
+import com.harris.domain.service.FssItemDomainService;
+import com.harris.infra.config.MarkTrace;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -16,23 +16,23 @@ import javax.annotation.Resource;
 @Component
 public class ItemPreheatScheduler {
     @Resource
-    private FlashItemDomainService flashItemDomainService;
+    private FssItemDomainService fssItemDomainService;
 
     @Resource
-    private ItemStockCacheService itemStockCacheService;
+    private StockCacheService stockCacheService;
 
     @MarkTrace
     @Scheduled(cron = "*/5 * * * * ?")
     public void warmUpFlashItemTask() {
         log.info("ItemPreheatScheduler starts");
-        PagesQueryCondition pagesQueryCondition = new PagesQueryCondition();
-        pagesQueryCondition.setStockWarmUp(0);
-        PageResult<FlashItem> pageResult = flashItemDomainService.getItems(pagesQueryCondition);
+        PageQueryCondition pageQueryCondition = new PageQueryCondition();
+        pageQueryCondition.setStockWarmUp(0);
+        PageResult<SaleItem> pageResult = fssItemDomainService.getItems(pageQueryCondition);
 
         // Iterate through the flash items
         pageResult.getData().forEach(flashItem -> {
             // Initialize the item stocks in the cache
-            boolean initSuccess = itemStockCacheService.alignItemStocks(flashItem.getId());
+            boolean initSuccess = stockCacheService.alignItemStocks(flashItem.getId());
             if (!initSuccess) {
                 log.info("Item init preheat failed: {}", flashItem.getId());
                 return;
@@ -40,7 +40,7 @@ public class ItemPreheatScheduler {
 
             // Set the stock warm-up status and publish the item
             flashItem.setStockWarmUp(1);
-            flashItemDomainService.publishItem(flashItem);
+            fssItemDomainService.publishItem(flashItem);
             log.info("Item init preheat success: {}", flashItem.getId());
         });
     }

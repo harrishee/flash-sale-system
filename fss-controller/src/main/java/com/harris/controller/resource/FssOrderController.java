@@ -53,7 +53,7 @@ public class FssOrderController {
     }
 
     @PostMapping(value = "/flash-orders")
-    public SingleResponse<PurchaseResult> Purchase(@RequestAttribute Long userId,
+    public SingleResponse<PurchaseResult> purchase(@RequestAttribute Long userId,
                                                    @RequestBody PurchaseRequest purchaseRequest) {
         PurchaseCommand purchaseCommand = SaleOrderConverter.toCommand(purchaseRequest);
         AppSingleResult<PurchaseResult> purchaseResult = fssOrderAppService.placeOrder(userId, purchaseCommand);

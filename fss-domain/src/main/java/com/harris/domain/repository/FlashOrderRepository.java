@@ -1,19 +1,19 @@
 package com.harris.domain.repository;
 
-import com.harris.domain.model.PagesQueryCondition;
-import com.harris.domain.model.entity.FlashOrder;
+import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.entity.SaleOrder;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface FlashOrderRepository {
-    boolean saveOrder(FlashOrder flashOrder);
+    Optional<SaleOrder> findOrderById(Long orderId);
 
-    boolean updateStatusForOrder(FlashOrder flashOrder);
+    List<SaleOrder> findOrdersByCondition(PageQueryCondition pageQueryCondition);
 
-    Optional<FlashOrder> findOrderById(Long orderId);
+    int countOrdersByCondition(PageQueryCondition buildParams);
 
-    List<FlashOrder> findOrdersByCondition(PagesQueryCondition pagesQueryCondition);
+    boolean saveOrder(SaleOrder saleOrder);
 
-    int countOrdersByCondition(PagesQueryCondition buildParams);
+    boolean updateStatusForOrder(SaleOrder saleOrder);
 }

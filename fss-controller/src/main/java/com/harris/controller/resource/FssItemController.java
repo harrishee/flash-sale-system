@@ -78,7 +78,7 @@ public class FssItemController {
                                 @PathVariable Long activityId,
                                 @RequestBody PublishItemRequest publishItemRequest) {
         PublishItemCommand publishItemCommand = SaleItemConverter.toCommand(publishItemRequest);
-        AppResult publishResult = fssItemAppService.publishFlashItem(userId, activityId, publishItemCommand);
+        AppResult publishResult = fssItemAppService.publishItem(userId, activityId, publishItemCommand);
         return ResponseConverter.toResponse(publishResult);
     }
 

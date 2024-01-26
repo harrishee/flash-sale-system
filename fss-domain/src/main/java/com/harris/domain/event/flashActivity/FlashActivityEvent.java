@@ -1,18 +1,18 @@
 package com.harris.domain.event.flashActivity;
 
 import com.alibaba.cola.event.DomainEventI;
-import com.harris.domain.model.entity.FlashActivity;
+import com.harris.domain.model.entity.SaleActivity;
 import lombok.Data;
 
 @Data
 public class FlashActivityEvent implements DomainEventI {
-    private FlashActivity flashActivity;
+    private SaleActivity saleActivity;
     private FlashActivityEventType flashActivityEventType;
 
     public Long getId() {
-        if (flashActivity == null) {
+        if (saleActivity == null) {
             return null;
         }
-        return flashActivity.getId();
+        return saleActivity.getId();
     }
 }

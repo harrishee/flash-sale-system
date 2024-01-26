@@ -1,24 +1,24 @@
 package com.harris.app.service.app;
 
-import com.harris.app.model.command.FlashItemPublishCommand;
+import com.harris.app.model.command.PublishItemCommand;
 import com.harris.app.model.dto.SaleItemDTO;
-import com.harris.app.model.query.FlashItemsQuery;
+import com.harris.app.model.query.SaleItemsQuery;
 import com.harris.app.model.result.AppMultiResult;
 import com.harris.app.model.result.AppResult;
 import com.harris.app.model.result.AppSingleResult;
 
-public interface FlashItemAppService {
-    AppSingleResult<SaleItemDTO> getFlashItem(Long itemId);
+public interface FssItemAppService {
+    AppSingleResult<SaleItemDTO> getItem(Long itemId);
 
-    AppSingleResult<SaleItemDTO> getFlashItem(Long userId, Long activityId, Long itemId, Long version);
+    AppSingleResult<SaleItemDTO> getItem(Long userId, Long activityId, Long itemId, Long version);
 
-    AppMultiResult<SaleItemDTO> getFlashItems(Long userId, Long activityId, FlashItemsQuery flashItemsQuery);
+    AppMultiResult<SaleItemDTO> listItems(Long userId, Long activityId, SaleItemsQuery saleItemsQuery);
 
-    AppResult publishFlashItem(Long userId, Long activityId, FlashItemPublishCommand flashItemPublishCommand);
+    AppResult publishItem(Long userId, Long activityId, PublishItemCommand publishItemCommand);
 
-    AppResult onlineFlashItem(Long userId, Long activityId, Long itemId);
+    AppResult onlineItem(Long userId, Long activityId, Long itemId);
 
-    AppResult offlineFlashItem(Long userId, Long activityId, Long itemId);
+    AppResult offlineItem(Long userId, Long activityId, Long itemId);
 
     boolean isPlaceOrderAllowed(Long itemId);
 }

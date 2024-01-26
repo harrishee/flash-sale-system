@@ -1,12 +1,12 @@
 package com.harris.app.scheduler;
 
-import com.harris.app.service.cache.ItemStockCacheService;
+import com.harris.app.service.cache.StockCacheService;
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.PagesQueryCondition;
-import com.harris.domain.model.entity.FlashItem;
-import com.harris.domain.model.enums.FlashItemStatus;
-import com.harris.domain.service.FlashItemDomainService;
-import com.harris.infra.config.annotation.MarkTrace;
+import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.entity.SaleItem;
+import com.harris.domain.model.enums.SaleItemStatus;
+import com.harris.domain.service.FssItemDomainService;
+import com.harris.infra.config.MarkTrace;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -17,23 +17,23 @@ import javax.annotation.Resource;
 @Component
 public class StocksAlignScheduler {
     @Resource
-    private FlashItemDomainService flashItemDomainService;
+    private FssItemDomainService fssItemDomainService;
     
     @Resource
-    private ItemStockCacheService itemStockCacheService;
+    private StockCacheService stockCacheService;
 
     @MarkTrace
     @Scheduled(cron = "*/2 * * * * ?")
     public void alignStocksTask() {
         log.info("StocksAlignScheduler starts");
-        PagesQueryCondition pagesQueryCondition = new PagesQueryCondition();
-        pagesQueryCondition.setStatus(FlashItemStatus.ONLINE.getCode());
-        PageResult<FlashItem> pageResult = flashItemDomainService.getItems(pagesQueryCondition);
+        PageQueryCondition pageQueryCondition = new PageQueryCondition();
+        pageQueryCondition.setStatus(SaleItemStatus.ONLINE.getCode());
+        PageResult<SaleItem> pageResult = fssItemDomainService.getItems(pageQueryCondition);
 
         // Iterate through the flash items
         pageResult.getData().forEach(flashItem -> {
             // Align the item stocks in the cache
-            boolean result = itemStockCacheService.alignItemStocks(flashItem.getId());
+            boolean result = stockCacheService.alignItemStocks(flashItem.getId());
             if (!result) {
                 log.info("StocksAlignScheduler, align failed: {},{}", flashItem.getId(), flashItem.getAvailableStock());
                 return;

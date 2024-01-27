@@ -15,7 +15,7 @@ public class SaleItemResponse {
     private Integer initialStock;
     private Integer availableStock;
     private Long originalPrice;
-    private Long flashPrice;
+    private Long salePrice;
     private Integer status;
     private Long activityId;
     private Date startTime;

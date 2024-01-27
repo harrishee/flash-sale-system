@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS flash_sale_0.sale_bucket_0
 (
     `id`                      bigint(20) NOT NULL AUTO_INCREMENT,
     `item_id`                 bigint(20) NOT NULL,
-    `total_stocks_amount`     int(11)    NOT NULL,
-    `available_stocks_amount` int(11)    NOT NULL,
+    `total_stock`     int(11)    NOT NULL,
+    `available_stock` int(11)    NOT NULL,
     `status`                  int(11)    NOT NULL DEFAULT '0',
     `serial_no`               int(11)    NOT NULL,
     `modified_time`           datetime   NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -84,8 +84,8 @@ CREATE TABLE IF NOT EXISTS flash_sale_0.sale_bucket_1
 (
     `id`                      bigint(20) NOT NULL AUTO_INCREMENT,
     `item_id`                 bigint(20) NOT NULL,
-    `total_stocks_amount`     int(11)    NOT NULL,
-    `available_stocks_amount` int(11)    NOT NULL,
+    `total_stock`     int(11)    NOT NULL,
+    `available_stock` int(11)    NOT NULL,
     `status`                  int(11)    NOT NULL DEFAULT '0',
     `serial_no`               int(11)    NOT NULL,
     `modified_time`           datetime   NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -102,8 +102,8 @@ CREATE TABLE IF NOT EXISTS flash_sale_0.sale_bucket_2
 (
     `id`                      bigint(20) NOT NULL AUTO_INCREMENT,
     `item_id`                 bigint(20) NOT NULL,
-    `total_stocks_amount`     int(11)    NOT NULL,
-    `available_stocks_amount` int(11)    NOT NULL,
+    `total_stock`     int(11)    NOT NULL,
+    `available_stock` int(11)    NOT NULL,
     `status`                  int(11)    NOT NULL DEFAULT '0',
     `serial_no`               int(11)    NOT NULL,
     `modified_time`           datetime   NOT NULL DEFAULT CURRENT_TIMESTAMP,

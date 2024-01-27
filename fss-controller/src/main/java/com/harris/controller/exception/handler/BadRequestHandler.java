@@ -17,37 +17,37 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.lang.reflect.UndeclaredThrowableException;
 
-import static com.harris.controller.exception.handler.ErrCode.*;
-
 @Slf4j
 @ControllerAdvice
 public class BadRequestHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({FlowException.class, AuthException.class, BizException.class, DomainException.class})
     protected ResponseEntity<Object> handleConflict(RuntimeException e, WebRequest request) {
-        ErrResponse errResponse = new ErrResponse();
+        ErrorResponse errorResponse = new ErrorResponse();
 
         if (e instanceof UndeclaredThrowableException) {
             // Handling for UndeclaredThrowableException wrapping a FlowException
             if (((UndeclaredThrowableException) e).getUndeclaredThrowable() instanceof FlowException) {
-                errResponse.setErrCode(LIMIT_ERROR.getCode());
-                errResponse.setErrMsg(LIMIT_ERROR.getMsg());
+                errorResponse.setErrCode(ErrorCode.LIMIT_ERROR.getCode());
+                errorResponse.setErrMessage(ErrorCode.LIMIT_ERROR.getMessage());
             }
         } else if (e instanceof BizException || e instanceof DomainException) {
             // Handling for business and domain exceptions
-            errResponse.setErrCode(BIZ_ERROR.getCode());
-            errResponse.setErrMsg(e.getMessage());
+            errorResponse.setErrCode(ErrorCode.BIZ_ERROR.getCode());
+            errorResponse.setErrMessage(e.getMessage());
         } else if (e instanceof AuthException) {
             // Handling for authentication exceptions
-            errResponse.setErrCode(AUTH_ERROR.getCode());
-            errResponse.setErrMsg(AUTH_ERROR.getMsg());
+            errorResponse.setErrCode(ErrorCode.AUTH_ERROR.getCode());
+            errorResponse.setErrMessage(ErrorCode.AUTH_ERROR.getMessage());
         }
+
         log.error("BadRequestHandler: ", e);
 
         // Creating HttpHeaders, setting content type to JSON
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+
         // Returning error response with 400 BAD_REQUEST status
-        return handleExceptionInternal(e, JSON.toJSONString(errResponse),
+        return handleExceptionInternal(e, JSON.toJSONString(errorResponse),
                 httpHeaders, HttpStatus.BAD_REQUEST, request);
     }
 }

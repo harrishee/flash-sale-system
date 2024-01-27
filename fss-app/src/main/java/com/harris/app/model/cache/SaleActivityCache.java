@@ -10,7 +10,7 @@ public class SaleActivityCache {
     private SaleActivity saleActivity;
     private Long version;
     private boolean later;
-    protected boolean exist;
+    private boolean exist;
 
     public SaleActivityCache with(SaleActivity saleActivity) {
         this.saleActivity = saleActivity;

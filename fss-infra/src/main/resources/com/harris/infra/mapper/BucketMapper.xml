@@ -6,8 +6,8 @@
 <mapper namespace="com.harris.infra.mapper.BucketMapper">
     <sql id="ALL_COLUMNS">
         item_id,
-        total_stocks_amount,
-        available_stocks_amount,
+        total_stock_amount,
+        available_stock_amount,
         status,
         serial_no,
         modified_time,
@@ -24,8 +24,8 @@
     <insert id="insertBuckets">
         INSERT INTO sale_bucket(
         item_id,
-        total_stocks_amount,
-        available_stocks_amount,
+        total_stock_amount,
+        available_stock_amount,
         status,
         serial_no,
         modified_time,
@@ -34,8 +34,8 @@
         <foreach collection="list" item="bucket" separator=",">
             (
             #{bucket.itemId,jdbcType=BIGINT},
-            #{bucket.totalStocksAmount,jdbcType=INTEGER},
-            #{bucket.availableStocksAmount,jdbcType=INTEGER},
+            #{bucket.totalStock,jdbcType=INTEGER},
+            #{bucket.availableStock,jdbcType=INTEGER},
             #{bucket.status,jdbcType=INTEGER},
             #{bucket.serialNo,jdbcType=INTEGER},
             now(),
@@ -59,20 +59,20 @@
     <update id="reduceStockByItemId">
         UPDATE sale_bucket
         SET modified_time           = now(),
-            available_stocks_amount = available_stocks_amount - #{quantity}
+            available_stock_amount = available_stock_amount - #{quantity}
         where item_id = #{itemId}
           and serial_no = #{serialNo}
-          and available_stocks_amount <![CDATA[ >= ]]>  #{quantity}
+          and available_stock_amount <![CDATA[ >= ]]>  #{quantity}
           and status = 1
     </update>
 
     <update id="addStockByItemId">
         UPDATE sale_bucket
         SET modified_time           = now(),
-            available_stocks_amount = available_stocks_amount + #{quantity}
+            available_stock_amount = available_stock_amount + #{quantity}
         where item_id = #{itemId}
           and serial_no = #{serialNo}
-          and (available_stocks_amount + #{quantity}) <![CDATA[ <= ]]> total_stocks_amount
+          and (available_stock_amount + #{quantity}) <![CDATA[ <= ]]> total_stock_amount
           and status = 1
     </update>
 </mapper>

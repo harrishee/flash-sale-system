@@ -11,8 +11,8 @@ import static com.harris.domain.model.enums.BucketType.PRIMARY;
 @Accessors(chain = true)
 public class Bucket {
     private Long itemId;
-    private Integer totalStocksAmount;
-    private Integer availableStocksAmount;
+    private Integer totalStock;
+    private Integer availableStock;
     private Integer status;
     private Integer serialNo;
 
@@ -29,17 +29,17 @@ public class Bucket {
         return this;
     }
 
-    public void addAvailableStock(int availableStockAmount) {
-        if (this.availableStocksAmount == null) {
+    public void addAvailableStock(int availableStock) {
+        if (this.availableStock == null) {
             return;
         }
-        this.availableStocksAmount += availableStockAmount;
+        this.availableStock += availableStock;
     }
 
-    public void increaseTotalStockAmount(Integer increaseStockAmount) {
+    public void increaseTotalStock(Integer increaseStockAmount) {
         if (increaseStockAmount == null) {
             return;
         }
-        this.totalStocksAmount += increaseStockAmount;
+        this.totalStock += increaseStockAmount;
     }
 }

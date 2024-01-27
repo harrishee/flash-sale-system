@@ -13,16 +13,11 @@ public class SaleActivitiesCache {
     private Integer total;
     private Long version;
     private boolean later;
-    protected boolean exist;
+    private boolean exist;
 
-    public SaleActivitiesCache with(List<SaleActivity> flashActivities) {
-        this.saleActivities = flashActivities;
+    public SaleActivitiesCache with(List<SaleActivity> saleActivities) {
+        this.saleActivities = saleActivities;
         this.exist = true;
-        return this;
-    }
-
-    public SaleActivitiesCache withVersion(Long version) {
-        this.version = version;
         return this;
     }
 

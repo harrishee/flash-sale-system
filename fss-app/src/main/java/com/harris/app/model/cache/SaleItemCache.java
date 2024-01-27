@@ -10,7 +10,7 @@ public class SaleItemCache {
     private SaleItem saleItem;
     private Long version;
     private boolean later;
-    protected boolean exist;
+    private boolean exist;
 
     public SaleItemCache with(SaleItem saleItem) {
         this.saleItem = saleItem;

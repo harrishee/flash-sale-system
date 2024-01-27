@@ -1,9 +1,9 @@
 package com.harris.infra.repository;
 
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleOrder;
 import com.harris.domain.repository.SaleOrderRepository;
-import com.harris.infra.model.converter.SaleOrderToDOConverter;
+import com.harris.infra.model.converter.SaleOrderConverter;
 import com.harris.infra.mapper.SaleOrderMapper;
 import com.harris.infra.model.SaleOrderDO;
 import org.springframework.stereotype.Component;
@@ -27,28 +27,28 @@ public class SaleOrderRepositoryImpl implements SaleOrderRepository {
         }
 
         // Convert the DO to a domain model
-        SaleOrder saleOrder = SaleOrderToDOConverter.toDomainModel(saleOrderDO);
+        SaleOrder saleOrder = SaleOrderConverter.toDomainModel(saleOrderDO);
         return Optional.of(saleOrder);
     }
 
     @Override
-    public List<SaleOrder> findOrdersByCondition(PageQueryCondition pageQueryCondition) {
+    public List<SaleOrder> findOrdersByCondition(PageQuery pageQuery) {
         // Get the DOs from the mapper and convert to domain models
-        return saleOrderMapper.getOrdersByCondition(pageQueryCondition)
+        return saleOrderMapper.getOrdersByCondition(pageQuery)
                 .stream()
-                .map(SaleOrderToDOConverter::toDomainModel)
+                .map(SaleOrderConverter::toDomainModel)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public int countOrdersByCondition(PageQueryCondition pageQueryCondition) {
-        return saleOrderMapper.countOrdersByCondition(pageQueryCondition);
+    public int countOrdersByCondition(PageQuery pageQuery) {
+        return saleOrderMapper.countOrdersByCondition(pageQuery);
     }
 
     @Override
     public boolean saveOrder(SaleOrder saleOrder) {
         // Convert the domain model to a DO
-        SaleOrderDO saleOrderDO = SaleOrderToDOConverter.toDO(saleOrder);
+        SaleOrderDO saleOrderDO = SaleOrderConverter.toDO(saleOrder);
 
         // Should be exactly 1 row affected
         int effectedRows = saleOrderMapper.insertOrder(saleOrderDO);
@@ -58,7 +58,7 @@ public class SaleOrderRepositoryImpl implements SaleOrderRepository {
     @Override
     public boolean updateStatus(SaleOrder saleOrder) {
         // Convert the domain model to a DO
-        SaleOrderDO saleOrderDO = SaleOrderToDOConverter.toDO(saleOrder);
+        SaleOrderDO saleOrderDO = SaleOrderConverter.toDO(saleOrder);
 
         // Should be exactly 1 row affected
         int effectedRows = saleOrderMapper.updateStatus(saleOrderDO);

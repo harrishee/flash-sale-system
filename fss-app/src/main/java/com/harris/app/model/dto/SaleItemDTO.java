@@ -23,11 +23,11 @@ public class SaleItemDTO {
     private Date endTime;
     private Long version;
 
-    public boolean isOnSale() {
+    public boolean notOnSale() {
         if (!SaleItemStatus.isOnline(status) || startTime == null || endTime == null) {
-            return false;
+            return true;
         }
         Date now = new Date();
-        return (startTime.equals(now) || startTime.before(now)) && endTime.after(now);
+        return (!startTime.equals(now) && !startTime.before(now)) || !endTime.after(now);
     }
 }

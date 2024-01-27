@@ -1,17 +1,15 @@
 package com.harris.app.model.result;
 
-import com.harris.app.exception.AppErrCode;
+import com.harris.app.exception.AppErrorCode;
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import static com.harris.app.exception.AppErrCode.TRY_LATER;
 
 @Data
 @Accessors(chain = true)
 public class AppSingleResult<T> {
     private boolean success;
     private String code;
-    private String msg;
+    private String message;
     private T data;
 
     public static <T> AppSingleResult<T> ok(T data) {
@@ -22,7 +20,7 @@ public class AppSingleResult<T> {
         return new AppSingleResult<T>()
                 .setSuccess(false)
                 .setCode(errCode)
-                .setMsg(errDesc);
+                .setMessage(errDesc);
     }
 
     public static <T> AppSingleResult<T> error(String errCode, String errDesc, T data) {
@@ -30,20 +28,20 @@ public class AppSingleResult<T> {
                 .setSuccess(false)
                 .setData(data)
                 .setCode(errCode)
-                .setMsg(errDesc);
+                .setMessage(errDesc);
     }
 
-    public static <T> AppSingleResult<T> error(AppErrCode appErrorCode) {
+    public static <T> AppSingleResult<T> error(AppErrorCode appErrorCode) {
         return new AppSingleResult<T>()
                 .setSuccess(false)
                 .setCode(appErrorCode.getErrCode())
-                .setMsg(appErrorCode.getErrDesc());
+                .setMessage(appErrorCode.getErrDesc());
     }
 
     public static <T> AppSingleResult<T> tryLater() {
         return new AppSingleResult<T>()
                 .setSuccess(false)
-                .setCode(TRY_LATER.getErrCode())
-                .setMsg(TRY_LATER.getErrDesc());
+                .setCode(AppErrorCode.TRY_LATER.getErrCode())
+                .setMessage(AppErrorCode.TRY_LATER.getErrDesc());
     }
 }

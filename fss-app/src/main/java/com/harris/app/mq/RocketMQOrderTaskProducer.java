@@ -16,7 +16,7 @@ import javax.annotation.PostConstruct;
 @Slf4j
 @Component
 @ConditionalOnProperty(name = "place_order_type", havingValue = "queued")
-public class RocketMQOrderTaskProducer implements OrderTaskPostService {
+public class RocketMQOrderTaskProducer {
     private DefaultMQProducer placeOrderMQProducer;
 
     @Value("${rocketmq.name-server}")
@@ -34,26 +34,30 @@ public class RocketMQOrderTaskProducer implements OrderTaskPostService {
             placeOrderMQProducer = new DefaultMQProducer(producerGroup);
             placeOrderMQProducer.setNamesrvAddr(nameServer);
             placeOrderMQProducer.start();
+
             log.info("init RocketMQOrderTaskProducer done: {},{},{}", nameServer, producerGroup, placeOrderTopic);
         } catch (Exception e) {
             log.error("init RocketMQOrderTaskProducer error: {},{},{}", nameServer, producerGroup, placeOrderTopic, e);
         }
     }
 
-    @Override
     public boolean post(PlaceOrderTask placeOrderTask) {
         log.info("RocketMQOrderTaskProducer, receive: {}", JSON.toJSONString(placeOrderTask));
         if (placeOrderTask == null) {
             log.info("RocketMQOrderTaskProducer. invalid params");
             return false;
         }
+
         String placeOrderTaskString = JSON.toJSONString(placeOrderTask);
         Message message = new Message();
         message.setTopic(placeOrderTopic);
         message.setBody(placeOrderTaskString.getBytes());
+
         try {
             SendResult sendResult = placeOrderMQProducer.send(message);
-            log.info("RocketMQOrderTaskProducer, post done: {},{}", placeOrderTask.getPlaceOrderTaskId(), JSON.toJSONString(sendResult));
+            log.info("RocketMQOrderTaskProducer, post: {},{}", placeOrderTask.getPlaceOrderTaskId(),
+                    JSON.toJSONString(sendResult));
+
             if (SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
                 log.info("RocketMQOrderTaskProducer, post success: {}", placeOrderTask.getPlaceOrderTaskId());
                 return true;

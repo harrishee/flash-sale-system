@@ -8,7 +8,7 @@ import com.harris.domain.event.DomainEventPublisher;
 import com.harris.domain.model.event.SaleOrderEvent;
 import com.harris.domain.exception.DomainException;
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleOrder;
 import com.harris.domain.repository.SaleOrderRepository;
 import com.harris.domain.service.SaleOrderDomainService;
@@ -43,15 +43,15 @@ public class SaleOrderDomainServiceImpl implements SaleOrderDomainService {
     }
 
     @Override
-    public PageResult<SaleOrder> getOrdersByUserId(Long userId, PageQueryCondition pageQueryCondition) {
+    public PageResult<SaleOrder> getOrdersByUserId(Long userId, PageQuery pageQuery) {
         // Validate params
-        if (pageQueryCondition == null) {
-            pageQueryCondition = new PageQueryCondition();
+        if (pageQuery == null) {
+            pageQuery = new PageQuery();
         }
 
         // Find orders with condition
-        List<SaleOrder> saleOrders = saleOrderRepository.findOrdersByCondition(pageQueryCondition.validateParams());
-        int total = saleOrderRepository.countOrdersByCondition(pageQueryCondition.validateParams());
+        List<SaleOrder> saleOrders = saleOrderRepository.findOrdersByCondition(pageQuery.validateParams());
+        int total = saleOrderRepository.countOrdersByCondition(pageQuery.validateParams());
         return PageResult.with(saleOrders, total);
     }
 

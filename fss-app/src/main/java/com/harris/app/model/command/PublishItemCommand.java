@@ -16,7 +16,7 @@ public class PublishItemCommand {
     private Integer initialStock;
     private Integer availableStock;
     private Long originalPrice;
-    private Long flashPrice;
+    private Long salePrice;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date startTime;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
@@ -27,7 +27,7 @@ public class PublishItemCommand {
                 initialStock == null || initialStock <= 0 ||
                 availableStock == null || availableStock <= 0 ||
                 originalPrice == null || originalPrice <= 0 ||
-                flashPrice == null || flashPrice <= 0 ||
+                salePrice == null || salePrice <= 0 ||
                 startTime == null || endTime == null ||
                 !startTime.before(endTime);
     }

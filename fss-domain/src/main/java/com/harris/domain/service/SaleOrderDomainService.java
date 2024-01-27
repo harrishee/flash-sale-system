@@ -1,7 +1,7 @@
 package com.harris.domain.service;
 
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleOrder;
 
 public interface SaleOrderDomainService {
@@ -18,10 +18,10 @@ public interface SaleOrderDomainService {
      * Retrieve a paginated list of SaleOrder by the given condition.
      *
      * @param userId             The user id
-     * @param pageQueryCondition The page query condition
+     * @param pageQuery The page query condition
      * @return The PageResult with SaleOrders and the total count
      */
-    PageResult<SaleOrder> getOrdersByUserId(Long userId, PageQueryCondition pageQueryCondition);
+    PageResult<SaleOrder> getOrdersByUserId(Long userId, PageQuery pageQuery);
 
     /**
      * save a SaleOrder and publish a place order event.

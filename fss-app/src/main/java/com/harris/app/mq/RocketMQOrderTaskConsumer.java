@@ -23,16 +23,19 @@ public class RocketMQOrderTaskConsumer implements RocketMQListener<String> {
     @Override
     public void onMessage(String s) {
         log.info("RocketMQOrderTaskConsumer, receive: {}", s);
+
         if (StringUtils.isEmpty(s)) {
-            log.info("RocketMQOrderTaskConsumer, empty msg: {}", s);
+            log.info("RocketMQOrderTaskConsumer, empty message: {}", s);
             return;
         }
+
         try {
             PlaceOrderTask placeOrderTask = JSON.parseObject(s, PlaceOrderTask.class);
             queuedPlaceOrderService.handlePlaceOrderTask(placeOrderTask);
+
             log.info("RocketMQOrderTaskConsumer, task done: {}", placeOrderTask.getPlaceOrderTaskId());
         } catch (Exception e) {
-            log.error("RocketMQOrderTaskConsumer, task failed: {}", s);
+            log.error("RocketMQOrderTaskConsumer, task error: ", e);
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.harris.domain.repository;
 
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleActivity;
 
 import java.util.List;
@@ -18,18 +18,18 @@ public interface SaleActivityRepository {
     /**
      * Find sale activities by the given condition.
      *
-     * @param pageQueryCondition The condition
+     * @param pageQuery The condition
      * @return List of sale activities
      */
-    List<SaleActivity> findActivitiesByCondition(PageQueryCondition pageQueryCondition);
+    List<SaleActivity> findActivitiesByCondition(PageQuery pageQuery);
 
     /**
      * Count total sale activities by the given condition.
      *
-     * @param pageQueryCondition The condition
+     * @param pageQuery The condition
      * @return The count of sale activities
      */
-    Integer countActivitiesByCondition(PageQueryCondition pageQueryCondition);
+    Integer countActivitiesByCondition(PageQuery pageQuery);
 
     /**
      * Saves a sale activity, either by inserting or updating it.

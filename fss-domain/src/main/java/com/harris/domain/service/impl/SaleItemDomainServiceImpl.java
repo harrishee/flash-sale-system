@@ -8,7 +8,7 @@ import com.harris.domain.event.DomainEventPublisher;
 import com.harris.domain.model.event.SaleItemEvent;
 import com.harris.domain.exception.DomainException;
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleItem;
 import com.harris.domain.repository.SaleItemRepository;
 import com.harris.domain.service.SaleItemDomainService;
@@ -44,16 +44,16 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
     }
 
     @Override
-    public PageResult<SaleItem> getItems(PageQueryCondition pageQueryCondition) {
+    public PageResult<SaleItem> getItems(PageQuery pageQuery) {
         // Validate params, set default value if necessary
-        if (pageQueryCondition == null) {
-            pageQueryCondition = new PageQueryCondition();
-            pageQueryCondition.validateParams();
+        if (pageQuery == null) {
+            pageQuery = new PageQuery();
+            pageQuery.validateParams();
         }
 
         // Find items with condition
-        List<SaleItem> saleItems = saleItemRepository.findItemsByCondition(pageQueryCondition);
-        Integer total = saleItemRepository.countItemsByCondition(pageQueryCondition);
+        List<SaleItem> saleItems = saleItemRepository.findItemsByCondition(pageQuery);
+        Integer total = saleItemRepository.countItemsByCondition(pageQuery);
         return PageResult.with(saleItems, total);
     }
 

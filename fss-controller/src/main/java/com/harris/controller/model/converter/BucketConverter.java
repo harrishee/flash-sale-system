@@ -1,19 +1,21 @@
 package com.harris.controller.model.converter;
 
-import com.harris.app.model.command.BucketArrangementCommand;
-import com.harris.controller.model.request.BucketArrangementRequest;
+import com.harris.app.model.command.ArrangeBucketCommand;
+import com.harris.controller.model.request.ArrangeBucketRequest;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class BucketConverter {
-    public static BucketArrangementCommand toCommand(BucketArrangementRequest bucketArrangementRequest) {
-        if (bucketArrangementRequest == null) {
+    public static ArrangeBucketCommand toCommand(ArrangeBucketRequest arrangeBucketRequest) {
+        if (arrangeBucketRequest == null) {
             return null;
         }
-        BucketArrangementCommand bucketsArrangementCommand = new BucketArrangementCommand();
-        BeanUtils.copyProperties(bucketArrangementRequest, bucketsArrangementCommand);
+
+        ArrangeBucketCommand bucketsArrangementCommand = new ArrangeBucketCommand();
+        BeanUtils.copyProperties(arrangeBucketRequest, bucketsArrangementCommand);
+
         return bucketsArrangementCommand;
     }
 }

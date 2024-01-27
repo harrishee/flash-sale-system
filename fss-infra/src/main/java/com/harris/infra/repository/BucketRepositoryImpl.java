@@ -4,7 +4,7 @@ import com.harris.domain.model.Bucket;
 import com.harris.domain.repository.BucketRepository;
 import com.harris.infra.mapper.BucketMapper;
 import com.harris.infra.model.BucketDO;
-import com.harris.infra.model.converter.BucketToDOConverter;
+import com.harris.infra.model.converter.BucketConverter;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +29,7 @@ public class BucketRepositoryImpl implements BucketRepository {
 
         // Get bucket DOs from the mapper and convert to domain models
         List<BucketDO> bucketDOS = bucketMapper.getBucketsByItemId(itemId);
-        return bucketDOS.stream().map(BucketToDOConverter::toDomainModel).collect(toList());
+        return bucketDOS.stream().map(BucketConverter::toDomainModel).collect(toList());
     }
 
     @Override
@@ -40,7 +40,7 @@ public class BucketRepositoryImpl implements BucketRepository {
         }
 
         // Convert to DOs
-        List<BucketDO> bucketDOS = buckets.stream().map(BucketToDOConverter::toDO).collect(Collectors.toList());
+        List<BucketDO> bucketDOS = buckets.stream().map(BucketConverter::toDO).collect(Collectors.toList());
         // Remove existing buckets for this item
         bucketMapper.deleteBucketByItemId(itemId);
         // Insert new buckets

@@ -1,7 +1,7 @@
 package com.harris.domain.service;
 
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleActivity;
 
 public interface SaleActivityDomainService {
@@ -16,10 +16,10 @@ public interface SaleActivityDomainService {
     /**
      * Retrieve a paginated list of SaleActivity by the given condition.
      *
-     * @param pageQueryCondition The page query condition
+     * @param pageQuery The page query condition
      * @return The PageResult with SaleActivities and the total count
      */
-    PageResult<SaleActivity> getActivities(PageQueryCondition pageQueryCondition);
+    PageResult<SaleActivity> getActivities(PageQuery pageQuery);
 
     /**
      * Publish a SaleActivity and publish a publish activity event.

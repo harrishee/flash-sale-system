@@ -1,38 +1,36 @@
 package com.harris.app.model.result;
 
-import com.harris.app.exception.AppErrCode;
-import com.harris.app.model.enums.OrderTaskStatus;
+import com.harris.app.exception.AppErrorCode;
+import com.harris.app.model.enums.PlaceOrderTaskStatus;
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import static com.harris.app.model.enums.OrderTaskStatus.SUCCESS;
 
 @Data
 @Accessors(chain = true)
 public class OrderHandleResult {
     private boolean success;
-    private OrderTaskStatus orderTaskStatus;
-    private Long orderId;
     private String code;
-    private String msg;
+    private String message;
+    private PlaceOrderTaskStatus placeOrderTaskStatus;
+    private Long orderId;
 
     public static OrderHandleResult ok(Long orderId) {
         return new OrderHandleResult()
                 .setSuccess(true)
-                .setOrderTaskStatus(SUCCESS)
+                .setPlaceOrderTaskStatus(PlaceOrderTaskStatus.SUCCESS)
                 .setOrderId(orderId);
     }
 
-    public static OrderHandleResult error(AppErrCode appErrCode) {
+    public static OrderHandleResult error(AppErrorCode appErrorCode) {
         return new OrderHandleResult()
                 .setSuccess(false)
-                .setCode(appErrCode.getErrCode())
-                .setMsg(appErrCode.getErrDesc());
+                .setCode(appErrorCode.getErrCode())
+                .setMessage(appErrorCode.getErrDesc());
     }
 
-    public static OrderHandleResult error(OrderTaskStatus orderTaskStatus) {
+    public static OrderHandleResult error(PlaceOrderTaskStatus placeOrderTaskStatus) {
         return new OrderHandleResult()
                 .setSuccess(false)
-                .setOrderTaskStatus(orderTaskStatus);
+                .setPlaceOrderTaskStatus(placeOrderTaskStatus);
     }
 }

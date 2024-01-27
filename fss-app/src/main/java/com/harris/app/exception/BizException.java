@@ -1,11 +1,11 @@
 package com.harris.app.exception;
 
 public class BizException extends AppException{
-    public BizException(AppErrCode appErrCode) {
-        super(appErrCode.getErrDesc());
+    public BizException(AppErrorCode appErrorCode) {
+        super(appErrorCode.getErrDesc());
     }
 
-    public BizException(String msg) {
-        super(msg);
+    public BizException(String message) {
+        super(message);
     }
 }

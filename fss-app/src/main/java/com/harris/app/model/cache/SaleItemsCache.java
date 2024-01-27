@@ -14,17 +14,12 @@ public class SaleItemsCache {
     private Integer total;
     private Long version;
     private boolean later;
-    protected boolean exist;
-    protected boolean empty;
+    private boolean exist;
+    private boolean empty;
 
     public SaleItemsCache with(List<SaleItem> saleItems) {
         this.saleItems = saleItems;
         this.exist = true;
-        return this;
-    }
-
-    public SaleItemsCache withVersion(Long version) {
-        this.version = version;
         return this;
     }
 
@@ -33,15 +28,10 @@ public class SaleItemsCache {
         return this;
     }
 
-    public SaleItemsCache notExist() {
-        this.exist = false;
-        return this;
-    }
-
     public SaleItemsCache empty() {
-        this.empty = true;
         this.saleItems = new ArrayList<>();
         this.total = 0;
+        this.empty = true;
         return this;
     }
 }

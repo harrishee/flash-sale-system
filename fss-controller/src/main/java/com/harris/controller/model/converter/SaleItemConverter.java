@@ -20,8 +20,10 @@ public class SaleItemConverter {
         if (publishItemRequest == null) {
             return null;
         }
+
         PublishItemCommand publishItemCommand = new PublishItemCommand();
         BeanUtils.copyProperties(publishItemRequest, publishItemCommand);
+
         return publishItemCommand;
     }
 
@@ -29,8 +31,10 @@ public class SaleItemConverter {
         if (saleItemDTO == null) {
             return null;
         }
+
         SaleItemResponse saleItemResponse = new SaleItemResponse();
         BeanUtils.copyProperties(saleItemDTO, saleItemResponse);
+
         return saleItemResponse;
     }
 
@@ -38,6 +42,7 @@ public class SaleItemConverter {
         if (CollectionUtils.isEmpty(saleItemDTOS)) {
             return new ArrayList<>();
         }
+
         return saleItemDTOS.stream().map(SaleItemConverter::toResponse).collect(Collectors.toList());
     }
 }

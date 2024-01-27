@@ -8,7 +8,7 @@ import com.harris.domain.event.DomainEventPublisher;
 import com.harris.domain.model.event.SaleActivityEvent;
 import com.harris.domain.exception.DomainException;
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleActivity;
 import com.harris.domain.repository.SaleActivityRepository;
 import com.harris.domain.service.SaleActivityDomainService;
@@ -44,16 +44,16 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
     }
 
     @Override
-    public PageResult<SaleActivity> getActivities(PageQueryCondition pageQueryCondition) {
+    public PageResult<SaleActivity> getActivities(PageQuery pageQuery) {
         // Validate params, set default value if necessary
-        if (pageQueryCondition == null) {
-            pageQueryCondition = new PageQueryCondition();
-            pageQueryCondition.validateParams();
+        if (pageQuery == null) {
+            pageQuery = new PageQuery();
+            pageQuery.validateParams();
         }
 
         // Find activities with condition
-        List<SaleActivity> saleActivities = saleActivityRepository.findActivitiesByCondition(pageQueryCondition);
-        Integer total = saleActivityRepository.countActivitiesByCondition(pageQueryCondition);
+        List<SaleActivity> saleActivities = saleActivityRepository.findActivitiesByCondition(pageQuery);
+        Integer total = saleActivityRepository.countActivitiesByCondition(pageQuery);
         return PageResult.with(saleActivities, total);
     }
 

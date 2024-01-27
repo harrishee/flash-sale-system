@@ -1,6 +1,6 @@
 package com.harris.domain.repository;
 
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleOrder;
 
 import java.util.List;
@@ -18,18 +18,18 @@ public interface SaleOrderRepository {
     /**
      * Find sale orders by the given condition.
      *
-     * @param pageQueryCondition The condition
+     * @param pageQuery The condition
      * @return List of sale orders
      */
-    List<SaleOrder> findOrdersByCondition(PageQueryCondition pageQueryCondition);
+    List<SaleOrder> findOrdersByCondition(PageQuery pageQuery);
 
     /**
      * Count total sale orders by the given condition.
      *
-     * @param pageQueryCondition The condition
+     * @param pageQuery The condition
      * @return The count of sale orders
      */
-    int countOrdersByCondition(PageQueryCondition pageQueryCondition);
+    int countOrdersByCondition(PageQuery pageQuery);
 
     /**
      * Saves a new sale order to DB.

@@ -1,10 +1,10 @@
 package com.harris.infra.repository;
 
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleItem;
 import com.harris.domain.repository.SaleItemRepository;
 import com.harris.infra.model.SaleItemDO;
-import com.harris.infra.model.converter.SaleItemToDOConverter;
+import com.harris.infra.model.converter.SaleItemConverter;
 import com.harris.infra.mapper.SaleItemMapper;
 import org.springframework.stereotype.Component;
 
@@ -27,28 +27,28 @@ public class SaleItemRepositoryImpl implements SaleItemRepository {
         }
 
         // Convert the DO to a domain model
-        SaleItem saleItem = SaleItemToDOConverter.toDomainModel(saleItemDO);
+        SaleItem saleItem = SaleItemConverter.toDomainModel(saleItemDO);
         return Optional.of(saleItem);
     }
 
     @Override
-    public List<SaleItem> findItemsByCondition(PageQueryCondition pageQueryCondition) {
+    public List<SaleItem> findItemsByCondition(PageQuery pageQuery) {
         // Get the DOs from the mapper and convert to domain models
-        return saleItemMapper.getItemsByCondition(pageQueryCondition)
+        return saleItemMapper.getItemsByCondition(pageQuery)
                 .stream()
-                .map(SaleItemToDOConverter::toDomainModel)
+                .map(SaleItemConverter::toDomainModel)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Integer countItemsByCondition(PageQueryCondition pageQueryCondition) {
-        return saleItemMapper.countItemsByCondition(pageQueryCondition);
+    public Integer countItemsByCondition(PageQuery pageQuery) {
+        return saleItemMapper.countItemsByCondition(pageQuery);
     }
 
     @Override
     public int saveItem(SaleItem saleItem) {
         // Convert the domain model to a DO
-        SaleItemDO saleItemDO = SaleItemToDOConverter.toDO(saleItem);
+        SaleItemDO saleItemDO = SaleItemConverter.toDO(saleItem);
 
         // If the ID is null, insert the new item
         if (saleItem.getId() == null) {

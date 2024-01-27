@@ -22,9 +22,9 @@ public class RedissonLockService implements DistributedLockService {
         return new DistributedLock() {
             @Override
             public boolean tryLock(long waitTime, long leaseTime, TimeUnit unit) throws InterruptedException {
-                boolean isLocked = rLock.tryLock(waitTime, leaseTime, unit);
-                log.debug("Lock acquire attempt for key: {} returned: {}", key, isLocked);
-                return isLocked;
+                boolean lockSuccess = rLock.tryLock(waitTime, leaseTime, unit);
+                log.debug("Lock acquire attempt for key: {} returned: {}", key, lockSuccess);
+                return lockSuccess;
             }
 
             @Override

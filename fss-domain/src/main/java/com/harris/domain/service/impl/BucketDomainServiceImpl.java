@@ -58,19 +58,19 @@ public class BucketDomainServiceImpl implements BucketDomainService {
 
         // Validate each bucket in the list
         buckets.forEach(stockBucket -> {
-            // Validate total stocks amount
-            if (stockBucket.getTotalStocksAmount() == null || stockBucket.getTotalStocksAmount() < 0) {
-                throw new DomainException(DomainErrorCode.TOTAL_STOCKS_AMOUNT_INVALID);
+            // Validate total stock amount
+            if (stockBucket.getTotalStock() == null || stockBucket.getTotalStock() < 0) {
+                throw new DomainException(DomainErrorCode.TOTAL_STOCK_AMOUNT_INVALID);
             }
 
-            // Validate available stocks amount
-            if (stockBucket.getAvailableStocksAmount() == null || stockBucket.getAvailableStocksAmount() <= 0) {
-                throw new DomainException(DomainErrorCode.AVAILABLE_STOCKS_AMOUNT_INVALID);
+            // Validate available stock amount
+            if (stockBucket.getAvailableStock() == null || stockBucket.getAvailableStock() <= 0) {
+                throw new DomainException(DomainErrorCode.AVAILABLE_STOCK_AMOUNT_INVALID);
             }
 
-            // Ensure available stocks amount equals total stocks amount for non-primary buckets
-            if (!stockBucket.getAvailableStocksAmount()
-                    .equals(stockBucket.getTotalStocksAmount()) && !stockBucket.isPrimary()) {
+            // Ensure available stock amount equals total stock amount for non-primary buckets
+            if (!stockBucket.getAvailableStock()
+                    .equals(stockBucket.getTotalStock()) && !stockBucket.isPrimary()) {
                 throw new DomainException(DomainErrorCode.AVAILABLE_AMOUNT_NOT_EQUALS_TO_TOTAL_AMOUNT);
             }
 

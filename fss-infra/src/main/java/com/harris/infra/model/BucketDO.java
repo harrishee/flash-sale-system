@@ -10,8 +10,8 @@ public class BucketDO implements Serializable {
     private static final long serialVersionUID = 1L;
     private Long id;
     private Long itemId;
-    private Integer totalStocksAmount;
-    private Integer availableStocksAmount;
+    private Integer totalStock;
+    private Integer availableStock;
     private Integer status;
     private Integer serialNo;
     private Date modifiedTime;

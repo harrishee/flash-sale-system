@@ -1,11 +1,10 @@
 package com.harris.app.model.result;
 
+import com.harris.app.exception.AppErrorCode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.util.Collection;
-
-import static com.harris.app.exception.AppErrCode.TRY_LATER;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -24,8 +23,8 @@ public class AppMultiResult<T> extends AppResult {
     public static <T> AppMultiResult<T> tryLater() {
         AppMultiResult<T> multiResult = new AppMultiResult<>();
         multiResult.setSuccess(false);
-        multiResult.setCode(TRY_LATER.getErrCode());
-        multiResult.setMsg(TRY_LATER.getErrDesc());
+        multiResult.setCode(AppErrorCode.TRY_LATER.getErrCode());
+        multiResult.setMessage(AppErrorCode.TRY_LATER.getErrDesc());
         return multiResult;
     }
 

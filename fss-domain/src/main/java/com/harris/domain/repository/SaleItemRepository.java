@@ -1,6 +1,6 @@
 package com.harris.domain.repository;
 
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleItem;
 
 import java.util.List;
@@ -18,18 +18,18 @@ public interface SaleItemRepository {
     /**
      * Find sale items by the given condition.
      *
-     * @param pageQueryCondition The condition
+     * @param pageQuery The condition
      * @return List of sale items
      */
-    List<SaleItem> findItemsByCondition(PageQueryCondition pageQueryCondition);
+    List<SaleItem> findItemsByCondition(PageQuery pageQuery);
 
     /**
      * Count total sale items by the given condition.
      *
-     * @param pageQueryCondition The condition
+     * @param pageQuery The condition
      * @return The count of sale items
      */
-    Integer countItemsByCondition(PageQueryCondition pageQueryCondition);
+    Integer countItemsByCondition(PageQuery pageQuery);
 
     /**
      * Saves a sale item, either by inserting or updating it.

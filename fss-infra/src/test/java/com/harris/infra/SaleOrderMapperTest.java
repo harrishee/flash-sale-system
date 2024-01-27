@@ -1,6 +1,6 @@
 package com.harris.infra;
 
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.infra.mapper.SaleOrderMapper;
 import com.harris.infra.model.SaleOrderDO;
 import org.apache.ibatis.io.Resources;
@@ -89,19 +89,19 @@ class SaleOrderMapperTest {
 
     @Test
     void getOrdersByConditionTest() {
-        PageQueryCondition pageQueryCondition = new PageQueryCondition()
+        PageQuery pageQuery = new PageQuery()
                 .setKeyword("test")
                 .setStatus(1)
                 .validateParams();
-        List<SaleOrderDO> orders = saleOrderMapper.getOrdersByCondition(pageQueryCondition);
+        List<SaleOrderDO> orders = saleOrderMapper.getOrdersByCondition(pageQuery);
         orders.forEach(System.out::println);
         assertEquals(2, orders.size());
     }
 
     @Test
     void countOrdersByConditionTest() {
-        PageQueryCondition pageQueryCondition = new PageQueryCondition().setKeyword("test").setStatus(1);
-        int count = saleOrderMapper.countOrdersByCondition(pageQueryCondition);
+        PageQuery pageQuery = new PageQuery().setKeyword("test").setStatus(1);
+        int count = saleOrderMapper.countOrdersByCondition(pageQuery);
         System.out.println(count);
         assertEquals(2, count);
     }

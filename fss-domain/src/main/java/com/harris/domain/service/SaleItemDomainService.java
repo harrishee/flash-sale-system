@@ -1,7 +1,7 @@
 package com.harris.domain.service;
 
 import com.harris.domain.model.PageResult;
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleItem;
 
 public interface SaleItemDomainService {
@@ -16,10 +16,10 @@ public interface SaleItemDomainService {
     /**
      * Retrieve a paginated list of SaleItem by the given condition.
      *
-     * @param pageQueryCondition The page query condition
+     * @param pageQuery The page query condition
      * @return The PageResult with SaleItems and the total count
      */
-    PageResult<SaleItem> getItems(PageQueryCondition pageQueryCondition);
+    PageResult<SaleItem> getItems(PageQuery pageQuery);
 
     /**
      * Publish a SaleItem and publish a publish item event.

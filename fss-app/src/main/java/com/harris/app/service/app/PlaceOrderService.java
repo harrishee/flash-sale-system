@@ -1,7 +1,7 @@
 package com.harris.app.service.app;
 
-import com.harris.app.model.command.PurchaseCommand;
-import com.harris.app.model.result.PurchaseResult;
+import com.harris.app.model.command.PlaceOrderCommand;
+import com.harris.app.model.result.PlaceOrderResult;
 
 public interface PlaceOrderService {
     /**
@@ -18,5 +18,5 @@ public interface PlaceOrderService {
      * The actual order placement logic is handled within the queued task, making it suitable
      * for high-throughput and high-concurrency scenarios
      */
-    PurchaseResult doPlaceOrder(Long userId, PurchaseCommand purchaseCommand);
+    PlaceOrderResult doPlaceOrder(Long userId, PlaceOrderCommand placeOrderCommand);
 }

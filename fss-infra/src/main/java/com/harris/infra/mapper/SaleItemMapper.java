@@ -1,6 +1,6 @@
 package com.harris.infra.mapper;
 
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.infra.model.SaleItemDO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -11,9 +11,9 @@ import java.util.List;
 public interface SaleItemMapper {
     SaleItemDO getItemById(@Param("itemId") Long itemId);
 
-    List<SaleItemDO> getItemsByCondition(PageQueryCondition pageQueryCondition);
+    List<SaleItemDO> getItemsByCondition(PageQuery pageQuery);
 
-    Integer countItemsByCondition(PageQueryCondition pageQueryCondition);
+    Integer countItemsByCondition(PageQuery pageQuery);
 
     int insertItem(SaleItemDO saleItemDO);
 

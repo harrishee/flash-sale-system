@@ -1,11 +1,11 @@
 package com.harris.infra.repository;
 
-import com.harris.domain.model.PageQueryCondition;
+import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleActivity;
 import com.harris.domain.repository.SaleActivityRepository;
 import com.harris.infra.mapper.SaleActivityMapper;
 import com.harris.infra.model.SaleActivityDO;
-import com.harris.infra.model.converter.SaleActivityToDOConverter;
+import com.harris.infra.model.converter.SaleActivityConverter;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -27,28 +27,28 @@ public class SaleActivityRepositoryImpl implements SaleActivityRepository {
         }
 
         // Convert the DO to a domain model
-        SaleActivity saleActivity = SaleActivityToDOConverter.toDomainModel(saleActivityDO);
+        SaleActivity saleActivity = SaleActivityConverter.toDomainModel(saleActivityDO);
         return Optional.of(saleActivity);
     }
 
     @Override
-    public List<SaleActivity> findActivitiesByCondition(PageQueryCondition pageQueryCondition) {
+    public List<SaleActivity> findActivitiesByCondition(PageQuery pageQuery) {
         // Get the DOs from the mapper and convert to domain models
-        return saleActivityMapper.getActivitiesByCondition(pageQueryCondition)
+        return saleActivityMapper.getActivitiesByCondition(pageQuery)
                 .stream()
-                .map(SaleActivityToDOConverter::toDomainModel)
+                .map(SaleActivityConverter::toDomainModel)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Integer countActivitiesByCondition(PageQueryCondition pageQueryCondition) {
-        return saleActivityMapper.countActivitiesByCondition(pageQueryCondition);
+    public Integer countActivitiesByCondition(PageQuery pageQuery) {
+        return saleActivityMapper.countActivitiesByCondition(pageQuery);
     }
 
     @Override
     public int saveActivity(SaleActivity saleActivity) {
         // Convert the domain model to a DO
-        SaleActivityDO saleActivityDO = SaleActivityToDOConverter.toDO(saleActivity);
+        SaleActivityDO saleActivityDO = SaleActivityConverter.toDO(saleActivity);
 
         // If the ID is null, insert the new activity with its ID
         if (saleActivityDO.getId() == null) {

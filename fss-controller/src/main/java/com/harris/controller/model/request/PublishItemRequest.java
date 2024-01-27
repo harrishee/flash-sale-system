@@ -15,7 +15,7 @@ public class PublishItemRequest {
     private Integer initialStock;
     private Integer availableStock;
     private Long originalPrice;
-    private Long flashPrice;
+    private Long salePrice;
     private Long activityId;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date startTime;

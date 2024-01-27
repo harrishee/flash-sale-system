@@ -15,10 +15,12 @@ public class ResponseConverter {
         if (appResult == null) {
             return new Response();
         }
+
         Response response = new Response();
         response.setSuccess(appResult.isSuccess());
         response.setErrCode(appResult.getCode());
-        response.setErrMessage(appResult.getMsg());
+        response.setErrMessage(appResult.getMessage());
+
         return response;
     }
 
@@ -26,11 +28,13 @@ public class ResponseConverter {
         if (appSingleResult == null) {
             return new SingleResponse<>();
         }
+
         SingleResponse singleResponse = new SingleResponse();
         singleResponse.setSuccess(appSingleResult.isSuccess());
         singleResponse.setErrCode(appSingleResult.getCode());
-        singleResponse.setErrMessage(appSingleResult.getMsg());
+        singleResponse.setErrMessage(appSingleResult.getMessage());
         singleResponse.setData(appSingleResult.getData());
+
         return singleResponse;
     }
 
@@ -38,11 +42,13 @@ public class ResponseConverter {
         if (appMultiResult == null) {
             return new MultiResponse<>();
         }
+
         MultiResponse multiResponse = new MultiResponse<>();
         multiResponse.setSuccess(appMultiResult.isSuccess());
         multiResponse.setErrCode(appMultiResult.getCode());
-        multiResponse.setErrMessage(appMultiResult.getMsg());
+        multiResponse.setErrMessage(appMultiResult.getMessage());
         multiResponse.setData(appMultiResult.getData());
+
         return multiResponse;
     }
 }

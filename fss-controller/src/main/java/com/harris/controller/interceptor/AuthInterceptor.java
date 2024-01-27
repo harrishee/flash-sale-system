@@ -1,7 +1,7 @@
 package com.harris.controller.interceptor;
 
-import com.harris.app.auth.AuthAppService;
-import com.harris.app.auth.model.AuthResult;
+import com.harris.app.service.app.AuthAppService;
+import com.harris.app.model.auth.AuthResult;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -36,6 +36,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             HttpServletRequestWrapper authRequestWrapper = new HttpServletRequestWrapper(request);
             authRequestWrapper.setAttribute(USER_ID, authResult.getUserId());
         }
+
         return true;
     }
 }

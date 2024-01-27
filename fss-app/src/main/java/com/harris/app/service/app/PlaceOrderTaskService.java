@@ -1,13 +1,13 @@
 package com.harris.app.service.app;
 
 import com.harris.app.model.PlaceOrderTask;
-import com.harris.app.model.enums.OrderTaskStatus;
-import com.harris.app.model.result.OrderTaskSubmitResult;
+import com.harris.app.model.enums.PlaceOrderTaskStatus;
+import com.harris.app.model.result.OrderSubmitResult;
 
 public interface PlaceOrderTaskService {
-    OrderTaskStatus getTaskStatus(String placeOrderTaskId);
+    PlaceOrderTaskStatus getStatus(String placeOrderTaskId);
 
-    OrderTaskSubmitResult submit(PlaceOrderTask placeOrderTask);
+    OrderSubmitResult submit(PlaceOrderTask placeOrderTask);
 
-    void updateTaskHandleResult(String placeOrderTaskId, boolean result);
+    void updateHandleResult(String placeOrderTaskId, boolean result);
 }

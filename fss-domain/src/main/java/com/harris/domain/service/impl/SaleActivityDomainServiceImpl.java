@@ -1,15 +1,14 @@
 package com.harris.domain.service.impl;
 
-import com.alibaba.fastjson.JSON;
-import com.harris.domain.exception.DomainErrorCode;
-import com.harris.domain.model.enums.SaleActivityStatus;
-import com.harris.domain.model.enums.SaleActivityEventType;
 import com.harris.domain.event.DomainEventPublisher;
-import com.harris.domain.model.event.SaleActivityEvent;
+import com.harris.domain.exception.DomainErrorCode;
 import com.harris.domain.exception.DomainException;
-import com.harris.domain.model.PageResult;
 import com.harris.domain.model.PageQuery;
+import com.harris.domain.model.PageResult;
 import com.harris.domain.model.entity.SaleActivity;
+import com.harris.domain.model.enums.SaleActivityEventType;
+import com.harris.domain.model.enums.SaleActivityStatus;
+import com.harris.domain.model.event.SaleActivityEvent;
 import com.harris.domain.repository.SaleActivityRepository;
 import com.harris.domain.service.SaleActivityDomainService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,117 +44,111 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
 
     @Override
     public PageResult<SaleActivity> getActivities(PageQuery pageQuery) {
-        // Validate params, set default value if necessary
-        if (pageQuery == null) {
-            pageQuery = new PageQuery();
-            pageQuery.validateParams();
-        }
+        pageQuery = pageQuery == null ? new PageQuery() : pageQuery;
+        pageQuery.validateParams();
 
-        // Find activities with condition
+        // Get activities from repository
         List<SaleActivity> saleActivities = saleActivityRepository.findActivitiesByCondition(pageQuery);
         Integer total = saleActivityRepository.countActivitiesByCondition(pageQuery);
-        return PageResult.with(saleActivities, total);
+        return PageResult.of(saleActivities, total);
     }
 
     @Override
     public void publishActivity(Long userId, SaleActivity saleActivity) {
-        log.info("publishActivity: {},{}", userId, JSON.toJSONString(saleActivity));
-
-        // Validate params
-        if (saleActivity == null || saleActivity.invalidParams()) {
+        log.info("domain publishActivity: {} | {}", userId, saleActivity);
+        if (userId == null || saleActivity == null || saleActivity.invalidParams()) {
             throw new DomainException(DomainErrorCode.ONLINE_ACTIVITY_INVALID_PARAMS);
         }
 
         // Set status to published and save activity to repository
         saleActivity.setStatus(SaleActivityStatus.PUBLISHED.getCode());
         saleActivityRepository.saveActivity(saleActivity);
-        log.info("publishActivity, activity published: {},{}", userId, saleActivity.getId());
+        log.info("domain publishActivity, activity saved to repository: {} | {}", userId, saleActivity.getId());
 
-        // Publish the event
         SaleActivityEvent saleActivityEvent = new SaleActivityEvent();
         saleActivityEvent.setSaleActivityEventType(SaleActivityEventType.PUBLISHED);
         saleActivityEvent.setSaleActivity(saleActivity);
+
+        // Publish the publish event
+        log.info("domain publishActivity, activity publish event published: {}", saleActivityEvent);
         domainEventPublisher.publish(saleActivityEvent);
-        log.info("publishActivity, activity publish event published: {}", JSON.toJSON(saleActivityEvent));
     }
 
     @Override
     public void modifyActivity(Long userId, SaleActivity saleActivity) {
-        log.info("modifyActivity: {},{}", userId, JSON.toJSONString(saleActivity));
-
-        // Validate params
+        log.info("domain modifyActivity: {} | {}", userId, saleActivity);
         if (saleActivity == null || saleActivity.invalidParams()) {
             throw new DomainException(DomainErrorCode.ONLINE_ACTIVITY_INVALID_PARAMS);
         }
 
-        // Save activity to repository
+        // Update activity to repository
         saleActivityRepository.saveActivity(saleActivity);
-        log.info("modifyActivity, activity modified: {},{}", userId, saleActivity.getId());
+        log.info("domain modifyActivity, activity updated to repository: {} | {}", userId, saleActivity.getId());
 
-        // Publish the event
+        // Publish the modification event
         SaleActivityEvent saleActivityEvent = new SaleActivityEvent();
         saleActivityEvent.setSaleActivityEventType(SaleActivityEventType.MODIFIED);
         saleActivityEvent.setSaleActivity(saleActivity);
+
+        log.info("domain modifyActivity, activity modification event published: {}", saleActivityEvent);
         domainEventPublisher.publish(saleActivityEvent);
-        log.info("modifyActivity, activity modification event published: {}", JSON.toJSON(saleActivityEvent));
     }
 
     @Override
     public void onlineActivity(Long userId, Long activityId) {
-        log.info("onlineActivity: {},{}", userId, activityId);
-
-        // Validate params
+        log.info("domain onlineActivity: {} | {}", userId, activityId);
         if (userId == null || activityId == null) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
 
-        // Find activity from repository and validate
+        // Find activity from repository
         Optional<SaleActivity> optionalSaleActivity = saleActivityRepository.findActivityById(activityId);
         if (!optionalSaleActivity.isPresent()) {
             throw new DomainException(DomainErrorCode.ACTIVITY_DOES_NOT_EXIST);
         }
-        SaleActivity saleActivity = optionalSaleActivity.get();
 
-        // Return if activity is already online
+        // If activity is already online
+        SaleActivity saleActivity = optionalSaleActivity.get();
         if (SaleActivityStatus.isOnline(saleActivity.getStatus())) {
+            log.info("domain onlineActivity, activity already online: {} | {}", userId, activityId);
             return;
         }
 
-        // Set status to online and save activity to repository
+        // Set status to online and update activity to repository
         saleActivity.setStatus(SaleActivityStatus.ONLINE.getCode());
         saleActivityRepository.saveActivity(saleActivity);
-        log.info("onlineActivity, activity online: {},{}", userId, saleActivity.getId());
+        log.info("domain onlineActivity, activity updated to repository: {} | {}", userId, activityId);
 
-        // Publish the event
         SaleActivityEvent saleActivityEvent = new SaleActivityEvent();
         saleActivityEvent.setSaleActivityEventType(SaleActivityEventType.ONLINE);
         saleActivityEvent.setSaleActivity(saleActivity);
+
+        // Publish the online event
+        log.info("domain onlineActivity, activity online event published: {}", saleActivityEvent);
         domainEventPublisher.publish(saleActivityEvent);
-        log.info("onlineActivity, activity online event published: {}", JSON.toJSON(saleActivityEvent));
     }
 
     @Override
     public void offlineActivity(Long userId, Long activityId) {
-        log.info("offlineActivity: {},{}", userId, activityId);
-
-        // Validate params
+        log.info("domain offlineActivity: {} | {}", userId, activityId);
         if (userId == null || activityId == null) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
 
-        // Find activity from repository and validate
+        // Find activity from repository
         Optional<SaleActivity> optionalSaleActivity = saleActivityRepository.findActivityById(activityId);
         if (!optionalSaleActivity.isPresent()) {
             throw new DomainException(DomainErrorCode.ACTIVITY_DOES_NOT_EXIST);
         }
-        SaleActivity saleActivity = optionalSaleActivity.get();
 
-        // Return if activity is already offline
+        // If activity is already offline
+        SaleActivity saleActivity = optionalSaleActivity.get();
         if (SaleActivityStatus.isOffline(saleActivity.getStatus())) {
+            log.info("domain offlineActivity, activity already offline: {} | {}", userId, activityId);
             return;
         }
 
-        // Check if activity is not online yet
+        // If activity is not online yet
         if (!SaleActivityStatus.isOnline(saleActivity.getStatus())) {
             throw new DomainException(DomainErrorCode.ACTIVITY_NOT_ONLINE);
         }
@@ -163,13 +156,14 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
         // Set status to offline and save activity to repository
         saleActivity.setStatus(SaleActivityStatus.OFFLINE.getCode());
         saleActivityRepository.saveActivity(saleActivity);
-        log.info("offlineActivity, activity offline: {},{}", userId, saleActivity.getId());
+        log.info("domain offlineActivity, activity updated to repository: {} | {}", userId, activityId);
 
-        // Publish the event
         SaleActivityEvent saleActivityEvent = new SaleActivityEvent();
         saleActivityEvent.setSaleActivityEventType(SaleActivityEventType.OFFLINE);
         saleActivityEvent.setSaleActivity(saleActivity);
+
+        // Publish the offline event
+        log.info("domain offlineActivity, activity offline event published: {}", saleActivityEvent);
         domainEventPublisher.publish(saleActivityEvent);
-        log.info("offlineActivity, activity offline event published: {}", JSON.toJSON(saleActivityEvent));
     }
 }

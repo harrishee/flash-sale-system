@@ -2,6 +2,7 @@ package com.harris.controller.interceptor;
 
 import com.harris.app.service.app.AuthAppService;
 import com.harris.app.model.auth.AuthResult;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -11,8 +12,9 @@ import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * A simplified auth interceptor for adding userId to the request.
+ * A simplified auth interceptor, converting token to user ID using Base64.
  */
+@Slf4j
 @Component
 public class AuthInterceptor implements HandlerInterceptor {
     private static final String USER_ID = "userId";
@@ -22,17 +24,18 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        // Return true if userId is not null
+        // Return true if the user ID attribute already exists
         Object userId = request.getAttribute(USER_ID);
         if (userId != null) {
             return true;
         }
 
-        // Otherwise, get token from request and authenticate
+        // Otherwise, authenticate the token to get the result with user ID
         String token = request.getParameter("token");
         AuthResult authResult = authAppService.auth(token);
+
+        // Wrap the original request and set the user ID attribute
         if (authResult.isSuccess()) {
-            // Wrap the original request and set the user ID attribute
             HttpServletRequestWrapper authRequestWrapper = new HttpServletRequestWrapper(request);
             authRequestWrapper.setAttribute(USER_ID, authResult.getUserId());
         }

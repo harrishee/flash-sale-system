@@ -12,9 +12,9 @@ CREATE TABLE IF NOT EXISTS flash_sale.sale_activity
     `modified_time` datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `create_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `flash_activity_end_time_idx` (`end_time`),
-    KEY `flash_activity_start_time_idx` (`start_time`),
-    KEY `flash_activity_status_idx` (`status`)
+    KEY `sale_activity_end_time_idx` (`end_time`),
+    KEY `sale_activity_start_time_idx` (`start_time`),
+    KEY `sale_activity_status_idx` (`status`)
 )
     ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4
@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS flash_sale.sale_item
     `modified_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `create_time`     datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    KEY `flash_item_end_time_idx` (`end_time`),
-    KEY `flash_item_start_time_idx` (`start_time`),
-    KEY `flash_item_status_idx` (`status`)
+    KEY `sale_item_end_time_idx` (`end_time`),
+    KEY `sale_item_start_time_idx` (`start_time`),
+    KEY `sale_item_status_idx` (`status`)
 )
     ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4
@@ -61,8 +61,8 @@ CREATE TABLE IF NOT EXISTS flash_sale.sale_order
     `modified_time` datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `create_time`   datetime    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `flash_order_id_uk` (`id`),
-    KEY `flash_order_user_id_idx` (`user_id`)
+    UNIQUE KEY `sale_order_id_uk` (`id`),
+    KEY `sale_order_user_id_idx` (`user_id`)
 )
     ENGINE = InnoDB
     DEFAULT CHARSET = utf8mb4

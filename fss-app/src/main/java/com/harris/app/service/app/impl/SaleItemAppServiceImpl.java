@@ -29,7 +29,7 @@ import com.harris.infra.controller.exception.AuthErrorCode;
 import com.harris.infra.controller.exception.AuthException;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
-import com.harris.infra.util.LinkUtil;
+import com.harris.infra.util.KeyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -317,10 +317,10 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
     }
 
     private String buildCreateLockKey(Long userId) {
-        return LinkUtil.link(ITEM_CREATE_LOCK_KEY, userId);
+        return KeyUtil.link(ITEM_CREATE_LOCK_KEY, userId);
     }
 
     private String buildModificationLockKey(Long itemId) {
-        return LinkUtil.link(ITEM_MODIFICATION_LOCK_KEY, itemId);
+        return KeyUtil.link(ITEM_MODIFICATION_LOCK_KEY, itemId);
     }
 }

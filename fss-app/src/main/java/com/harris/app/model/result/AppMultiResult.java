@@ -21,11 +21,11 @@ public class AppMultiResult<T> extends AppResult {
     }
 
     public static <T> AppMultiResult<T> tryLater() {
-        AppMultiResult<T> multiResult = new AppMultiResult<>();
-        multiResult.setSuccess(false);
-        multiResult.setCode(AppErrorCode.TRY_LATER.getErrCode());
-        multiResult.setMessage(AppErrorCode.TRY_LATER.getErrDesc());
-        return multiResult;
+        AppMultiResult<T> appMultiResult = new AppMultiResult<>();
+        appMultiResult.setSuccess(false);
+        appMultiResult.setCode(AppErrorCode.TRY_LATER.getErrCode());
+        appMultiResult.setMessage(AppErrorCode.TRY_LATER.getErrDesc());
+        return appMultiResult;
     }
 
     public static <T> AppMultiResult<T> empty() {

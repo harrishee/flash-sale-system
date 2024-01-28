@@ -52,7 +52,7 @@ public class SaleOrderDomainServiceImpl implements SaleOrderDomainService {
         // Find orders with condition
         List<SaleOrder> saleOrders = saleOrderRepository.findOrdersByCondition(pageQuery.validateParams());
         int total = saleOrderRepository.countOrdersByCondition(pageQuery.validateParams());
-        return PageResult.with(saleOrders, total);
+        return PageResult.of(saleOrders, total);
     }
 
     @Override

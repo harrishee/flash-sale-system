@@ -19,7 +19,7 @@ import com.harris.domain.service.SaleOrderDomainService;
 import com.harris.domain.service.StockDomainService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
-import com.harris.infra.util.LinkUtil;
+import com.harris.infra.util.KeyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -187,6 +187,6 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
     }
 
     private String buildPlaceOrderLockKey(Long userId) {
-        return LinkUtil.link(PLACE_ORDER_LOCK_KEY, userId);
+        return KeyUtil.link(PLACE_ORDER_LOCK_KEY, userId);
     }
 }

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
  * into a single string, separated by underscores.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class LinkUtil {
+public class KeyUtil {
     public static String link(Object... items) {
         if (items == null) {
             return null;

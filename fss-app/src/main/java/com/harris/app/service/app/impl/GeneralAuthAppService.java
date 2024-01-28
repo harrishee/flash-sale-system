@@ -14,35 +14,22 @@ import org.springframework.stereotype.Service;
 public class GeneralAuthAppService implements AuthAppService {
     @Override
     public AuthResult auth(String encryptedToken) {
-        // Parse the token
+        // Parse the token using Base64
         AuthToken authToken = parseToken(encryptedToken);
-
-        // Check if the token is valid
         if (authToken == null) {
             throw new AuthException(AuthErrorCode.INVALID_TOKEN);
         }
 
+        // Return the pass result with user ID
         return new AuthResult().setUserId(authToken.getUserId()).pass();
     }
 
-    /**
-     * Authenticate based on user ID and a specific resource.
-     *
-     * @param userId       User ID
-     * @param resourceEnum Resource
-     * @return AuthResult, including user ID and pass status
-     */
     @Override
     public AuthResult auth(Long userId, ResourceEnum resourceEnum) {
+        // Return the pass result with user ID
         return new AuthResult().setUserId(userId).pass();
     }
 
-    /**
-     * Parse token using Base64
-     *
-     * @param encryptedToken encrypted token
-     * @return Parsed AuthToken
-     */
     private AuthToken parseToken(String encryptedToken) {
         try {
             // Decode using Base64 and then parse into a JSON object

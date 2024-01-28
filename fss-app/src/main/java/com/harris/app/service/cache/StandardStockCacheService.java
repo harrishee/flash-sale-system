@@ -11,7 +11,7 @@ import com.harris.domain.model.entity.SaleItem;
 import com.harris.domain.service.SaleItemDomainService;
 import com.harris.infra.cache.DistributedCacheService;
 import com.harris.infra.cache.RedisCacheService;
-import com.harris.infra.util.LinkUtil;
+import com.harris.infra.util.KeyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -266,10 +266,10 @@ public class StandardStockCacheService implements StockCacheService {
     }
 
     public static String buildStockAlignKey(Long itemId) {
-        return LinkUtil.link(STOCK_ALIGN_LOCK_KEY, itemId);
+        return KeyUtil.link(STOCK_ALIGN_LOCK_KEY, itemId);
     }
 
     public static String buildStockCacheKey(Long itemId) {
-        return LinkUtil.link(STOCK_CACHE_KEY, itemId);
+        return KeyUtil.link(STOCK_CACHE_KEY, itemId);
     }
 }

@@ -14,7 +14,7 @@ public class PageResult<T> {
         this.total = total;
     }
 
-    public static <T> PageResult<T> with(List<T> data, int total) {
+    public static <T> PageResult<T> of(List<T> data, int total) {
         return new PageResult<>(total, data);
     }
 }

@@ -12,7 +12,7 @@ import com.harris.domain.service.SaleActivityDomainService;
 import com.harris.infra.cache.DistributedCacheService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
-import com.harris.infra.util.LinkUtil;
+import com.harris.infra.util.KeyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -42,131 +42,100 @@ public class SaleActivitiesCacheService {
     @Resource
     private SaleActivityDomainService saleActivityDomainService;
 
-    /**
-     * Retrieve sale activities cache, updating from distributed cache if needed.
-     *
-     * @param pageNumber The requested page number
-     * @param version    The version for cache validation
-     * @return The activities cache
-     */
     public SaleActivitiesCache getActivitiesCache(Integer pageNumber, Long version) {
-        // Set default page number if null
-        if (pageNumber == null) {
-            pageNumber = 1;
+        pageNumber = pageNumber == null ? 1 : pageNumber;
+
+        // Try to get from local cache
+        SaleActivitiesCache saleActivitiesCache = activitiesLocalCache.getIfPresent(pageNumber);
+        if (saleActivitiesCache != null) {
+            Long localVersion = saleActivitiesCache.getVersion();
+
+            // Return local cache, if version is null or older or equal to local cache
+            if (version == null || version <= localVersion) {
+                log.info("getActivitiesCache, hit local cache: {}", pageNumber);
+                return saleActivitiesCache;
+            }
+        } else {
+
+            // Local cache missed or version is newer, need to get from distributed cache
+            log.info("getActivitiesCache, miss local cache: {}", pageNumber);
         }
 
-        // 1. Try to get from local cache
-        SaleActivitiesCache saleActivityCache = activitiesLocalCache.getIfPresent(pageNumber);
-        if (saleActivityCache != null) {
-            // 1.1 Just return the local cache if no version specified
-            if (version == null) {
-                log.info("getActivitiesCache, hit local: {}", pageNumber);
-                return saleActivityCache;
-            }
-
-            // 1.2 Return local cache if version matches or older, meaning it's latest
-            if (version.equals(saleActivityCache.getVersion()) || version < saleActivityCache.getVersion()) {
-                log.info("activitiesCache, hit local: {},{}", pageNumber, version);
-                return saleActivityCache;
-            }
-
-            // 1.3 Fetch latest cache from distributed cache if version is newer
-            return getLatestDistributedCache(pageNumber);
-        }
-
-        // 2. Fetch latest cache from distributed cache if local cache missed
         return getLatestDistributedCache(pageNumber);
     }
 
-
-    /**
-     * Attempt to update the distributed cache with a distributed lock
-     *
-     * @param pageNumber The page number
-     * @return Updated cache or try later indication
-     */
-    public SaleActivitiesCache tryUpdateActivitiesCache(Integer pageNumber) {
-        log.info("tryUpdateActivitiesCache, update remote: {}", pageNumber);
-
-        // 1. Get distributed lock with lock key
-        DistributedLock distributedLock = distributedLockService.getDistributedLock(UPDATE_ACTIVITIES_CACHE_LOCK_KEY);
-
-        try {
-            // 2. Try to acquire lock, wait for 1 second, timeout after 5 seconds
-            boolean lockSuccess = distributedLock.tryLock(1, 5, TimeUnit.SECONDS);
-            if (!lockSuccess) {
-                // 2.1 Return try later response if lock failed
-                return new SaleActivitiesCache().tryLater();
-            }
-
-            // 3. Get latest activities from domain service
-            PageQuery pageQuery = new PageQuery();
-            PageResult<SaleActivity> activitiesPageResult = saleActivityDomainService.getActivities(pageQuery);
-
-            // 4. Create a new cache object with the results
-            SaleActivitiesCache saleActivitiesCache = (activitiesPageResult != null)
-                    ? new SaleActivitiesCache()
-                    .setTotal(activitiesPageResult.getTotal())
-                    .setSaleActivities(activitiesPageResult.getData())
-                    .setVersion(System.currentTimeMillis())
-                    : new SaleActivitiesCache().notExist();
-
-            // 5. Update the distributed cache with the new data
-            distributedCacheService.put(buildActivityCacheKey(pageNumber),
-                    JSON.toJSONString(saleActivitiesCache), CacheConstant.MINUTES_5);
-            log.info("tryUpdateActivitiesCache, update remote success: {}", pageNumber);
-            return saleActivitiesCache;
-        } catch (InterruptedException e) {
-            log.error("tryUpdateActivitiesCache, update remote failed: {}", pageNumber);
-            return new SaleActivitiesCache().tryLater();
-        } finally {
-            distributedLock.unlock();
-        }
-    }
-
-    /**
-     * Retrieve the latest cache from distributed storage.
-     *
-     * @param pageNumber The page number
-     * @return Latest cache
-     */
     private SaleActivitiesCache getLatestDistributedCache(Integer pageNumber) {
-        log.info("getLatestDistributedCache, read remote: {}", pageNumber);
+        log.info("getLatestDistributedCache, read distributed cache: {}", pageNumber);
 
-        // 1. Get cache from distributed storage
+        // Get cache from Redis distributed cache
         SaleActivitiesCache distributedActivitiesCache = distributedCacheService
                 .getObject(buildActivityCacheKey(pageNumber), SaleActivitiesCache.class);
 
-        // 2. Try to update cache if cache missed
+        // Try to update cache if not found
         if (distributedActivitiesCache == null) {
             distributedActivitiesCache = tryUpdateActivitiesCache(pageNumber);
         }
 
-        // 3. If cache is retrieved or updated successfully, and not try later, update local cache
+        // If cache is found or updated successfully, and not try later, update local cache
         if (distributedActivitiesCache != null && !distributedActivitiesCache.isLater()) {
-            // 3.1 Try to acquire local lock to update local cache
             boolean lockSuccess = localLock.tryLock();
             if (lockSuccess) {
                 try {
                     activitiesLocalCache.put(pageNumber, distributedActivitiesCache);
-                    log.info("getLatestDistributedCache, update local: {}", pageNumber);
+                    log.info("getLatestDistributedCache, local cache updated: {}", pageNumber);
                 } finally {
                     localLock.unlock();
                 }
             }
         }
 
-        // 4. Return the latest cache
         return distributedActivitiesCache;
     }
 
-    /**
-     * Build the cache key for the specified page number
-     *
-     * @param pageNumber The page number for cache key
-     * @return The constructed cache key
-     */
+    public SaleActivitiesCache tryUpdateActivitiesCache(Integer pageNumber) {
+        log.info("tryUpdateActivitiesCache, update distributed cache: {}", pageNumber);
+
+        // Get Redisson distributed lock
+        // TODO: UPDATE_ACTIVITIES_CACHE_LOCK_KEY_ + pageNumber ?
+        DistributedLock distributedLock = distributedLockService.getDistributedLock(UPDATE_ACTIVITIES_CACHE_LOCK_KEY);
+
+        try {
+            // Try to acquire lock, wait for 1 second, timeout after 5 seconds
+            boolean lockSuccess = distributedLock.tryLock(1, 5, TimeUnit.SECONDS);
+            if (!lockSuccess) {
+                return new SaleActivitiesCache().tryLater();
+            }
+
+            // Get latest activities from domain service
+            PageQuery pageQuery = new PageQuery().setPageNumber(pageNumber);
+            PageResult<SaleActivity> activitiesPageResult = saleActivityDomainService.getActivities(pageQuery);
+
+            // Create a new cache object with the results
+            SaleActivitiesCache saleActivitiesCache;
+            if (activitiesPageResult == null) {
+                saleActivitiesCache = new SaleActivitiesCache().notExist();
+            } else {
+                saleActivitiesCache = new SaleActivitiesCache()
+                        .setTotal(activitiesPageResult.getTotal())
+                        .setSaleActivities(activitiesPageResult.getData())
+                        .setVersion(System.currentTimeMillis());
+            }
+
+            // Update the result to Redis distributed cache
+            distributedCacheService.put(buildActivityCacheKey(pageNumber),
+                    JSON.toJSONString(saleActivitiesCache), CacheConstant.MINUTES_5);
+
+            log.info("tryUpdateActivitiesCache, distributed cache updated: {}", pageNumber);
+            return saleActivitiesCache;
+        } catch (InterruptedException e) {
+            log.error("tryUpdateActivitiesCache, distributed cache update error", e);
+            return new SaleActivitiesCache().tryLater();
+        } finally {
+            distributedLock.unlock();
+        }
+    }
+
     private String buildActivityCacheKey(Integer pageNumber) {
-        return LinkUtil.link(CacheConstant.ACTIVITIES_CACHE_KEY, pageNumber);
+        return KeyUtil.link(CacheConstant.ACTIVITIES_CACHE_KEY, pageNumber);
     }
 }

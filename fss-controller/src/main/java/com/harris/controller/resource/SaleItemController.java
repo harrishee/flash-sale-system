@@ -21,11 +21,12 @@ import javax.annotation.Resource;
 import java.util.Collection;
 
 @RestController
+@RequestMapping("/sale-activities/{activityId}/sale-items")
 public class SaleItemController {
     @Resource
     private SaleItemAppService saleItemAppService;
 
-    @GetMapping(value = "/sale-activities/{activityId}/sale-items/{itemId}")
+    @GetMapping("/{itemId}")
     public SingleResponse<SaleItemResponse> getItem(@RequestAttribute Long userId,
                                                     @PathVariable Long activityId,
                                                     @PathVariable Long itemId,
@@ -41,8 +42,7 @@ public class SaleItemController {
                 : SingleResponse.of(itemResponse);
     }
 
-    // TODO: combine listItems and listOnlineItems into one using status
-    @GetMapping(value = "/sale-activities/{activityId}/sale-items")
+    @GetMapping
     public MultiResponse<SaleItemResponse> listItems(@RequestAttribute Long userId,
                                                      @PathVariable Long activityId,
                                                      @RequestParam Integer pageSize,
@@ -64,7 +64,7 @@ public class SaleItemController {
                 : MultiResponse.of(itemResponses, itemsResult.getTotal());
     }
 
-    @GetMapping(value = "/activities/{activityId}/sale-items/online")
+    @GetMapping("/online")
     public MultiResponse<SaleItemResponse> listOnlineItems(@RequestAttribute Long userId,
                                                            @PathVariable Long activityId,
                                                            @RequestParam Integer pageSize,
@@ -87,7 +87,7 @@ public class SaleItemController {
                 : MultiResponse.of(itemResponses, itemsResult.getTotal());
     }
 
-    @PostMapping(value = "/activities/{activityId}/sale-items")
+    @PostMapping
     public Response publishItem(@RequestAttribute Long userId,
                                 @PathVariable Long activityId,
                                 @RequestBody PublishItemRequest publishItemRequest) {
@@ -98,8 +98,7 @@ public class SaleItemController {
         return ResponseConverter.toResponse(publishResult);
     }
 
-    // TODO: combine onlineItem and offlineItem into one using status
-    @PutMapping(value = "/activities/{activityId}/sale-items/{itemId}/online")
+    @PutMapping("/{itemId}/online")
     public Response onlineItem(@RequestAttribute Long userId,
                                @PathVariable Long activityId,
                                @PathVariable Long itemId) {
@@ -109,7 +108,7 @@ public class SaleItemController {
         return ResponseConverter.toResponse(onlineResult);
     }
 
-    @PutMapping(value = "/activities/{activityId}/sale-items/{itemId}/offline")
+    @PutMapping("/{itemId}/offline")
     public Response offlineItem(@RequestAttribute Long userId,
                                 @PathVariable Long activityId,
                                 @PathVariable Long itemId) {

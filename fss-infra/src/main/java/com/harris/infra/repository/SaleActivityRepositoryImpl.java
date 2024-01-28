@@ -47,10 +47,9 @@ public class SaleActivityRepositoryImpl implements SaleActivityRepository {
 
     @Override
     public int saveActivity(SaleActivity saleActivity) {
-        // Convert the domain model to a DO
         SaleActivityDO saleActivityDO = SaleActivityConverter.toDO(saleActivity);
 
-        // If the ID is null, insert the new activity with its ID
+        // If it's a new activity, insert it
         if (saleActivityDO.getId() == null) {
             int effectedRows = saleActivityMapper.insertActivity(saleActivityDO);
             saleActivity.setId(saleActivityDO.getId());

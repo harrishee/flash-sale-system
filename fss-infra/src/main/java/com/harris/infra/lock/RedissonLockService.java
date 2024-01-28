@@ -23,7 +23,7 @@ public class RedissonLockService implements DistributedLockService {
             @Override
             public boolean tryLock(long waitTime, long leaseTime, TimeUnit unit) throws InterruptedException {
                 boolean lockSuccess = rLock.tryLock(waitTime, leaseTime, unit);
-                log.debug("Lock acquire attempt for key: {} returned: {}", key, lockSuccess);
+                log.info("tryLock, key: {}, result: {}", key, lockSuccess);
                 return lockSuccess;
             }
 
@@ -36,6 +36,7 @@ public class RedissonLockService implements DistributedLockService {
             public void unlock() {
                 if (isLocked() && isHeldByCurrentThread()) {
                     rLock.unlock();
+                    log.info("Released lock for key: {}", key);
                 } else {
                     log.warn("Attempted to unlock: {}, but not held by current thread", key);
                 }

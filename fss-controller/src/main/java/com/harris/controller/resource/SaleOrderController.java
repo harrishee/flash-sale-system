@@ -18,11 +18,12 @@ import javax.annotation.Resource;
 import java.util.Collection;
 
 @RestController
+@RequestMapping("/sale-orders")
 public class SaleOrderController {
     @Resource
     private SaleOrderAppService saleOrderAppService;
 
-    @GetMapping(value = "/sale-orders/{orderId}")
+    @GetMapping("/{orderId}")
     public SingleResponse<OrderHandleResult> getOrder(@RequestAttribute Long userId,
                                                       @PathVariable Long itemId,
                                                       @PathVariable String orderId) {
@@ -36,7 +37,7 @@ public class SaleOrderController {
                 : SingleResponse.of(orderHandleResult);
     }
 
-    @GetMapping(value = "/sale-orders/user")
+    @GetMapping("/user")
     public MultiResponse<SaleOrderResponse> listUserOrders(@RequestAttribute Long userId,
                                                            @RequestParam Integer pageSize,
                                                            @RequestParam Integer pageNumber,
@@ -57,7 +58,7 @@ public class SaleOrderController {
                 : MultiResponse.of(orderResponses, ordersResult.getTotal());
     }
 
-    @PostMapping(value = "/sale-orders")
+    @PostMapping
     public SingleResponse<PlaceOrderResult> placeOrder(@RequestAttribute Long userId,
                                                        @RequestBody PlaceOrderRequest placeOrderRequest) {
 
@@ -69,7 +70,7 @@ public class SaleOrderController {
                 : SingleResponse.of(placeOrderResult.getData());
     }
 
-    @PutMapping(value = "/sale-orders/{orderId}")
+    @PutMapping("/{orderId}")
     public Response cancelOrder(@RequestAttribute Long userId, @PathVariable Long orderId) {
         AppResult cancelResult = saleOrderAppService.cancelOrder(userId, orderId);
 

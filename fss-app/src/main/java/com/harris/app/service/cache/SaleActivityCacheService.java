@@ -10,7 +10,7 @@ import com.harris.domain.service.SaleActivityDomainService;
 import com.harris.infra.cache.DistributedCacheService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
-import com.harris.infra.util.LinkUtil;
+import com.harris.infra.util.KeyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -45,29 +45,55 @@ public class SaleActivityCacheService {
             return null;
         }
 
+        // Try to get from local cache
         SaleActivityCache saleActivityCache = activityLocalCache.getIfPresent(activityId);
         if (saleActivityCache != null) {
-            if (version == null) {
-                log.info("getActivityCache, hit local: {}", activityId);
+            Long localVersion = saleActivityCache.getVersion();
+            if (version == null || version <= localVersion) {
+                log.info("getActivityCache, hit local cache: {}", activityId);
                 return saleActivityCache;
             }
-
-            if (version.equals(saleActivityCache.getVersion()) || version < saleActivityCache.getVersion()) {
-                log.info("getActivityCache, hit local: {},{}", activityId, version);
-                return saleActivityCache;
-            }
-
-            return getLatestDistributedCache(activityId);
+        } else {
+            // Local cache missed or version is newer, need to get from distributed cache
+            log.info("getActivityCache, miss local cache: {}", activityId);
         }
 
         return getLatestDistributedCache(activityId);
     }
 
-    public SaleActivityCache tryUpdateActivityCache(Long activityId) {
-        log.info("tryUpdateActivityCache, update remote: {}", activityId);
+    private SaleActivityCache getLatestDistributedCache(Long activityId) {
+        log.info("getLatestDistributedCache, read distributed cache: {}", activityId);
 
-        DistributedLock distributedLock = distributedLockService
-                .getDistributedLock(UPDATE_ACTIVITY_CACHE_LOCK_KEY + activityId);
+        // Get cache from Redis distributed cache
+        SaleActivityCache distributedActivityCache = distributedCacheService
+                .getObject(buildActivityCacheKey(activityId), SaleActivityCache.class);
+
+        // Try to update cache if not found
+        if (distributedActivityCache == null) {
+            distributedActivityCache = tryUpdateActivityCache(activityId);
+        }
+
+        // If cache is found or updated successfully, and not try later, update local cache
+        if (distributedActivityCache != null && !distributedActivityCache.isLater()) {
+            boolean lockSuccess = localLock.tryLock();
+            if (lockSuccess) {
+                try {
+                    activityLocalCache.put(activityId, distributedActivityCache);
+                    log.info("getLatestDistributedCache, local cache updated: {}", activityId);
+                } finally {
+                    localLock.unlock();
+                }
+            }
+        }
+
+        return distributedActivityCache;
+    }
+
+    public SaleActivityCache tryUpdateActivityCache(Long activityId) {
+        log.info("tryUpdateActivityCache, update distributed cache: {}", activityId);
+
+        // Get Redisson distributed lock
+        DistributedLock distributedLock = distributedLockService.getDistributedLock(UPDATE_ACTIVITY_CACHE_LOCK_KEY + activityId);
 
         try {
             boolean lockSuccess = distributedLock.tryLock(1, 5, TimeUnit.SECONDS);
@@ -75,48 +101,29 @@ public class SaleActivityCacheService {
                 return new SaleActivityCache().tryLater();
             }
 
+            // Get latest activity from domain service
             SaleActivity saleActivity = saleActivityDomainService.getActivity(activityId);
-            SaleActivityCache saleActivityCache = (saleActivity != null)
+
+            // Create a new cache object with the results
+            SaleActivityCache saleActivityCache = saleActivity != null
                     ? new SaleActivityCache().with(saleActivity).withVersion(System.currentTimeMillis())
                     : new SaleActivityCache().notExist();
 
+            // Update the result to Redis distributed cache
             distributedCacheService.put(buildActivityCacheKey(activityId),
                     JSON.toJSONString(saleActivityCache), CacheConstant.MINUTES_5);
-            log.info("tryUpdateActivityCache, update remote success: {}", activityId);
+
+            log.info("tryUpdateActivityCache, distributed cache updated: {}", activityId);
             return saleActivityCache;
         } catch (InterruptedException e) {
-            log.error("tryUpdateActivityCache, update remote failed: {}", activityId);
+            log.error("tryUpdateActivityCache, distributed cache update error", e);
             return new SaleActivityCache().tryLater();
         } finally {
             distributedLock.unlock();
         }
     }
 
-    private SaleActivityCache getLatestDistributedCache(Long activityId) {
-        log.info("getLatestDistributedCache, read remote: {}", activityId);
-
-        SaleActivityCache distributedActivitiesCache = distributedCacheService
-                .getObject(buildActivityCacheKey(activityId), SaleActivityCache.class);
-        if (distributedActivitiesCache == null) {
-            distributedActivitiesCache = tryUpdateActivityCache(activityId);
-        }
-
-        if (distributedActivitiesCache != null && !distributedActivitiesCache.isLater()) {
-            boolean lockSuccess = localLock.tryLock();
-            if (lockSuccess) {
-                try {
-                    activityLocalCache.put(activityId, distributedActivitiesCache);
-                    log.info("getLatestDistributedCache, update local: {}", activityId);
-                } finally {
-                    localLock.unlock();
-                }
-            }
-        }
-
-        return distributedActivitiesCache;
-    }
-
     private String buildActivityCacheKey(Long activityId) {
-        return LinkUtil.link(CacheConstant.ACTIVITY_CACHE_KEY, activityId);
+        return KeyUtil.link(CacheConstant.ACTIVITY_CACHE_KEY, activityId);
     }
 }

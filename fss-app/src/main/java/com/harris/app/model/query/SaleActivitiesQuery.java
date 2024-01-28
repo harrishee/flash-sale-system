@@ -14,6 +14,6 @@ public class SaleActivitiesQuery {
     private Long version;
 
     public boolean isFirstPageQuery() {
-        return StringUtils.isEmpty(keyword) && pageNumber != null && pageNumber == 1;
+        return StringUtils.isEmpty(keyword) && Integer.valueOf(1).equals(pageNumber);
     }
 }

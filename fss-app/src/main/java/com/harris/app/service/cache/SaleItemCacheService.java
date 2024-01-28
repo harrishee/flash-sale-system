@@ -10,7 +10,7 @@ import com.harris.domain.service.SaleItemDomainService;
 import com.harris.infra.cache.DistributedCacheService;
 import com.harris.infra.lock.DistributedLock;
 import com.harris.infra.lock.DistributedLockService;
-import com.harris.infra.util.LinkUtil;
+import com.harris.infra.util.KeyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -143,6 +143,6 @@ public class SaleItemCacheService {
     }
 
     private String buildItemCacheKey(Long itemId) {
-        return LinkUtil.link(CacheConstant.ITEM_CACHE_KEY, itemId);
+        return KeyUtil.link(CacheConstant.ITEM_CACHE_KEY, itemId);
     }
 }

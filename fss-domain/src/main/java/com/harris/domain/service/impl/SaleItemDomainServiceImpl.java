@@ -45,16 +45,13 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
 
     @Override
     public PageResult<SaleItem> getItems(PageQuery pageQuery) {
-        // Validate params, set default value if necessary
-        if (pageQuery == null) {
-            pageQuery = new PageQuery();
-            pageQuery.validateParams();
-        }
+        pageQuery = pageQuery == null ? new PageQuery() : pageQuery;
+        pageQuery.validateParams();
 
         // Find items with condition
         List<SaleItem> saleItems = saleItemRepository.findItemsByCondition(pageQuery);
         Integer total = saleItemRepository.countItemsByCondition(pageQuery);
-        return PageResult.with(saleItems, total);
+        return PageResult.of(saleItems, total);
     }
 
     @Override

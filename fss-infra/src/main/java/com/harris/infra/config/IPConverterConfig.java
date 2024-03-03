@@ -7,15 +7,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 public class IPConverterConfig extends ClassicConverter {
-    /**
-     * Converts a logging event to the IP address of the machine where the log is generated.
-     * This converter retrieves and returns the local host IP address.
-     *
-     * @param iLoggingEvent The logging event
-     * @return The IP address of the local host
-     */
     @Override
     public String convert(ILoggingEvent iLoggingEvent) {
+        // 获取当前服务器的IP地址，用于日志记录
         try {
             return InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {

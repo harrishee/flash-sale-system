@@ -7,35 +7,15 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SaleActivityRepository {
-    /**
-     * Find a sale activity by its ID.
-     *
-     * @param activityId The activity ID
-     * @return Optional object of the sale activity
-     */
+    // 根据 活动ID 查询 活动
     Optional<SaleActivity> findActivityById(Long activityId);
+    
+    // 根据 页面查询条件 查询 活动列表
+    List<SaleActivity> findAllActivityByCondition(PageQuery pageQuery);
+    
+    // 根据 页面查询条件 查询 活动数量
+    Integer countAllActivityByCondition(PageQuery pageQuery);
 
-    /**
-     * Find sale activities by the given condition.
-     *
-     * @param pageQuery The condition
-     * @return List of sale activities
-     */
-    List<SaleActivity> findActivitiesByCondition(PageQuery pageQuery);
-
-    /**
-     * Count total sale activities by the given condition.
-     *
-     * @param pageQuery The condition
-     * @return The count of sale activities
-     */
-    Integer countActivitiesByCondition(PageQuery pageQuery);
-
-    /**
-     * Saves a sale activity, either by inserting or updating it.
-     *
-     * @param saleActivity The sale activity
-     * @return The count of effected rows
-     */
+    // 保存 活动
     int saveActivity(SaleActivity saleActivity);
 }

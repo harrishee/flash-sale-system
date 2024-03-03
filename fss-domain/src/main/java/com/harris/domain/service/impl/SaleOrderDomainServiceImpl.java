@@ -29,12 +29,11 @@ public class SaleOrderDomainServiceImpl implements SaleOrderDomainService {
 
     @Override
     public SaleOrder getOrder(Long userId, Long orderId) {
-        // Validate params
         if (userId == null || orderId == null) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
 
-        // Find order from repository and validate
+        // 从仓库中获取订单
         Optional<SaleOrder> optionalSaleOrder = saleOrderRepository.findOrderById(orderId);
         if (!optionalSaleOrder.isPresent()) {
             throw new DomainException(DomainErrorCode.ITEM_DOES_NOT_EXIST);
@@ -43,78 +42,77 @@ public class SaleOrderDomainServiceImpl implements SaleOrderDomainService {
     }
 
     @Override
-    public PageResult<SaleOrder> getOrdersByUserId(Long userId, PageQuery pageQuery) {
-        // Validate params
+    public PageResult<SaleOrder> getOrders(Long userId, PageQuery pageQuery) {
         if (pageQuery == null) {
             pageQuery = new PageQuery();
         }
 
-        // Find orders with condition
-        List<SaleOrder> saleOrders = saleOrderRepository.findOrdersByCondition(pageQuery.validateParams());
+        // 从仓库中获取订单列表和订单数量，包装成分页结果并返回
+        List<SaleOrder> saleOrders = saleOrderRepository.findAllOrderByCondition(pageQuery.validateParams());
         int total = saleOrderRepository.countOrdersByCondition(pageQuery.validateParams());
         return PageResult.of(saleOrders, total);
     }
 
     @Override
     public boolean placeOrder(Long userId, SaleOrder saleOrder) {
-        log.info("placeOrder: {},{}", userId, JSON.toJSONString(saleOrder));
-
-        // Validate params
+        log.info("domain-placeOrder: {},{}", userId, JSON.toJSONString(saleOrder));
         if (saleOrder == null || saleOrder.invalidParams()) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
 
-        // Set status to created and save order
+        // 设置订单状态为已创建并保存订单
         saleOrder.setStatus(SaleOrderStatus.CREATED.getCode());
         boolean saveSuccess = saleOrderRepository.saveOrder(saleOrder);
 
-        // Publish event if save success
+        // 如果保存成功，发布订单创建事件
         if (saveSuccess) {
             SaleOrderEvent saleOrderEvent = new SaleOrderEvent();
             saleOrderEvent.setSaleOrderEventType(SaleOrderEventType.CREATED);
             domainEventPublisher.publish(saleOrderEvent);
-            log.info("placeOrder, place order event published: {},{}", userId, JSON.toJSONString(saleOrder));
+            log.info("domain-placeOrder, place order event published: {},{}", userId, JSON.toJSONString(saleOrder));
         }
-        log.info("placeOrder, order created: {},{}", userId, JSON.toJSONString(saleOrder));
+        
+        log.info("domain-placeOrder, order created: {},{}", userId, JSON.toJSONString(saleOrder));
         return saveSuccess;
     }
 
     @Override
     public boolean cancelOrder(Long userId, Long orderId) {
-        log.info("cancelOrder: {},{}", userId, orderId);
-
-        // Validate params
+        log.info("domain-cancelOrder: {},{}", userId, orderId);
         if (userId == null || orderId == null) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
 
-        // Find order from repository and validate
+        // 从仓库中获取订单
         Optional<SaleOrder> optionalSaleOrder = saleOrderRepository.findOrderById(orderId);
         if (!optionalSaleOrder.isPresent()) {
             throw new DomainException(DomainErrorCode.ITEM_DOES_NOT_EXIST);
         }
 
-        // Check if order belongs to user
+        // 检查订单是否属于当前用户
         SaleOrder saleOrder = optionalSaleOrder.get();
         if (!saleOrder.getUserId().equals(userId)) {
             throw new DomainException(DomainErrorCode.ITEM_DOES_NOT_EXIST);
         }
 
-        // Return if order is already canceled
+        // 检查订单是否已取消
         if (SaleOrderStatus.isCanceled(saleOrder.getStatus())) {
             return false;
         }
 
-        // Set status to canceled and save order
+        // 设置订单状态为已取消并更新订单
         saleOrder.setStatus(SaleOrderStatus.CANCELED.getCode());
         boolean updateSuccess = saleOrderRepository.updateStatus(saleOrder);
+        
+        // 如果更新成功，发布订单取消事件
         if (updateSuccess) {
             SaleOrderEvent saleOrderEvent = new SaleOrderEvent();
             saleOrderEvent.setSaleOrderEventType(SaleOrderEventType.CANCEL);
             domainEventPublisher.publish(saleOrderEvent);
-            log.info("cancelOrder, cancel order event published: {},{}", userId, JSON.toJSONString(saleOrder));
+            log.info("domain-cancelOrder, cancel order event published: {},{}", userId, JSON.toJSONString(saleOrder));
         }
-        log.info("cancelOrder, order canceled: {},{}", userId, orderId);
+        
+        log.info("domain-cancelOrder, order canceled: {},{}", userId, orderId);
         return updateSuccess;
     }
 }

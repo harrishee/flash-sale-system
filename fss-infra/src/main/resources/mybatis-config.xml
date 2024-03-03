@@ -5,6 +5,7 @@
 
 <configuration>
     <settings>
+        <!-- 开启驼峰映射 ，使查询结果能转成 resultType -->
         <setting name="mapUnderscoreToCamelCase" value="true"/>
     </settings>
 
@@ -13,7 +14,6 @@
     </typeAliases>
 
     <mappers>
-        <mapper resource="com/harris/infra/mapper/BucketMapper.xml"/>
         <mapper resource="com/harris/infra/mapper/SaleActivityMapper.xml"/>
         <mapper resource="com/harris/infra/mapper/SaleItemMapper.xml"/>
         <mapper resource="com/harris/infra/mapper/SaleOrderMapper.xml"/>

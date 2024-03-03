@@ -11,8 +11,4 @@ public class CacheConstant {
     public static final String ACTIVITIES_CACHE_KEY = "ACTIVITIES_CACHE_KEY";
     public static final String ITEM_CACHE_KEY = "ITEM_CACHE_KEY";
     public static final String ITEMS_CACHE_KEY = "ITEMS_CACHE_KEY";
-    public static final String BUCKET_CACHE_INIT_KEY = "BUCKET_CACHE_INIT_KEY";
-    public static final String BUCKET_QUANTITY_KEY = "BUCKET_QUANTITY_KEY";
-    public static final String BUCKET_AVAILABLE_STOCK_KEY = "BUCKET_AVAILABLE_STOCK_KEY";
-    public static final String BUCKET_SUSPEND_KEY = "BUCKET_SUSPEND_KEY";
 }

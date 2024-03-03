@@ -4,6 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.harris.infra.mapper.SaleItemMapper">
+    <!-- 定义SQL片段，列出所有字段，便于复用 -->
     <sql id="ALL_COLUMNS">
         id,
         item_title,
@@ -23,12 +24,14 @@
         create_time
     </sql>
 
+    <!-- 根据商品ID查询单个商品的详细信息，返回的结果映射为SaleItemDO对象 -->
     <select id="getItemById" resultType="com.harris.infra.model.SaleItemDO" parameterType="java.lang.Long">
         SELECT *
         FROM sale_item
         WHERE id = #{itemId}
     </select>
 
+    <!-- 条件查询商品列表，支持通过关键字、活动ID、状态、库存预热值进行筛选，并支持分页查询 -->
     <select id="getItemsByCondition" resultType="com.harris.infra.model.SaleItemDO">
         SELECT * FROM sale_item WHERE 1=1
         <if test="keyword != null">
@@ -47,6 +50,7 @@
         LIMIT #{offset},#{pageSize}
     </select>
 
+    <!-- 根据相同的查询条件，计算满足条件的商品总数，用于分页显示 -->
     <select id="countItemsByCondition" resultType="java.lang.Integer">
         SELECT count(*) FROM sale_item WHERE 1=1
         <if test="keyword != null">
@@ -63,6 +67,7 @@
         </if>
     </select>
 
+    <!-- 插入新的商品记录到sale_item表，并通过<selectKey>标签获取自增ID -->
     <insert id="insertItem" parameterType="com.harris.infra.model.SaleItemDO" useGeneratedKeys="true"
             keyProperty="saleItemDO.id">
         INSERT INTO sale_item (
@@ -90,6 +95,7 @@
         </selectKey>
     </insert>
 
+    <!-- 根据商品ID更新商品信息。支持更新标题、描述、库存、价格等字段 -->
     <update id="updateItem" parameterType="com.harris.infra.model.SaleItemDO">
         UPDATE sale_item SET modified_time = now()
         <if test="itemTitle != null">
@@ -131,23 +137,24 @@
         <if test="rules != null">
             ,`rules` = #{rules,jdbcType=LONGVARCHAR}
         </if>
-
-        where id = #{id}
+        WHERE id = #{id}
     </update>
 
+    <!-- 根据商品ID和扣减数量来减少商品的可用库存 -->
     <update id="reduceStockById" parameterType="com.harris.infra.model.SaleItemDO">
         UPDATE sale_item
         SET modified_time   = now(),
             available_stock = available_stock - #{quantity}
-        where id = #{itemId}
-          and available_stock <![CDATA[ >= ]]>  #{quantity}
+        WHERE id = #{itemId}
+          AND available_stock <![CDATA[ >= ]]>  #{quantity}
     </update>
 
+    <!-- 根据商品ID和增加数量来增加商品的可用库存，确保增加后的库存不超过初始库存 -->
     <update id="addStockById" parameterType="com.harris.infra.model.SaleItemDO">
         UPDATE sale_item
         SET modified_time   = now(),
             available_stock = available_stock + #{quantity}
-        where id = #{itemId}
-          and (available_stock + #{quantity}) <![CDATA[ <= ]]> initial_stock
+        WHERE id = #{itemId}
+          AND (available_stock + #{quantity}) <![CDATA[ <= ]]> initial_stock
     </update>
 </mapper>

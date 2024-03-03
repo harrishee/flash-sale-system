@@ -9,11 +9,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-/**
- * Utility class for extracting IP address from HttpServletRequest.
- * It handles various scenarios where the IP address might be present in different
- * headers due to proxies and load balancers.
- */
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class IPUtil {
@@ -21,16 +16,16 @@ public class IPUtil {
     private static final String UNKNOWN = "unknown";
     private static final String LOCALHOST_IP = "0:0:0:0:0:0:0:1";
     private static final String LOCALHOST_IP1 = "127.0.0.1";
-
+    
+    // 从 HttpServletRequest 中获取 IP 地址
     public static String getIpAddr(HttpServletRequest req) {
         String ip = null;
         try {
+            // 尝试从各种HTTP头中获取IP地址
             ip = req.getHeader("X-Original-Forwarded-For");
             if (StringUtils.isEmpty(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
                 ip = req.getHeader("X-Forwarded-For");
             }
-
-            // Repeats the process for different headers that might contain the IP
             if (StringUtils.isEmpty(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
                 ip = req.getHeader("x-forwarded-for");
             }
@@ -46,30 +41,33 @@ public class IPUtil {
             if (StringUtils.isEmpty(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
                 ip = req.getHeader("HTTP_X_FORWARDED_FOR");
             }
-
-            // If IP is still unknown, get it from the remote address of the request
+            
+            // 如果从常规头中未获取到IP，尝试从请求的远程地址中获取
             if (StringUtils.isEmpty(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
+                // 如果从常规头中未获取到IP，最后尝试从请求的远程地址中获取
                 ip = req.getRemoteAddr();
+                // 将获取到的IP地址进行最终处理并返回
                 ip = getRealIpAddress(ip);
             }
         } catch (Exception e) {
-            log.error("IPUtil error: ", e);
+            log.error("IPUtil，获取IP地址出错", e);
         }
-
-        // Checks if IP contains a comma and splits it to get the first IP
+        
+        // 检查是否有多个IP地址，如果有则只取第一个
         if (!StringUtils.isEmpty(ip) && ip.contains(IP_UTIL_FLAG)) {
             ip = ip.substring(0, ip.indexOf(IP_UTIL_FLAG));
         }
         return ip;
     }
-
+    
     private static String getRealIpAddress(String ip) {
+        // 如果获取到的IP地址是本地地址，则尝试获取本机的真实IP地址
         if (LOCALHOST_IP1.equalsIgnoreCase(ip) || LOCALHOST_IP.equalsIgnoreCase(ip)) {
             try {
                 InetAddress in = InetAddress.getLocalHost();
                 return in.getHostAddress();
             } catch (UnknownHostException e) {
-                log.error("Failed to get local host address", e);
+                log.error("IPUtil，获取IP地址出错", e);
             }
         }
         return ip;

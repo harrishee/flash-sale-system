@@ -17,21 +17,14 @@ import java.util.stream.Collectors;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class SaleActivityConverter {
     public static PublishActivityCommand toCommand(PublishActivityRequest publishActivityRequest) {
-        if (publishActivityRequest == null) {
-            return null;
-        }
-
+        if (publishActivityRequest == null) return null;
         PublishActivityCommand activityPublishCommand = new PublishActivityCommand();
         BeanUtils.copyProperties(publishActivityRequest, activityPublishCommand);
-
         return activityPublishCommand;
     }
 
     public static SaleActivityResponse toResponse(SaleActivityDTO saleActivityDTO) {
-        if (saleActivityDTO == null) {
-            return null;
-        }
-
+        if (saleActivityDTO == null) return null;
         SaleActivityResponse saleActivityResponse = new SaleActivityResponse();
         BeanUtils.copyProperties(saleActivityDTO, saleActivityResponse);
 
@@ -39,10 +32,7 @@ public class SaleActivityConverter {
     }
 
     public static List<SaleActivityResponse> toResponseList(Collection<SaleActivityDTO> saleActivityDTOS) {
-        if (CollectionUtils.isEmpty(saleActivityDTOS)) {
-            return new ArrayList<>();
-        }
-
+        if (CollectionUtils.isEmpty(saleActivityDTOS)) return new ArrayList<>();
         return saleActivityDTOS.stream().map(SaleActivityConverter::toResponse).collect(Collectors.toList());
     }
 }

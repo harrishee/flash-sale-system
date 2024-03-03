@@ -14,18 +14,18 @@ public class SaleActivitiesCache {
     private Long version;
     private boolean later;
     private boolean exist;
-
+    
     public SaleActivitiesCache with(List<SaleActivity> saleActivities) {
         this.saleActivities = saleActivities;
         this.exist = true;
         return this;
     }
-
+    
     public SaleActivitiesCache tryLater() {
         this.later = true;
         return this;
     }
-
+    
     public SaleActivitiesCache notExist() {
         this.exist = false;
         return this;

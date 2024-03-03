@@ -21,23 +21,23 @@ public class StandardStockDomainService implements StockDomainService {
 
     @Override
     public boolean deductStock(StockDeduction stockDeduction) {
-        log.info("Standard deductStock: {}", JSON.toJSONString(stockDeduction));
-
-        // Validate params
+        log.info("domain-standard-deductStock: {}", JSON.toJSONString(stockDeduction));
         if (stockDeduction == null || stockDeduction.getItemId() == null || stockDeduction.getQuantity() == null) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
+        
+        // 从仓库中扣减库存
         return saleItemRepository.deductStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
     }
 
     @Override
     public boolean revertStock(StockDeduction stockDeduction) {
-        log.info("Standard revertStock: {}", JSON.toJSONString(stockDeduction));
-
-        // Validate params
+        log.info("domain-standard-revertStock: {}", JSON.toJSONString(stockDeduction));
         if (stockDeduction == null || stockDeduction.getItemId() == null || stockDeduction.getQuantity() == null) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
+        
+        // 从仓库中恢复库存
         return saleItemRepository.revertStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
     }
 }

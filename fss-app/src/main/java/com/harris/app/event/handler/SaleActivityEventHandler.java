@@ -14,28 +14,30 @@ import javax.annotation.Resource;
 import static com.harris.app.exception.AppErrorCode.INVALID_PARAMS;
 
 @Slf4j
-@EventHandler
+@EventHandler // 事件处理器，用于处理销售活动相关的事件
 public class SaleActivityEventHandler implements EventHandlerI<Response, SaleActivityEvent> {
     @Resource
     private SaleActivityCacheService saleActivityCacheService;
-
+    
     @Resource
     private SaleActivitiesCacheService saleActivitiesCacheService;
-
+    
     @Override
     @MarkTrace
     public Response execute(SaleActivityEvent saleActivityEvent) {
-        log.info("SaleActivityEventHandler: {}", saleActivityEvent);
-
+        log.info("应用层 activityEvent，接收活动事件: {}", saleActivityEvent);
+        
         if (saleActivityEvent.getId() == null) {
-            log.info("SaleActivityEventHandler, invalid params");
+            log.info("应用层 activityEvent，事件参数错误");
             return Response.buildFailure(INVALID_PARAMS.getErrCode(), INVALID_PARAMS.getErrDesc());
         }
-
-        // Update activity to Redis distributed cache
+        
+        // 尝试更新指定活动ID的活动缓存
         saleActivityCacheService.tryUpdateActivityCache(saleActivityEvent.getId());
+        
+        // 尝试更新第一页的活动缓存
         saleActivitiesCacheService.tryUpdateActivitiesCache(1);
-
+        
         return Response.buildSuccess();
     }
 }

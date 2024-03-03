@@ -2,45 +2,20 @@ package com.harris.infra.lock;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * Provides methods for managing access to a shared resource in a distributed system.
- */
+// 分布式锁接口，提供了分布式环境下锁的基本操作
 public interface DistributedLock {
-    /**
-     * Attempts to acquire the lock within a specified waiting time and lease time.
-     *
-     * @param waitTime  The maximum time to wait for the lock
-     * @param leaseTime The time to hold the lock after acquisition
-     * @param unit      The time unit of the waitTime and leaseTime parameters
-     * @return true if the lock was acquired within the wait time, false otherwise
-     * @throws InterruptedException if the current thread is interrupted while waiting for the lock
-     */
+    // 尝试获取锁，带有等待时间和租约时间
     boolean tryLock(long waitTime, long leaseTime, TimeUnit unit) throws InterruptedException;
-
-    /**
-     * Acquires the lock, blocking until it's available or the lease time expires.
-     *
-     * @param leaseTime The time to hold the lock after acquisition
-     * @param unit      The time unit of the leaseTime parameter
-     */
+    
+    // 获取锁，并设置租约时间
     void lock(long leaseTime, TimeUnit unit);
-
-    /**
-     * Releases the lock if it's held by the current thread.
-     */
+    
+    // 释放锁
     void unlock();
-
-    /**
-     * Checks if the lock is currently held by any thread.
-     *
-     * @return true if the lock is currently held, false otherwise
-     */
+    
+    // 判断锁是否被获取
     boolean isLocked();
-
-    /**
-     * Checks if the lock is held by the current thread.
-     *
-     * @return true if the current thread holds the lock, false otherwise
-     */
+    
+    // 判断锁是否被当前线程持有
     boolean isHeldByCurrentThread();
 }

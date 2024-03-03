@@ -49,13 +49,13 @@ public class RedisCacheService implements DistributedCacheService {
 
     @Override
     public <T> T getObject(String key, Class<T> targetClass) {
-        // Retrieve the object from Redis and validate
+        // 用 redisTemplate 获取 key 对应的 object 类型的 value
         Object res = redisTemplate.opsForValue().get(key);
         if (res == null) {
             return null;
         }
 
-        // Parse the object (expected to be a String in JSON format) to the specified class type
+        // 将 value 用 fastjson 转换为指定的 class 类型，方便使用
         try {
             return JSON.parseObject((String) res, targetClass);
         } catch (Exception e) {

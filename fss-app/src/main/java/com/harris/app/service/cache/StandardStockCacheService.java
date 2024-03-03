@@ -1,6 +1,5 @@
 package com.harris.app.service.cache;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -25,20 +24,24 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Conditional(PlaceOrderCondition.class)
 public class StandardStockCacheService implements StockCacheService {
-    private static final int IN_STOCK_ALIGNING = -9;
+    // 锁的 key 的前缀
+    private static final int IN_STOCK_ALIGNING = -9; // 库存对齐过程中的标志
     private static final String STOCK_CACHE_KEY = "STOCK_CACHE_KEY";
     private static final String STOCK_ALIGN_LOCK_KEY = "STOCK_ALIGN_LOCK_KEY";
     private static final String INIT_OR_ALIGN_STOCK_LUA;
     private static final String REVERT_STOCK_LUA;
     private static final String DEDUCT_STOCK_LUA;
-    private final static Cache<Long, StockCache> stockLocalCache =
+    
+    // 本地缓存的初始化，用于减少对外部系统的访问
+    private static final Cache<Long, StockCache> STOCK_LOCAL_CACHE =
             CacheBuilder.newBuilder()
                     .initialCapacity(10)
                     .concurrencyLevel(5)
                     .expireAfterWrite(10, TimeUnit.SECONDS)
                     .build();
-
+    
     static {
+        // 用于初始化或对齐库存
         INIT_OR_ALIGN_STOCK_LUA = "if (redis.call('exists', KEYS[2]) == 1) then" +
                 "    return -997;" +
                 "end;" +
@@ -47,7 +50,8 @@ public class StandardStockCacheService implements StockCacheService {
                 "redis.call('set', KEYS[1] , stockNumber);" +
                 "redis.call('del', KEYS[2]);" +
                 "return 1";
-
+        
+        // 用于回滚库存
         REVERT_STOCK_LUA = "if (redis.call('exists', KEYS[2]) == 1) then" +
                 "    return -9;" +
                 "end;" +
@@ -58,8 +62,8 @@ public class StandardStockCacheService implements StockCacheService {
                 "    return 1;" +
                 "end;" +
                 "return -1;";
-
-
+        
+        // 用于扣减库存
         DEDUCT_STOCK_LUA = "if (redis.call('exists', KEYS[2]) == 1) then" +
                 "    return -9;" +
                 "end;" +
@@ -77,198 +81,196 @@ public class StandardStockCacheService implements StockCacheService {
                 "end;" +
                 "return -1;";
     }
-
+    
     @Resource
     private RedisCacheService redisCacheService;
-
+    
     @Resource
     private DistributedCacheService distributedCacheService;
-
+    
     @Resource
     private SaleItemDomainService saleItemDomainService;
-
+    
     @Override
     public StockCache getStockCache(Long userId, Long itemId) {
-        // Get from local cache first
-        StockCache stockCache = stockLocalCache.getIfPresent(itemId);
-        if (stockCache != null) {
-            return stockCache;
-        }
-
-        // Get from distributed cache if not in local cache
+        // 从本地缓存中获取库存缓存对象，如果存在则直接返回
+        StockCache stockCache = STOCK_LOCAL_CACHE.getIfPresent(itemId);
+        if (stockCache != null) return stockCache;
+        
+        // 否则，从分布式缓存中获取可用库存数量，还不存在则返回 null
         Integer availableStockQuantity = distributedCacheService.getObject(buildStockCacheKey(itemId), Integer.class);
-        if (availableStockQuantity == null) {
-            return null;
-        }
-
-        // Create a new stock cache with available stock quantity and update the local cache
+        if (availableStockQuantity == null) return null;
+        
+        // 本地不存在，分布式存在，创建新的库存缓存对象并存入本地缓存
         stockCache = new StockCache().with(availableStockQuantity);
-        stockLocalCache.put(itemId, stockCache);
+        STOCK_LOCAL_CACHE.put(itemId, stockCache);
         return stockCache;
     }
-
+    
     @Override
     public boolean alignStock(Long itemId) {
         if (itemId == null) {
-            log.info("alignStock, no itemId");
+            log.info("应用层 alignStock, 参数为空: [{}]", itemId);
             return false;
         }
-
+        
         try {
-            // Retrieve the sale item and check if it exists
+            // 从领域服务获取销售项对象
             SaleItem saleItem = saleItemDomainService.getItem(itemId);
             if (saleItem == null) {
-                log.info("alignStock, item not exist: {}", itemId);
+                log.info("应用层 alignStock, 商品不存在: [{}]", itemId);
                 return false;
             }
-
-            // Check if the initial stock for the item is set up
+            
+            //
             if (saleItem.getInitialStock() == null) {
-                log.info("alignStock, stock not set up: {}", itemId);
+                log.info("应用层 alignStock, 商品库存未设置: [{}]", itemId);
                 return false;
             }
-
-            // Build keys for the Redis cache
+            
+            // 构建库存缓存键和库存对齐锁键
             String stockCacheKey = buildStockCacheKey(itemId);
             String stockAlignKey = buildStockAlignKey(itemId);
+            
+            // 准备Lua脚本的键和参数
             List<String> keys = Lists.newArrayList(stockCacheKey, stockAlignKey);
-
-            // Prepare and execute the Redis LUA script for stock alignment
+            
+            // 执行Lua脚本进行库存对齐
             DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(INIT_OR_ALIGN_STOCK_LUA, Long.class);
             Long result = redisCacheService.getRedisTemplate().execute(redisScript, keys, saleItem.getAvailableStock());
+            
+            // 库存校准失败
             if (result == null) {
-                log.info("alignStock, align failed: {},{},{}", itemId, stockCacheKey, saleItem.getInitialStock());
+                log.info("应用层 alignStock，商品库存校准失败: [{},{},{}]", itemId, stockCacheKey, saleItem.getInitialStock());
                 return false;
             }
-
-            // Check if stock alignment is already in process
+            
+            // 库存校准中
             if (result == -997) {
-                log.info("alignStock in process, align canceled: {},{},{},{}", result, itemId,
-                        stockCacheKey, saleItem.getInitialStock());
+                log.info("应用层 alignStock，已在校准中，本次校准取消: [{},{},{}]", itemId, stockCacheKey, saleItem.getInitialStock());
                 return true;
             }
-
-            // Successful stock alignment
+            
+            // 库存校准成功
             if (result == 1) {
-                log.info("alignStock, align success: {},{},{},{}", result, itemId, stockCacheKey,
-                        saleItem.getInitialStock());
+                // log.info("应用层 alignStock，商品库存校准成功: [{},{},{}]", itemId, stockCacheKey, saleItem.getInitialStock());
                 return true;
             }
-
-            // Default case, return false for unhandled results
+            
+            // 其他情况返回失败
             return false;
         } catch (Exception e) {
-            log.error("alignStock error: {}", itemId, e);
+            log.error("应用层 alignStock, 商品库存校准异常: [{}]", itemId, e);
             return false;
         }
     }
-
+    
     @Override
     public boolean deductStock(StockDeduction stockDeduction) {
-        log.info("deductStock, start: {}", JSON.toJSONString(stockDeduction));
-
-        // Check if the stock deduction is valid
-        if (stockDeduction == null || stockDeduction.invalidParams()) {
-            return false;
-        }
-
+        log.info("应用层 deductStock，申请库存预扣减: [{}]", stockDeduction);
+        if (stockDeduction == null || stockDeduction.invalidParams()) return false;
+        
         try {
-            // Build cache keys for accessing the Redis cache
+            // 构建库存缓存键和库存对齐锁键
             String stockCacheKey = buildStockCacheKey(stockDeduction.getItemId());
             String stockAlignKey = buildStockAlignKey(stockDeduction.getItemId());
+            
+            // 准备Lua脚本执行所需的键列表，包含库存缓存键和库存对齐锁键
             List<String> keys = Lists.newArrayList(stockCacheKey, stockAlignKey);
-
-            // Prepare the Redis LUA script for stock deduction
+            
+            // 创建Lua脚本执行器，指定脚本和返回类型
             DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(DEDUCT_STOCK_LUA, Long.class);
             Long result = null;
             long startTime = System.currentTimeMillis();
-
-            // Loop until stock deduction is successful or timeout occurs
+            
+            // 循环执行Lua脚本，直到成功或超过1500毫秒的超时时间
             while ((result == null || result == IN_STOCK_ALIGNING) && (System.currentTimeMillis() - startTime) < 1500) {
-
-                // Execute the LUA script and store the result
+                // 执行Lua脚本，传递键和扣减数量作为参数
                 result = redisCacheService.getRedisTemplate().execute(redisScript, keys, stockDeduction.getQuantity());
+                
+                // 库存校准失败
                 if (result == null || result == -1 || result == -2 || result == -3) {
-                    log.info("deductStock, duduct failed: {}", stockCacheKey);
+                    log.info("应用层 deductStock, 库存预扣减失败: [{}]", stockCacheKey);
                     return false;
                 }
-
-                // If stock alignment is in progress, wait and retry
+                
+                // 库存正在对齐中，等待20毫秒后重试
                 if (result == IN_STOCK_ALIGNING) {
-                    log.info("deductStock, stock aligning: {}", stockCacheKey);
+                    log.info("应用层 deductStock, 库存校准中: [{}]", stockCacheKey);
                     Thread.sleep(20);
                 }
-
-                // Deduction success
+                
+                // 库存扣减成功
                 if (result == 1) {
-                    log.info("deductStock, deduct success: {}", stockCacheKey);
+                    log.info("应用层 deductStock, 库存预扣减成功: [{}]", stockCacheKey);
                     return true;
                 }
             }
         } catch (Exception e) {
-            log.error("deductStock error: ", e);
+            log.error("应用层 deductStock, 库存预扣减异常: ", e);
             return false;
         }
-
-        // Return false if deduction not successful within timeout
+        
+        // 如果超过重试时间仍未成功，返回失败
         return false;
     }
-
+    
     @Override
     public boolean revertStock(StockDeduction stockDeduction) {
-        log.info("revertStock, start: {}", JSON.toJSONString(stockDeduction));
-
-        // Check if the stock deduction is valid
-        if (stockDeduction == null || stockDeduction.invalidParams()) {
-            return false;
-        }
-
+        log.info("应用层 revertStock，申请库存预回滚: [{}]", stockDeduction);
+        if (stockDeduction == null || stockDeduction.invalidParams()) return false;
+        
         try {
-            // Build cache keys for accessing the Redis cache
+            // 构建库存缓存键和库存对齐锁键
             String stockCacheKey = buildStockCacheKey(stockDeduction.getItemId());
             String stockAlignKey = buildStockAlignKey(stockDeduction.getItemId());
+            
+            // 准备Lua脚本执行所需的键列表，包含库存缓存键和库存对齐锁键
             List<String> keys = Lists.newArrayList(stockCacheKey, stockAlignKey);
-
-            // Prepare the Redis LUA script for stock deduction
+            
+            // 创建Lua脚本执行器，指定脚本和返回类型
             DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(REVERT_STOCK_LUA, Long.class);
             Long result = null;
             long startTime = System.currentTimeMillis();
-
-            // Loop until stock revert is successful or timeout occurs
+            
+            // 循环执行Lua脚本，直到成功或超过1500毫秒的超时时间
             while ((result == null || result == IN_STOCK_ALIGNING) && (System.currentTimeMillis() - startTime) < 1500) {
-
-                // Execute the LUA script and store the result
+                // 执行Lua脚本，传递键和回滚数量作为参数
                 result = redisCacheService.getRedisTemplate().execute(redisScript, keys, stockDeduction.getQuantity());
+                
+                // 库存校准失败
                 if (result == null || result == -1) {
-                    log.info("revertStock, revert failed: {}", stockCacheKey);
+                    log.info("应用层 revertStock, 库存回滚失败: [{}]", stockCacheKey);
                     return false;
                 }
-
-                // If stock alignment is in progress, wait and retry
+                
+                // 库存正在对齐中，等待20毫秒后重试
                 if (result == IN_STOCK_ALIGNING) {
-                    log.info("revertStock, stock aligning: {}", stockCacheKey);
+                    log.info("应用层 revertStock, 库存校准中: [{}]", stockCacheKey);
                     Thread.sleep(20);
                 }
-
-                // Revert success
+                
+                // 库存回滚成功
                 if (result == 1) {
-                    log.info("revertStock, revert success: {}", stockCacheKey);
+                    log.info("应用层 revertStock, 库存回滚成功: [{}]", stockCacheKey);
                     return true;
                 }
             }
         } catch (Exception e) {
-            log.error("revertStock failed");
+            log.error("应用层 revertStock, 库存回滚异常: ", e);
             return false;
         }
-
-        // Return false if revert not successful within timeout
+        
+        // 如果超过重试时间仍未成功，返回失败
         return false;
     }
-
+    
+    // 构建库存对齐锁键
     public static String buildStockAlignKey(Long itemId) {
         return KeyUtil.link(STOCK_ALIGN_LOCK_KEY, itemId);
     }
-
+    
+    // 构建库存缓存键
     public static String buildStockCacheKey(Long itemId) {
         return KeyUtil.link(STOCK_CACHE_KEY, itemId);
     }

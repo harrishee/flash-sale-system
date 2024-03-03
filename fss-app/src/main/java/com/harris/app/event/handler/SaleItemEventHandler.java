@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 
 @Slf4j
-@EventHandler
+@EventHandler // 事件处理器，用于处理销售商品相关的事件
 public class SaleItemEventHandler implements EventHandlerI<Response, SaleItemEvent> {
     @Resource
     private SaleItemCacheService saleItemCacheService;
@@ -22,16 +22,19 @@ public class SaleItemEventHandler implements EventHandlerI<Response, SaleItemEve
 
     @Override
     public Response execute(SaleItemEvent saleItemEvent) {
-        log.info("SaleItemEventHandler: {}", JSON.toJSON(saleItemEvent));
+        log.info("应用层 itemEvent，接收商品事件: {}", JSON.toJSON(saleItemEvent));
 
         if (saleItemEvent.getId() == null) {
-            log.info("SaleItemEventHandler, invalid params");
+            log.info("应用层 itemEvent，商品事件参数错误");
             return Response.buildSuccess();
         }
-
+        
+        // 调用商品缓存服务尝试更新指定商品ID的缓存
         saleItemCacheService.tryUpdateItemCache(saleItemEvent.getId());
+        
+        // 调用商品缓存服务尝试更新指定活动ID的商品缓存
         saleItemsCacheService.tryUpdateItemsCache(saleItemEvent.getActivityId());
-
+        
         return Response.buildSuccess();
     }
 }

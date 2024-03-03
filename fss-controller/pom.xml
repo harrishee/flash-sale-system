@@ -9,13 +9,13 @@
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>controller</artifactId>
+    <artifactId>fss-controller</artifactId>
     <name>fss-controller</name>
 
     <dependencies>
         <dependency>
             <groupId>com.harris</groupId>
-            <artifactId>app</artifactId>
+            <artifactId>fss-app</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>

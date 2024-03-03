@@ -1,14 +1,7 @@
 package com.harris.infra.lock;
 
-/**
- * Allows acquiring locks based on a unique key.
- */
+// 分布式锁服务接口，用于获取分布式锁
 public interface DistributedLockService {
-    /**
-     * Retrieves a distributed lock based on a specified key.
-     *
-     * @param key The key associated with the lock. This key is used to uniquely identify the lock
-     * @return An instance of DistributedLock corresponding to the given key
-     */
+    // 根据给定的键获取一个分布式锁实例
     DistributedLock getDistributedLock(String key);
 }

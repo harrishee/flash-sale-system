@@ -1,9 +1,9 @@
 package com.harris.app.service.app;
 
 import com.harris.app.model.auth.AuthResult;
-import com.harris.app.model.auth.ResourceEnum;
+import com.harris.app.model.ResourceEnum;
 
-public interface AuthAppService {
+public interface AuthService {
     AuthResult auth(String encryptedToken);
 
     AuthResult auth(Long userId, ResourceEnum resourceEnum);

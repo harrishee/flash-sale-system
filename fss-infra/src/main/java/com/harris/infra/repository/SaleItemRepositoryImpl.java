@@ -3,9 +3,9 @@ package com.harris.infra.repository;
 import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleItem;
 import com.harris.domain.repository.SaleItemRepository;
-import com.harris.infra.model.SaleItemDO;
-import com.harris.infra.model.converter.SaleItemConverter;
 import com.harris.infra.mapper.SaleItemMapper;
+import com.harris.infra.model.SaleItemDO;
+import com.harris.infra.util.InfraConverter;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -17,57 +17,58 @@ import java.util.stream.Collectors;
 public class SaleItemRepositoryImpl implements SaleItemRepository {
     @Resource
     private SaleItemMapper saleItemMapper;
-
+    
     @Override
     public Optional<SaleItem> findItemById(Long itemId) {
-        // Get the DO from the mapper and validate
+        // 从 mapper 中获取 DO
         SaleItemDO saleItemDO = saleItemMapper.getItemById(itemId);
         if (saleItemDO == null) {
             return Optional.empty();
         }
-
-        // Convert the DO to a domain model
-        SaleItem saleItem = SaleItemConverter.toDomainModel(saleItemDO);
+        
+        // 将 DO 转换为 domain model
+        SaleItem saleItem = InfraConverter.toSaleItemDomain(saleItemDO);
         return Optional.of(saleItem);
     }
-
+    
     @Override
-    public List<SaleItem> findItemsByCondition(PageQuery pageQuery) {
-        // Get the DOs from the mapper and convert to domain models
+    public List<SaleItem> findAllItemByCondition(PageQuery pageQuery) {
+        // 从 mapper 中获取 DO 列表，然后转换为 domain model 列表
         return saleItemMapper.getItemsByCondition(pageQuery)
                 .stream()
-                .map(SaleItemConverter::toDomainModel)
+                .map(InfraConverter::toSaleItemDomain)
                 .collect(Collectors.toList());
     }
-
+    
     @Override
-    public Integer countItemsByCondition(PageQuery pageQuery) {
+    public Integer countAllItemByCondition(PageQuery pageQuery) {
+        // 从 mapper 中获取符合条件的商品数量
         return saleItemMapper.countItemsByCondition(pageQuery);
     }
-
+    
     @Override
     public int saveItem(SaleItem saleItem) {
-        // Convert the domain model to a DO
-        SaleItemDO saleItemDO = SaleItemConverter.toDO(saleItem);
-
-        // If the ID is null, insert the new item
+        // 将 domain model 转换为 DO
+        SaleItemDO saleItemDO = InfraConverter.toSaleItemDO(saleItem);
+        
+        // 如果 商品ID 为空，则插入新的商品
         if (saleItem.getId() == null) {
             return saleItemMapper.insertItem(saleItemDO);
         }
-
-        // Otherwise, update the existed item
+        
+        // 否则更新商品信息
         return saleItemMapper.updateItem(saleItemDO);
     }
-
+    
     @Override
     public boolean deductStockForItem(Long itemId, Integer quantity) {
-        // Should be exactly 1 row affected
+        // 扣减库存，并检查是否扣减成功
         return saleItemMapper.reduceStockById(itemId, quantity) == 1;
     }
-
+    
     @Override
     public boolean revertStockForItem(Long itemId, Integer quantity) {
-        // Should be exactly 1 row affected
+        // 恢复库存，并检查是否恢复成功
         return saleItemMapper.addStockById(itemId, quantity) == 1;
     }
 }

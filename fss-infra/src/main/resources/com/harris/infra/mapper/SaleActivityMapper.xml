@@ -4,6 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.harris.infra.mapper.SaleActivityMapper">
+    <!-- 定义SQL片段，列出所有字段，便于复用 -->
     <sql id="ALL_COLUMNS">
         id,
         activity_name,
@@ -15,12 +16,14 @@
         create_time
     </sql>
 
+    <!-- 根据活动ID查询活动，返回SaleActivityDO对象 -->
     <select id="getActivityById" resultType="com.harris.infra.model.SaleActivityDO" parameterType="java.lang.Long">
         SELECT *
         FROM sale_activity
         WHERE id = #{activityId}
     </select>
 
+    <!-- 根据条件查询活动列表，支持关键字搜索和状态过滤，实现分页 -->
     <select id="getActivitiesByCondition" resultType="com.harris.infra.model.SaleActivityDO">
         SELECT * FROM sale_activity WHERE 1=1
         <if test="keyword != null">
@@ -33,6 +36,7 @@
         LIMIT #{offset},#{pageSize}
     </select>
 
+    <!-- 根据条件统计活动数量，用于分页 -->
     <select id="countActivitiesByCondition" resultType="java.lang.Integer">
         SELECT count(*) FROM sale_activity WHERE 1=1
         <if test="keyword != null">
@@ -43,6 +47,7 @@
         </if>
     </select>
 
+    <!-- 插入活动，使用自动生成的ID -->
     <insert id="insertActivity" parameterType="com.harris.infra.model.SaleActivityDO" useGeneratedKeys="true"
             keyProperty="saleActivityDO.id">
         INSERT INTO sale_activity (
@@ -62,6 +67,7 @@
         </selectKey>
     </insert>
 
+    <!-- 更新活动信息 -->
     <update id="updateActivity" parameterType="com.harris.infra.model.SaleActivityDO">
         UPDATE sale_activity SET modified_time = now()
         <if test="activityName != null">

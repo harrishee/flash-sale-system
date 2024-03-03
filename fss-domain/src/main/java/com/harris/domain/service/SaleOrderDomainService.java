@@ -5,39 +5,15 @@ import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleOrder;
 
 public interface SaleOrderDomainService {
-    /**
-     * Retrieve order by user id and order id.
-     *
-     * @param userId  The user id
-     * @param orderId The order id
-     * @return The SaleOrder
-     */
+    // 根据 用户ID 和 订单ID 查询 订单
     SaleOrder getOrder(Long userId, Long orderId);
-
-    /**
-     * Retrieve a paginated list of SaleOrder by the given condition.
-     *
-     * @param userId             The user id
-     * @param pageQuery The page query condition
-     * @return The PageResult with SaleOrders and the total count
-     */
-    PageResult<SaleOrder> getOrdersByUserId(Long userId, PageQuery pageQuery);
-
-    /**
-     * save a SaleOrder and publish a place order event.
-     *
-     * @param userId    The user id
-     * @param saleOrder The SaleOrder
-     * @return save result
-     */
+    
+    // 根据 用户ID 和 页面查询条件 查询 订单列表 并返回分页结果
+    PageResult<SaleOrder> getOrders(Long userId, PageQuery pageQuery);
+    
+    // 根据 用户ID 和 订单 下单
     boolean placeOrder(Long userId, SaleOrder saleOrder);
-
-    /**
-     * update the order status and publish a cancel order event.
-     *
-     * @param userId  The user id
-     * @param orderId The order id
-     * @return cancel result
-     */
+    
+    // 根据 用户ID 和 订单ID 取消 订单
     boolean cancelOrder(Long userId, Long orderId);
 }

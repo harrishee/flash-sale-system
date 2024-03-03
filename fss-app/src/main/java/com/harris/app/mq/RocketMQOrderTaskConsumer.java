@@ -14,28 +14,31 @@ import javax.annotation.Resource;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "place_order_type", havingValue = "queued")
+@ConditionalOnProperty(name = "place_order_type", havingValue = "queued") // 仅当 place_order_type 配置为 queued 时，该组件才会被实例化
 @RocketMQMessageListener(topic = "PLACE_ORDER_TASK_TOPIC", consumerGroup = "PLACE_ORDER_TASK_TOPIC_CONSUMER_GROUP")
 public class RocketMQOrderTaskConsumer implements RocketMQListener<String> {
     @Resource
-    private QueuedPlaceOrderService queuedPlaceOrderService;
-
+    private QueuedPlaceOrderService queuedPlaceOrderService; // 注入处理队列式下单服务
+    
     @Override
     public void onMessage(String s) {
-        log.info("RocketMQOrderTaskConsumer, receive: {}", s);
-
+        log.info("应用层 orderTaskConsumer，接收下单任务消息: [{}]", s);
+        
         if (StringUtils.isEmpty(s)) {
-            log.info("RocketMQOrderTaskConsumer, empty message: {}", s);
+            log.info("用用层 orderTaskConsumer，接收下单任务消息为空: [{}]", s);
             return;
         }
-
+        
         try {
+            // 将接收到的JSON字符串消息反序列化为 PlaceOrderTask 对象
             PlaceOrderTask placeOrderTask = JSON.parseObject(s, PlaceOrderTask.class);
+            
+            // 调用队列式下单服务处理下单任务
             queuedPlaceOrderService.handlePlaceOrderTask(placeOrderTask);
-
-            log.info("RocketMQOrderTaskConsumer, task done: {}", placeOrderTask.getPlaceOrderTaskId());
+            
+            log.info("应用层 orderTaskConsumer，下单任务消息处理完成: [{}]", placeOrderTask.getPlaceOrderTaskId());
         } catch (Exception e) {
-            log.error("RocketMQOrderTaskConsumer, task error: ", e);
+            log.error("应用层 orderTaskConsumer，下单任务消息处理失败: [{}]", s);
         }
     }
 }

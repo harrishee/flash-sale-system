@@ -3,9 +3,9 @@ package com.harris.infra.repository;
 import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleOrder;
 import com.harris.domain.repository.SaleOrderRepository;
-import com.harris.infra.model.converter.SaleOrderConverter;
 import com.harris.infra.mapper.SaleOrderMapper;
 import com.harris.infra.model.SaleOrderDO;
+import com.harris.infra.util.InfraConverter;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -17,50 +17,51 @@ import java.util.stream.Collectors;
 public class SaleOrderRepositoryImpl implements SaleOrderRepository {
     @Resource
     private SaleOrderMapper saleOrderMapper;
-
+    
     @Override
     public Optional<SaleOrder> findOrderById(Long orderId) {
-        // Get the DO from the mapper and validate
+        // 从 mapper 中获取 DO
         SaleOrderDO saleOrderDO = saleOrderMapper.getOrderById(orderId);
         if (saleOrderDO == null) {
             return Optional.empty();
         }
-
-        // Convert the DO to a domain model
-        SaleOrder saleOrder = SaleOrderConverter.toDomainModel(saleOrderDO);
+        
+        // 将 DO 转换为 domain model
+        SaleOrder saleOrder = InfraConverter.toSaleOrderDomain(saleOrderDO);
         return Optional.of(saleOrder);
     }
-
+    
     @Override
-    public List<SaleOrder> findOrdersByCondition(PageQuery pageQuery) {
-        // Get the DOs from the mapper and convert to domain models
+    public List<SaleOrder> findAllOrderByCondition(PageQuery pageQuery) {
+        // 从 mapper 中获取 DO 列表，然后转换为 domain model 列表
         return saleOrderMapper.getOrdersByCondition(pageQuery)
                 .stream()
-                .map(SaleOrderConverter::toDomainModel)
+                .map(InfraConverter::toSaleOrderDomain)
                 .collect(Collectors.toList());
     }
-
+    
     @Override
     public int countOrdersByCondition(PageQuery pageQuery) {
+        // 从 mapper 中获取符合条件的订单数量
         return saleOrderMapper.countOrdersByCondition(pageQuery);
     }
-
+    
     @Override
     public boolean saveOrder(SaleOrder saleOrder) {
-        // Convert the domain model to a DO
-        SaleOrderDO saleOrderDO = SaleOrderConverter.toDO(saleOrder);
-
-        // Should be exactly 1 row affected
+        // 将 domain model 转换为 DO
+        SaleOrderDO saleOrderDO = InfraConverter.toSaleOrderDO(saleOrder);
+        
+        // 插入新的订单，并检查是否插入成功
         int effectedRows = saleOrderMapper.insertOrder(saleOrderDO);
         return effectedRows == 1;
     }
-
+    
     @Override
     public boolean updateStatus(SaleOrder saleOrder) {
-        // Convert the domain model to a DO
-        SaleOrderDO saleOrderDO = SaleOrderConverter.toDO(saleOrder);
-
-        // Should be exactly 1 row affected
+        // 将 domain model 转换为 DO
+        SaleOrderDO saleOrderDO = InfraConverter.toSaleOrderDO(saleOrder);
+        
+        // 更新订单状态，并检查是否更新成功
         int effectedRows = saleOrderMapper.updateStatus(saleOrderDO);
         return effectedRows == 1;
     }

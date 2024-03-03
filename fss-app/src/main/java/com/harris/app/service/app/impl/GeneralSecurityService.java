@@ -1,5 +1,6 @@
-package com.harris.app.service.security;
+package com.harris.app.service.app.impl;
 
+import com.harris.app.service.app.SecurityService;
 import org.springframework.stereotype.Service;
 
 @Service

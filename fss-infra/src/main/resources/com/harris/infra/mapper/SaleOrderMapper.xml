@@ -4,6 +4,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.harris.infra.mapper.SaleOrderMapper">
+    <!-- 定义SQL片段，列出所有字段，便于复用 -->
     <sql id="ALL_COLUMNS">
         id,
         item_id,
@@ -18,6 +19,7 @@
         create_time
     </sql>
 
+    <!-- 根据订单ID查询订单，返回SaleOrderDO对象 -->
     <select id="getOrderById" resultType="com.harris.infra.model.SaleOrderDO"
             parameterType="java.lang.Long">
         SELECT *
@@ -25,6 +27,7 @@
         WHERE id = #{orderId}
     </select>
 
+    <!-- 根据条件查询订单列表，支持关键字搜索和状态过滤，实现分页 -->
     <select id="getOrdersByCondition" resultType="com.harris.infra.model.SaleOrderDO">
         SELECT * FROM sale_order WHERE 1=1
         <if test="keyword != null">
@@ -37,6 +40,7 @@
         LIMIT #{offset},#{pageSize}
     </select>
 
+    <!-- 根据条件统计订单数量，用于分页 -->
     <select id="countOrdersByCondition" resultType="java.lang.Integer">
         SELECT count(*) FROM sale_order WHERE 1=1
         <if test="keyword != null">
@@ -47,6 +51,7 @@
         </if>
     </select>
 
+    <!-- 插入新订单 -->
     <insert id="insertOrder" parameterType="com.harris.infra.model.SaleOrderDO">
         INSERT INTO sale_order (
         <include refid="ALL_COLUMNS"/>
@@ -65,11 +70,12 @@
         )
     </insert>
 
+    <!-- 更新订单状态 -->
     <update id="updateStatus" parameterType="com.harris.infra.model.SaleOrderDO">
         UPDATE sale_order SET modified_time = now()
         <if test="status != null">
             ,`status` = #{status,jdbcType=INTEGER}
         </if>
-        where id = #{id}
+        WHERE id = #{id}
     </update>
 </mapper>

@@ -7,9 +7,11 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.actuate.autoconfigure.metrics.MeterRegistryCustomizer;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication(scanBasePackages = {"com.harris", "com.alibaba.cola"})
 @MapperScan("com.harris.infra.mapper")
+@EnableScheduling
 public class FlashSaleApplication {
 
     public static void main(String[] args) {

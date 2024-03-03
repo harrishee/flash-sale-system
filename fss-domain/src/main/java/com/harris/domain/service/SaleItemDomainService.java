@@ -5,40 +5,18 @@ import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.entity.SaleItem;
 
 public interface SaleItemDomainService {
-    /**
-     * Retrieve item by id.
-     *
-     * @param itemId The item id
-     * @return The SaleItem
-     */
+    // 根据 商品ID 查询 商品
     SaleItem getItem(Long itemId);
-
-    /**
-     * Retrieve a paginated list of SaleItem by the given condition.
-     *
-     * @param pageQuery The page query condition
-     * @return The PageResult with SaleItems and the total count
-     */
+    
+    // 根据 页面查询条件 查询 商品列表 并返回分页结果
     PageResult<SaleItem> getItems(PageQuery pageQuery);
-
-    /**
-     * Publish a SaleItem and publish a publish item event.
-     *
-     * @param saleItem The SaleItem
-     */
+    
+    // 根据 商品 发布 商品
     void publishItem(SaleItem saleItem);
-
-    /**
-     * Online a SaleItem and publish a online item event.
-     *
-     * @param itemId The item ID
-     */
+    
+    // 根据 商品ID 上线 商品
     void onlineItem(Long itemId);
-
-    /**
-     * Offline a SaleItem and publish a offline item event.
-     *
-     * @param itemId The item ID
-     */
+    
+    // 根据 商品ID 下线 商品
     void offlineItem(Long itemId);
 }

@@ -7,43 +7,18 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SaleOrderRepository {
-    /**
-     * Find a sale order by its ID.
-     *
-     * @param orderId The order ID
-     * @return Optional object of the sale order
-     */
+    // 根据 订单ID 查询 订单
     Optional<SaleOrder> findOrderById(Long orderId);
-
-    /**
-     * Find sale orders by the given condition.
-     *
-     * @param pageQuery The condition
-     * @return List of sale orders
-     */
-    List<SaleOrder> findOrdersByCondition(PageQuery pageQuery);
-
-    /**
-     * Count total sale orders by the given condition.
-     *
-     * @param pageQuery The condition
-     * @return The count of sale orders
-     */
+    
+    // 根据 页面查询条件 查询 订单列表
+    List<SaleOrder> findAllOrderByCondition(PageQuery pageQuery);
+    
+    // 根据 页面查询条件 查询 订单数量
     int countOrdersByCondition(PageQuery pageQuery);
-
-    /**
-     * Saves a new sale order to DB.
-     *
-     * @param saleOrder The sale order
-     * @return The count of effected rows
-     */
+    
+    // 保存 订单
     boolean saveOrder(SaleOrder saleOrder);
-
-    /**
-     * Updates the status of a sale order.
-     *
-     * @param saleOrder The sale order
-     * @return The count of effected rows
-     */
+    
+    // 更新 订单状态
     boolean updateStatus(SaleOrder saleOrder);
 }

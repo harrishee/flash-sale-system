@@ -20,10 +20,10 @@
     </properties>
 
     <modules>
-        <module>fss-infra</module>
-        <module>fss-domain</module>
         <module>fss-app</module>
         <module>fss-controller</module>
+        <module>fss-domain</module>
+        <module>fss-infra</module>
         <module>fss-start</module>
     </modules>
 

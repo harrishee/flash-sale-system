@@ -9,18 +9,18 @@
         <version>0.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>app</artifactId>
+    <artifactId>fss-app</artifactId>
     <name>fss-app</name>
 
     <dependencies>
         <dependency>
             <groupId>com.harris</groupId>
-            <artifactId>domain</artifactId>
+            <artifactId>fss-domain</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.harris</groupId>
-            <artifactId>infra</artifactId>
+            <artifactId>fss-infra</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>

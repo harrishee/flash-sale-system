@@ -11,28 +11,24 @@ import java.util.concurrent.TimeUnit;
 public class SlidingWindowLimitServiceImpl implements SlidingWindowLimitService {
     @Resource
     private RedisTemplate<String, Object> redisTemplate;
-
+    
     @Override
     public boolean pass(String userActionKey, int period, int size) {
-        // Current time in milliseconds
-        long current = System.currentTimeMillis();
-        // Calculate the length of the window in milliseconds
-        long length = (long) period * size;
-        // Calculate the start of the window
-        long start = current - length;
-        // Calculate expiration time for the Redis key
-        long expireTime = length + period;
-
-        // Add the current timestamp to the Redis sorted set
+        long current = System.currentTimeMillis(); // 当前时间（毫秒）
+        long length = (long) period * size; // 计算窗口长度（毫秒）
+        long start = current - length; // 计算窗口开始时间
+        long expireTime = length + period; // 计算Redis键的过期时间
+        
+        // 将当前时间戳添加到Redis有序集合
         redisTemplate.opsForZSet().add(userActionKey, String.valueOf(current), current);
-        // Remove all elements in the Redis sorted set with a score between [0, start]
+        // 移除有序集合中分数在[0, start]之间的所有元素
         redisTemplate.opsForZSet().removeRangeByScore(userActionKey, 0, start);
-        // Get the number of elements in the Redis sorted set
+        // 获取有序集合中的元素数量
         Long count = redisTemplate.opsForZSet().zCard(userActionKey);
-        // Set the expiration time for the Redis key
+        // 设置Redis键的过期时间
         redisTemplate.expire(userActionKey, expireTime, TimeUnit.MILLISECONDS);
-
-        // Return false if count is null or if the count exceeds the size limit.
+        
+        // 如果count为null或者元素数量超过了大小限制，则返回false
         return count != null && count <= size;
     }
 }

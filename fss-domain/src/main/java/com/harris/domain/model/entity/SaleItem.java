@@ -22,7 +22,7 @@ public class SaleItem implements Serializable {
     private Long activityId;
     private Date startTime;
     private Date endTime;
-
+    
     public boolean invalidParams() {
         return StringUtils.isEmpty(itemTitle) ||
                 initialStock == null || initialStock <= 0 ||
@@ -33,11 +33,11 @@ public class SaleItem implements Serializable {
                 startTime == null || endTime == null ||
                 endTime.before(startTime) || endTime.before(new Date());
     }
-
+    
     public boolean isOnline() {
         return SaleItemStatus.isOnline(status);
     }
-
+    
     public boolean isInProgress() {
         Date now = new Date();
         return startTime.before(now) && endTime.after(now);

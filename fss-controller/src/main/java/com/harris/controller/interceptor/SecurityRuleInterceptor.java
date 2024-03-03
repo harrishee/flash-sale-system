@@ -16,29 +16,24 @@ import java.util.stream.Collectors;
 @Component
 public class SecurityRuleInterceptor implements HandlerInterceptor {
     @Resource
-    private List<SecurityChainService> securityChainServices;
-
+    private List<SecurityChainService> securityChainServices; // 注入一系列的安全链服务
+    
     private List<SecurityChainService> getSortedSecurityRules() {
-        // Get the list of security rule chain services
-        if (CollectionUtils.isEmpty(securityChainServices)) {
-            return new ArrayList<>();
-        }
-
-        // Sort the security rule chain services based on their order
-        return securityChainServices.stream()
-                .sorted(Comparator.comparing(SecurityChainService::getOrder))
-                .collect(Collectors.toList());
+        // 获取安全链服务列表
+        if (CollectionUtils.isEmpty(securityChainServices)) return new ArrayList<>();
+        
+        // 根据服务的顺序对安全链服务进行排序
+        return securityChainServices.stream().sorted(Comparator.comparing(SecurityChainService::getOrder)).collect(Collectors.toList());
     }
-
+    
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        // Iterate through the security rule chain services
+        // 遍历排序后的安全链服务
         for (SecurityChainService securityChainService : getSortedSecurityRules()) {
-            if (!securityChainService.run(request, response)) {
-                return false;
-            }
+            // 如果任何一个安全链服务返回false，则拦截请求
+            if (!securityChainService.run(request, response)) return false;
         }
-
-        return true;
+        
+        return true; // 所有安全链服务都通过后，继续执行后续处理流程
     }
 }

@@ -1,7 +1,7 @@
 package com.harris.app.model.result;
 
 import com.harris.app.exception.AppErrorCode;
-import com.harris.app.model.enums.PlaceOrderTaskStatus;
+import com.harris.app.model.PlaceOrderTaskStatus;
 import lombok.Data;
 import lombok.experimental.Accessors;
 

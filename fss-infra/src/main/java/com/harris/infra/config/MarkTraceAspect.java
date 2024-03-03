@@ -18,33 +18,23 @@ import java.util.UUID;
 @Component
 public class MarkTraceAspect {
     private static final String MDC_TRACE_ID = "traceId";
-
-    /**
-     * Pointcut that matches methods annotated with @MarkTrace.
-     * It is used to define where advice should be applied.
-     */
+    
     @Pointcut("@annotation(com.harris.infra.config.MarkTrace)")
     public void traceMethod() {
+        // 定义切点，针对使用@MarkTrace注解的方法
     }
-
-    /**
-     * Before advice that runs before methods matched by the traceMethod pointcut.
-     * It checks if a trace ID is not already present in MDC, and if not,
-     * it generates a new trace ID and adds it to the MDC.
-     */
+    
     @Before("traceMethod()")
     public void before() {
+        // 方法执行前，向MDC中添加唯一的traceId
         if (MDC.get(MDC_TRACE_ID) == null) {
             MDC.put(MDC_TRACE_ID, UUID.randomUUID().toString().replace("-", ""));
         }
     }
-
-    /**
-     * After returning advice that runs after methods matched by the traceMethod pointcut.
-     * It removes the trace ID from the MDC, ensuring it's not used for subsequent unrelated log entries.
-     */
+    
     @AfterReturning(pointcut = "traceMethod()")
     public void after() {
+        // 方法执行后，从MDC中移除traceId
         MDC.remove(MDC_TRACE_ID);
     }
 }

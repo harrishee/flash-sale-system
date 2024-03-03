@@ -11,16 +11,16 @@ import javax.annotation.Resource;
 @Configuration
 public class SecurityConfig implements WebMvcConfigurer {
     @Resource
-    private AuthInterceptor authInterceptor;
-
+    private AuthInterceptor authInterceptor; // 注入认证拦截器
+    
     @Resource
-    private SecurityRuleInterceptor securityRuleInterceptor;
-
+    private SecurityRuleInterceptor securityRuleInterceptor; // 注入安全规则拦截器
+    
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // Add the authentication interceptor and set the path patterns to all paths
+        // 注册认证拦截器，并设置其应用到所有的路径上
         registry.addInterceptor(authInterceptor).addPathPatterns("/**");
-        // Add the security rules interceptor and set the path patterns to all paths
+        // 注册安全规则拦截器，并设置其也应用到所有的路径上
         registry.addInterceptor(securityRuleInterceptor).addPathPatterns("/**");
     }
 }

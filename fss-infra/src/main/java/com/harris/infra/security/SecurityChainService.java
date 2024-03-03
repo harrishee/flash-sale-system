@@ -4,23 +4,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Service for security rule chain execution.
- * Now it only returns true for run and 0 for order.
+ * 用于执行安全规则链的服务，演示作用：
+ * - run 方法返回 true，表示安全检查通过
+ * - getOrder 方法返回 0，表示优先级顺序
  */
 public interface SecurityChainService {
-    /**
-     * Executes the security rule chain for the given request and response.
-     *
-     * @param request  The HTTP request
-     * @param response The HTTP response
-     * @return Execution result
-     */
     boolean run(HttpServletRequest request, HttpServletResponse response);
-
-    /**
-     * Execution order of the security chain.
-     *
-     * @return Execution order
-     */
+    
     int getOrder();
 }

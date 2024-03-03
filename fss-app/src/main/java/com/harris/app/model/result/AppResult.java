@@ -7,7 +7,6 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class AppResult {
-    private static final long serialVersionUID = 1L;
     private boolean success;
     private String code;
     private String message;

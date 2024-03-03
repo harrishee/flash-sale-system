@@ -10,8 +10,9 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class LogbackConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // Add the logback interceptor and set the path patterns to all paths
+        // 创建 LogbackInterceptor 的实例并注册到 Spring MVC 的拦截器注册表中
         InterceptorRegistration registration = registry.addInterceptor(new LogbackInterceptor());
+        // 设置这个拦截器应用到所有的路径上
         registration.addPathPatterns("/**");
     }
 }

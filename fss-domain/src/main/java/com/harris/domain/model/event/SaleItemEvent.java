@@ -9,18 +9,14 @@ import lombok.Data;
 public class SaleItemEvent implements DomainEventI {
     private SaleItem saleItem;
     private SaleItemEventType saleItemEventType;
-
+    
     public Long getId() {
-        if (saleItem == null) {
-            return null;
-        }
+        if (saleItem == null) return null;
         return saleItem.getId();
     }
-
+    
     public Long getActivityId() {
-        if (saleItem == null) {
-            return null;
-        }
+        if (saleItem == null) return null;
         return saleItem.getActivityId();
     }
 }

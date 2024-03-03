@@ -11,19 +11,11 @@ import org.springframework.context.annotation.Configuration;
 public class RedissonConfig {
     @Value("${spring.redis.address}")
     private String redisAddress;
-
-    /**
-     * Creates a RedissonClient bean for interacting with Redis.
-     * This client provides various Redis operations and uses a single server configuration.
-     *
-     * @return Configured RedissonClient instance
-     */
+    
     @Bean
     public RedissonClient redissonClient() {
+        // 配置并创建RedissonClient实例，用于操作Redis
         Config config = new Config();
-
-        // Configuring Redisson to use a single Redis server.
-        // The address of the Redis server and the database index (0 in this case) are set here.
         config.useSingleServer().setAddress(redisAddress).setDatabase(0);
         return Redisson.create(config);
     }

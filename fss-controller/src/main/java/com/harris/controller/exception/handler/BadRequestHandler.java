@@ -20,34 +20,32 @@ import java.lang.reflect.UndeclaredThrowableException;
 @Slf4j
 @ControllerAdvice
 public class BadRequestHandler extends ResponseEntityExceptionHandler {
+    // 定义一个异常处理方法，处理一系列自定义异常
     @ExceptionHandler({FlowException.class, AuthException.class, BizException.class, DomainException.class})
     protected ResponseEntity<Object> handleConflict(RuntimeException e, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse();
-
-        if (e instanceof UndeclaredThrowableException) {
-            // Handling for UndeclaredThrowableException wrapping a FlowException
-            if (((UndeclaredThrowableException) e).getUndeclaredThrowable() instanceof FlowException) {
-                errorResponse.setErrCode(ErrorCode.LIMIT_ERROR.getCode());
-                errorResponse.setErrMessage(ErrorCode.LIMIT_ERROR.getMessage());
-            }
+        ErrorResponse errorResponse = new ErrorResponse(); // 创建错误响应对象
+        
+        // 特殊处理UndeclaredThrowableException异常，检查其内部是否包装了FlowException
+        if (e instanceof UndeclaredThrowableException && ((UndeclaredThrowableException) e).getUndeclaredThrowable() instanceof FlowException) {
+            // 设置错误代码和消息为限流错误
+            errorResponse.setErrCode(ErrorCode.LIMIT_ERROR.getCode());
+            errorResponse.setErrMessage(ErrorCode.LIMIT_ERROR.getMessage());
         } else if (e instanceof BizException || e instanceof DomainException) {
-            // Handling for business and domain exceptions
+            // 业务异常和领域异常的处理
             errorResponse.setErrCode(ErrorCode.BIZ_ERROR.getCode());
             errorResponse.setErrMessage(e.getMessage());
         } else if (e instanceof AuthException) {
-            // Handling for authentication exceptions
+            // 认证异常的处理
             errorResponse.setErrCode(ErrorCode.AUTH_ERROR.getCode());
             errorResponse.setErrMessage(ErrorCode.AUTH_ERROR.getMessage());
         }
-
+        
         log.error("BadRequestHandler: ", e);
-
-        // Creating HttpHeaders, setting content type to JSON
-        HttpHeaders httpHeaders = new HttpHeaders();
+        
+        HttpHeaders httpHeaders = new HttpHeaders(); // 设置响应头，指定内容类型为JSON
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-
-        // Returning error response with 400 BAD_REQUEST status
-        return handleExceptionInternal(e, JSON.toJSONString(errorResponse),
-                httpHeaders, HttpStatus.BAD_REQUEST, request);
+        
+        // 返回构建的错误响应，状态码为 400 BAD_REQUEST
+        return handleExceptionInternal(e, JSON.toJSONString(errorResponse), httpHeaders, HttpStatus.BAD_REQUEST, request);
     }
 }

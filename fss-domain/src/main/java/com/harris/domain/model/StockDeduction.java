@@ -6,12 +6,12 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class StockDeduction {
+    private Long userId;
     private Long itemId;
     private Integer quantity;
-    private Long userId;
     private Integer serialNo;
-
+    
     public boolean invalidParams() {
-        return itemId == null || quantity == null || quantity <= 0 || userId == null;
+        return userId == null || itemId == null || quantity == null || quantity <= 0;
     }
 }

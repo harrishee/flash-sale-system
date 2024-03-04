@@ -99,9 +99,9 @@ public class SaleActivitiesCacheService {
         log.info("应用层 tryUpdateActivitiesCache, 更新远程缓存: {}", pageNumber);
         
         // 获取 Redisson 分布式锁，锁的键由 预定义的前缀 + 页码 组成
-        DistributedLock distributedLock = distributedLockService.getDistributedLock(UPDATE_ACTIVITIES_CACHE_LOCK_KEY + pageNumber);
+        DistributedLock distributedLock = distributedLockService.getLock(UPDATE_ACTIVITIES_CACHE_LOCK_KEY + pageNumber);
         try {
-            // 尝试获取分布式锁，设置超时时间为500毫秒，等待时间为1000毫秒
+            // 尝试获取分布式锁
             boolean lockSuccess = distributedLock.tryLock(1, 5, TimeUnit.SECONDS);
             if (!lockSuccess) return new SaleActivitiesCache().tryLater();
             

@@ -41,7 +41,7 @@ public class StandardStockCacheService implements StockCacheService {
                     .build();
     
     static {
-        // 用于初始化或对齐库存
+        // 用于 预热 或 对齐 库存
         INIT_OR_ALIGN_STOCK_LUA = "if (redis.call('exists', KEYS[2]) == 1) then" +
                 "    return -997;" +
                 "end;" +
@@ -97,8 +97,12 @@ public class StandardStockCacheService implements StockCacheService {
         StockCache stockCache = STOCK_LOCAL_CACHE.getIfPresent(itemId);
         if (stockCache != null) return stockCache;
         
+        System.out.println("key: " + buildStockCacheKey(itemId));
         // 否则，从分布式缓存中获取可用库存数量，还不存在则返回 null
         Integer availableStockQuantity = distributedCacheService.getObject(buildStockCacheKey(itemId), Integer.class);
+        
+        System.out.println("availableStockQuantity: " + availableStockQuantity);
+        
         if (availableStockQuantity == null) return null;
         
         // 本地不存在，分布式存在，创建新的库存缓存对象并存入本地缓存
@@ -108,9 +112,9 @@ public class StandardStockCacheService implements StockCacheService {
     }
     
     @Override
-    public boolean alignStock(Long itemId) {
+    public boolean syncCachedStockToDB(Long itemId) {
         if (itemId == null) {
-            log.info("应用层 alignStock, 参数为空: [{}]", itemId);
+            log.info("应用层 syncCachedStockToDB, 参数 itemId 为空");
             return false;
         }
         
@@ -118,13 +122,11 @@ public class StandardStockCacheService implements StockCacheService {
             // 从领域服务获取销售项对象
             SaleItem saleItem = saleItemDomainService.getItem(itemId);
             if (saleItem == null) {
-                log.info("应用层 alignStock, 商品不存在: [{}]", itemId);
+                log.info("应用层 syncCachedStockToDB, 商品不存在: [itemId={}]", itemId);
                 return false;
             }
-            
-            //
             if (saleItem.getInitialStock() == null) {
-                log.info("应用层 alignStock, 商品库存未设置: [{}]", itemId);
+                log.info("应用层 syncCachedStockToDB, 商品库存未设置: [itemId={}]", itemId);
                 return false;
             }
             
@@ -132,35 +134,28 @@ public class StandardStockCacheService implements StockCacheService {
             String stockCacheKey = buildStockCacheKey(itemId);
             String stockAlignKey = buildStockAlignKey(itemId);
             
-            // 准备Lua脚本的键和参数
+            // 执行 Lua 脚本进行库存对齐
             List<String> keys = Lists.newArrayList(stockCacheKey, stockAlignKey);
-            
-            // 执行Lua脚本进行库存对齐
             DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(INIT_OR_ALIGN_STOCK_LUA, Long.class);
             Long result = redisCacheService.getRedisTemplate().execute(redisScript, keys, saleItem.getAvailableStock());
             
-            // 库存校准失败
             if (result == null) {
-                log.info("应用层 alignStock，商品库存校准失败: [{},{},{}]", itemId, stockCacheKey, saleItem.getInitialStock());
+                log.info("应用层 syncCachedStockToDB，商品库存校准失败: [itemId={}, availableStock={}]", itemId, saleItem.getAvailableStock());
                 return false;
             }
-            
-            // 库存校准中
             if (result == -997) {
-                log.info("应用层 alignStock，已在校准中，本次校准取消: [{},{},{}]", itemId, stockCacheKey, saleItem.getInitialStock());
+                log.info("应用层 syncCachedStockToDB，已在校准中，本次校准取消: [itemId={}, availableStock={}]", itemId, saleItem.getAvailableStock());
                 return true;
             }
-            
-            // 库存校准成功
             if (result == 1) {
-                // log.info("应用层 alignStock，商品库存校准成功: [{},{},{}]", itemId, stockCacheKey, saleItem.getInitialStock());
+                // log.info("应用层 syncCachedStockToDB，商品库存校准成功: [itemId={}, availableStock={}]", itemId, saleItem.getAvailableStock());
                 return true;
             }
             
             // 其他情况返回失败
             return false;
         } catch (Exception e) {
-            log.error("应用层 alignStock, 商品库存校准异常: [{}]", itemId, e);
+            log.error("应用层 syncCachedStockToDB, 商品库存校准异常: [itemId={}]", itemId, e);
             return false;
         }
     }

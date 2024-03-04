@@ -12,35 +12,36 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Component
-public class StockAlignScheduler {
+public class onlineItemAlignScheduler {
     @Resource
-    private SaleItemDomainService saleItemDomainService; // 注入商品领域服务，用于获取商品信息
+    private SaleItemDomainService saleItemDomainService;
     
     @Resource
-    private StockCacheService stockCacheService; // 注入库存缓存服务，用于校准库存数据
+    private StockCacheService stockCacheService;
     
     @MarkTrace
     @Scheduled(cron = "*/2 * * * * ?") // 定时任务，每 2 秒执行一次这个方法
-    public void alignStockTask() {
-        // log.info("应用层 alignStockTask，校准库存缓存开始");
+    public void onlineItemAlignTask() {
+        // log.info("应用层调度 onlineItemAlignTask，已上线商品库存校准调度");
         
-        // 调用领域服务获取在线商品列表
+        // 调用领域服务获取所有 已上线 的商品列表
         PageQuery pageQuery = new PageQuery();
         pageQuery.setStatus(SaleItemStatus.ONLINE.getCode());
         PageResult<SaleItem> pageResult = saleItemDomainService.getItems(pageQuery);
+        List<Long> ids = new ArrayList<>();
         
-        // 遍历商品列表，对每个商品执行库存校准操作
         pageResult.getData().forEach(saleItem -> {
-            // 调用库存缓存服务进行库存校准，返回校准是否成功
-            boolean result = stockCacheService.alignStock(saleItem.getId());
-            if (!result) {
-                log.info("应用层 alignStockTask，校准库存失败: {},{}", saleItem.getId(), saleItem.getAvailableStock());
-                return;
-            }
-            // log.info("应用层 alignStockTask，校准库存完成: {},{}", saleItem.getId(), saleItem.getAvailableStock());
+            // 确保缓存中的库存数据与数据库中的实际库存数据保持一致
+            boolean result = stockCacheService.syncCachedStockToDB(saleItem.getId());
+            if (!result) log.info("应用层调度 onlineItemAlignTask，已上线商品库存校准失败: [itemId={}]", saleItem.getId());
+            else ids.add(saleItem.getId());
         });
+        
+        // log.info("应用层调度 onlineItemAlignTask，已上线商品库存校准调度完成: [total={}, itemIds={}]", pageResult.getTotal(), ids);
     }
 }

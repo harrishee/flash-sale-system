@@ -37,7 +37,7 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
     private static final String INCREMENT_TOKEN_LUA;
     
     // 本地缓存，用于临时存储订单令牌数，以减少对外部系统的访问次数
-    private static final Cache<Long, Integer> orderTokenLocalCache =
+    private static final Cache<Long, Integer> ORDER_TOKEN_LOCAL_CACHE =
             CacheBuilder.newBuilder()
                     .initialCapacity(20)
                     .concurrencyLevel(5)
@@ -93,11 +93,12 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
         // 检查任务是否已经被提交过
         String taskKey = buildOrderTaskKey(placeOrderTask.getPlaceOrderTaskId());
         Integer taskIdSubmitted = redisCacheService.getObject(taskKey, Integer.class);
-        if (taskIdSubmitted != null) return OrderSubmitResult.error(AppErrorCode.REDUNDANT_SUBMIT);
+        // if (taskIdSubmitted != null) return OrderSubmitResult.error(AppErrorCode.REDUNDANT_SUBMIT);
         
         // 获取可用的订单令牌数
         Integer availableOrderToken = getAvailableOrderTokens(placeOrderTask.getItemId());
         if (availableOrderToken == null || availableOrderToken == 0) {
+            log.info("应用层 submit, 库存不足: [availableOrderToken={}, placeOrderTask={}]", availableOrderToken, placeOrderTask);
             return OrderSubmitResult.error(AppErrorCode.ORDER_TOKENS_NOT_AVAILABLE);
         }
         
@@ -137,7 +138,8 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
     
     private Integer getAvailableOrderTokens(Long itemId) {
         // 从本地缓存中获取可用的订单令牌数
-        Integer availableOrderToken = orderTokenLocalCache.getIfPresent(itemId);
+        Integer availableOrderToken = ORDER_TOKEN_LOCAL_CACHE.getIfPresent(itemId);
+        System.out.println("availableOrderToken " + availableOrderToken);
         if (availableOrderToken != null) return availableOrderToken;
         
         // 如果本地缓存没有，则从外部系统刷新
@@ -146,14 +148,14 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
     
     private synchronized Integer refreshLocalAvailableTokens(Long itemId) {
         // 再次检查本地缓存，以防止在等待锁的过程中已经被其他线程更新
-        Integer availableOrderToken = orderTokenLocalCache.getIfPresent(itemId);
+        Integer availableOrderToken = ORDER_TOKEN_LOCAL_CACHE.getIfPresent(itemId);
         if (availableOrderToken != null) return availableOrderToken;
         
         // 从外部系统获取最新的可用令牌数，并更新本地缓存
         Integer latestToken = redisCacheService.getObject(buildItemAvailableTokenKey(itemId), Integer.class);
         if (latestToken != null) {
             //
-            orderTokenLocalCache.put(itemId, latestToken);
+            ORDER_TOKEN_LOCAL_CACHE.put(itemId, latestToken);
             return latestToken;
         }
         
@@ -163,21 +165,23 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
     
     private Integer refreshLatestAvailableTokens(Long itemId) {
         // 获取 Redisson 分布式锁
-        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildRefreshTokensLockKey(itemId));
+        DistributedLock distributedLock = distributedLockService.getLock(buildRefreshTokensLockKey(itemId));
         try {
-            // 尝试获取分布式锁，设置超时时间为500毫秒，等待时间为1000毫秒
+            // 尝试获取分布式锁
             boolean lockSuccess = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!lockSuccess) return null;
             
             // 从库存缓存服务获取最新的库存情况，并根据库存情况更新令牌数
             StockCache stockCache = stockCacheService.getStockCache(null, itemId);
-            if (stockCache != null && stockCache.isSuccess() && stockCache.getAvailableStockQuantity() != null) {
+            System.out.println("stockCache " + stockCache);
+            if (stockCache != null && stockCache.isSuccess() && stockCache.getAvailableStock() != null) {
                 // 计算 最新的可用令牌数为库存数量的 1.5 倍
-                Integer latestToken = (int) Math.ceil(stockCache.getAvailableStockQuantity() * 1.5);
+                Integer latestToken = (int) Math.ceil(stockCache.getAvailableStock() * 1.5);
+                System.out.println("latestToken " + latestToken + " availableStockQuantity " + stockCache.getAvailableStock());
                 // 将最新的可用令牌数存入缓存，有效期为 24 小时
                 redisCacheService.put(buildItemAvailableTokenKey(itemId), latestToken, CacheConstant.HOURS_24);
                 // 同样也将最新的可用令牌数存入本地缓存
-                orderTokenLocalCache.put(itemId, latestToken);
+                ORDER_TOKEN_LOCAL_CACHE.put(itemId, latestToken);
                 return latestToken;
             }
         } catch (Exception e) {

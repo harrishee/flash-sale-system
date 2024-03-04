@@ -7,7 +7,6 @@ import java.util.Date;
 
 @Data
 public class SaleOrderDO implements Serializable {
-    private static final long serialVersionUID = 1L;
     private Long id;
     private Long itemId;
     private Long activityId;

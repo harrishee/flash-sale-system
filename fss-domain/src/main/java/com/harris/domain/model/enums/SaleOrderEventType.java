@@ -6,9 +6,9 @@ import lombok.Getter;
 public enum SaleOrderEventType {
     CREATED(0),
     CANCEL(1);
-
+    
     private final Integer code;
-
+    
     SaleOrderEventType(Integer code) {
         this.code = code;
     }

@@ -14,17 +14,11 @@ public class PageQuery {
     private Integer status;
     private Long activityId;
     private Integer stockWarmUp;
-
+    
     public PageQuery validateParams() {
-        if (this.pageSize == null) {
-            this.pageSize = 10;
-        }
-        if (this.pageSize > MAX_PAGE_SIZE_LIMIT) {
-            this.pageSize = 100;
-        }
-        if (this.pageNumber == null || this.pageNumber == 0) {
-            this.pageNumber = 1;
-        }
+        if (this.pageSize == null) this.pageSize = 10;
+        if (this.pageSize > MAX_PAGE_SIZE_LIMIT) this.pageSize = 100;
+        if (this.pageNumber == null || this.pageNumber == 0) this.pageNumber = 1;
         this.offset = (pageNumber - 1) * pageSize;
         return this;
     }

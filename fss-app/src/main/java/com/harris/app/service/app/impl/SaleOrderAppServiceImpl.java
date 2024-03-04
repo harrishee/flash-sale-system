@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SaleOrderAppServiceImpl implements SaleOrderAppService {
-    // 分布式锁的 key 的前缀
     private static final String PLACE_ORDER_LOCK_KEY = "PLACE_ORDER_LOCK_KEY";
     
     @Resource
@@ -54,128 +53,120 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
     private DistributedLockService distributedLockService;
     
     @Override
+    public AppMultiResult<SaleOrderDTO> listOrdersByUser(Long userId, SaleOrdersQuery saleOrdersQuery) {
+        if (userId == null || saleOrdersQuery == null) return AppMultiResult.empty();
+        log.info("应用层 listOrdersByUser: [userId={}, saleOrdersQuery={}]", userId, saleOrdersQuery);
+        
+        // 调用领域服务的 订单列表 方法
+        PageResult<SaleOrder> orderPageResult = saleOrderDomainService.getOrders(userId, AppConverter.toPageQuery(saleOrdersQuery));
+        
+        List<SaleOrderDTO> saleOrderDTOS = orderPageResult.getData().stream().map(AppConverter::toDTO).collect(Collectors.toList());
+        log.info("应用层 listOrdersByUser，成功: [userId={}, saleOrdersQuery={}, total={}]", userId, saleOrdersQuery, orderPageResult.getTotal());
+        return AppMultiResult.of(saleOrderDTOS, orderPageResult.getTotal());
+    }
+    
+    @Override
     @Transactional
     public AppSingleResult<PlaceOrderResult> placeOrder(Long userId, PlaceOrderCommand placeOrderCommand) {
-        log.info("应用层 placeOrder: [{},{}]", userId, placeOrderCommand);
         if (userId == null || placeOrderCommand == null || placeOrderCommand.invalidParams()) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
+        log.info("应用层 placeOrder: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
         
-        // 获取 Redisson 分布式锁
-        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildPlaceOrderLockKey(userId));
+        // 获取 Redisson 分布式锁实例，key = PLACE_ORDER_LOCK_KEY + userId
+        DistributedLock rLock = distributedLockService.getLock(buildPlaceOrderLockKey(userId));
         try {
-            // 尝试获取分布式锁，设置超时时间为500毫秒，等待时间为1000毫秒
-            boolean lockSuccess = distributedLock.tryLock(5, 5, TimeUnit.SECONDS);
-            if (!lockSuccess) {
-                return AppSingleResult.error(AppErrorCode.LOCK_FAILED.getErrCode(), AppErrorCode.LOCK_FAILED.getErrDesc());
-            }
+            // 尝试获取分布式锁
+            boolean lockSuccess = rLock.tryLock(5, 5, TimeUnit.SECONDS);
+            if (!lockSuccess) return AppSingleResult.error(AppErrorCode.LOCK_FAILED);
             
             // 检查用户是否通过风控检查，这里只是为了演示，直接返回 true
             boolean notRisk = securityService.inspectRisksByPolicy(userId);
             if (!notRisk) {
-                log.info("应用层 placeOrder，风控检查失败: [{},{}]", userId, placeOrderCommand);
+                log.info("应用层 placeOrder，风控检查失败: [userId={}]", userId);
                 return AppSingleResult.error(AppErrorCode.PLACE_ORDER_FAILED);
             }
             
             // 调用下单服务
             PlaceOrderResult placeOrderResult = placeOrderService.doPlaceOrder(userId, placeOrderCommand);
             if (!placeOrderResult.isSuccess()) {
-                log.info("应用层 placeOrder，失败: [{},{}]", userId, placeOrderCommand);
+                log.info("应用层 placeOrder，失败: [userId={}]", userId);
                 return AppSingleResult.error(placeOrderResult.getCode(), placeOrderResult.getMessage());
             }
             
-            log.info("应用层 placeOrder，成功: [{},{}]", userId, placeOrderCommand);
+            log.info("应用层 placeOrder，成功: [userId={}, placeOrderResult={}]", userId, placeOrderResult);
             return AppSingleResult.ok(placeOrderResult);
         } catch (Exception e) {
-            log.error("应用层 placeOrder，异常: ", e);
+            log.error("应用层 placeOrder，异常: [userId={}] ", userId, e);
             return AppSingleResult.error(AppErrorCode.PLACE_ORDER_FAILED);
         } finally {
-            distributedLock.unlock();
+            rLock.unlock();
         }
-    }
-    
-    @Override
-    public AppSingleResult<OrderHandleResult> getPlaceOrderTaskResult(Long userId, Long itemId, String placeOrderTaskId) {
-        log.info("应用层 getPlaceOrderTaskResult: [{},{},{}]", userId, itemId, placeOrderTaskId);
-        if (userId == null || itemId == null || StringUtils.isEmpty(placeOrderTaskId)) {
-            throw new BizException(AppErrorCode.INVALID_PARAMS);
-        }
-        
-        // 如果下单服务是 QueuedPlaceOrderService 类型的
-        if (placeOrderService instanceof QueuedPlaceOrderService) {
-            // 强制转换为 QueuedPlaceOrderService 类型，然后调用其 getPlaceOrderResult 方法
-            QueuedPlaceOrderService queuedPlaceOrderService = (QueuedPlaceOrderService) placeOrderService;
-            OrderHandleResult orderHandleResult = queuedPlaceOrderService.getPlaceOrderResult(userId, itemId, placeOrderTaskId);
-            
-            if (!orderHandleResult.isSuccess()) {
-                log.info("应用层 getPlaceOrderTaskResult，失败: [{},{},{}]", userId, itemId, placeOrderTaskId);
-                return AppSingleResult.error(orderHandleResult.getCode(), orderHandleResult.getMessage(), orderHandleResult);
-            }
-            
-            log.info("应用层 getPlaceOrderTaskResult，成功: [{},{},{}]", userId, itemId, placeOrderTaskId);
-            return AppSingleResult.ok(orderHandleResult);
-        } else {
-            log.info("应用层 getPlaceOrderTaskResult，下单类型不支持: [{},{},{}]", userId, itemId, placeOrderTaskId);
-            return AppSingleResult.error(AppErrorCode.ORDER_TYPE_NOT_SUPPORT);
-        }
-    }
-    
-    @Override
-    public AppMultiResult<SaleOrderDTO> listOrdersByUser(Long userId, SaleOrdersQuery saleOrdersQuery) {
-        log.info("应用层 listOrdersByUser: [{},{}]", userId, saleOrdersQuery);
-        
-        // 调用领域服务获取订单列表
-        PageResult<SaleOrder> orderPageResult = saleOrderDomainService.getOrders(userId, AppConverter.toPageQuery(saleOrdersQuery));
-        
-        // 转换领域对象为 DTO
-        List<SaleOrderDTO> saleOrderDTOS = orderPageResult.getData().stream().map(AppConverter::toDTO).collect(Collectors.toList());
-        
-        log.info("应用层 listOrdersByUser，成功: [{},{}]", userId, saleOrdersQuery);
-        return AppMultiResult.of(saleOrderDTOS, orderPageResult.getTotal());
     }
     
     @Override
     @Transactional
     public AppResult cancelOrder(Long userId, Long orderId) {
-        log.info("应用层 cancelOrder: [{},{}]", userId, orderId);
         if (userId == null || orderId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
+        log.info("应用层 cancelOrder: [userId={}, orderId={}]", userId, orderId);
         
-        // 调用领域服务获取订单
+        // 调用领域服务的 获取订单 方法
         SaleOrder saleOrder = saleOrderDomainService.getOrder(userId, orderId);
-        if (saleOrder == null) {
-            log.info("应用层 cancelOrder 订单不存在: [{},{}]", userId, orderId);
-            throw new BizException(AppErrorCode.ORDER_NOT_FOUND);
-        }
+        if (saleOrder == null) throw new BizException(AppErrorCode.ORDER_NOT_FOUND);
         
-        // 调用领域服务取消订单
+        // 调用领域服务的 取消订单 方法
         boolean cancelSuccess = saleOrderDomainService.cancelOrder(userId, orderId);
         if (!cancelSuccess) {
-            log.info("应用层 cancelOrder 订单取消失败: [{},{}]", userId, orderId);
+            log.info("应用层 cancelOrder 订单取消失败: [userId={}, orderId={}]", userId, orderId);
             return AppResult.error(AppErrorCode.ORDER_CANCEL_FAILED);
         }
         
         // 创建库存扣减对象
         StockDeduction stockDeduction = new StockDeduction().setItemId(saleOrder.getItemId()).setQuantity(saleOrder.getQuantity()).setUserId(userId);
         
-        // 调用领域服务恢复库存
+        // 调用领域服务的 恢复库存 方法
         boolean revertSuccess = stockDomainService.revertStock(stockDeduction);
         if (!revertSuccess) {
-            log.info("应用层 cancelOrder 库存恢复失败: [{},{}]", userId, orderId);
+            log.info("应用层 cancelOrder 库存恢复失败: [userId={}, orderId={}]", userId, orderId);
             throw new BizException(AppErrorCode.ORDER_CANCEL_FAILED);
         }
         
-        // 调用缓存服务恢复库存
+        // 调用缓存服务的 恢复缓存库存 方法
         boolean cacheRevertSuccess = stockCacheService.revertStock(stockDeduction);
         if (!cacheRevertSuccess) {
-            log.info("应用层 cancelOrder Redis库存恢复失败: [{},{}]", userId, orderId);
+            log.info("应用层 cancelOrder 缓存库存恢复失败: [userId={}, orderId={}]", userId, orderId);
             throw new BizException(AppErrorCode.ORDER_CANCEL_FAILED);
         }
         
-        log.info("应用层 cancelOrder 订单取消成功: [{},{}]", userId, orderId);
+        log.info("应用层 cancelOrder 订单取消成功: [userId={}, orderId={}]", userId, orderId);
         return AppResult.ok();
     }
     
-    // 构建用于分布式锁的 key
+    @Override
+    public AppSingleResult<OrderHandleResult> getPlaceOrderTaskResult(Long userId, Long itemId, String placeOrderTaskId) {
+        if (userId == null || itemId == null || StringUtils.isEmpty(placeOrderTaskId)) {
+            throw new BizException(AppErrorCode.INVALID_PARAMS);
+        }
+        log.info("应用层 getPlaceOrderTaskResult: [userId={}, itemId={}, placeOrderTaskId={}]", userId, itemId, placeOrderTaskId);
+        
+        // 只有采用 消息队列 下单服务才支持获取下单任务结果
+        if (placeOrderService instanceof QueuedPlaceOrderService) {
+            // 调用 队列下单服务 获取下单任务结果
+            QueuedPlaceOrderService queuedPlaceOrderService = (QueuedPlaceOrderService) placeOrderService;
+            OrderHandleResult orderHandleResult = queuedPlaceOrderService.getPlaceOrderResult(userId, itemId, placeOrderTaskId);
+            if (!orderHandleResult.isSuccess()) {
+                log.info("应用层 getPlaceOrderTaskResult，失败: [userId={}, itemId={}, placeOrderTaskId={}]", userId, itemId, placeOrderTaskId);
+                return AppSingleResult.error(orderHandleResult.getCode(), orderHandleResult.getMessage(), orderHandleResult);
+            }
+            
+            log.info("应用层 getPlaceOrderTaskResult，成功: [userId={}, itemId={}, placeOrderTaskId={}]", userId, itemId, placeOrderTaskId);
+            return AppSingleResult.ok(orderHandleResult);
+        } else {
+            log.info("应用层 getPlaceOrderTaskResult，下单类型不支持: [userId={}] ", userId);
+            return AppSingleResult.error(AppErrorCode.ORDER_TYPE_NOT_SUPPORT);
+        }
+    }
+    
     private String buildPlaceOrderLockKey(Long userId) {
         return KeyUtil.link(PLACE_ORDER_LOCK_KEY, userId);
     }

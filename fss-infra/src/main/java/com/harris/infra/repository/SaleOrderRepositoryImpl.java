@@ -22,9 +22,7 @@ public class SaleOrderRepositoryImpl implements SaleOrderRepository {
     public Optional<SaleOrder> findOrderById(Long orderId) {
         // 从 mapper 中获取 DO
         SaleOrderDO saleOrderDO = saleOrderMapper.getOrderById(orderId);
-        if (saleOrderDO == null) {
-            return Optional.empty();
-        }
+        if (saleOrderDO == null) return Optional.empty();
         
         // 将 DO 转换为 domain model
         SaleOrder saleOrder = InfraConverter.toSaleOrderDomain(saleOrderDO);
@@ -42,7 +40,6 @@ public class SaleOrderRepositoryImpl implements SaleOrderRepository {
     
     @Override
     public int countOrdersByCondition(PageQuery pageQuery) {
-        // 从 mapper 中获取符合条件的订单数量
         return saleOrderMapper.countOrdersByCondition(pageQuery);
     }
     
@@ -62,7 +59,6 @@ public class SaleOrderRepositoryImpl implements SaleOrderRepository {
         SaleOrderDO saleOrderDO = InfraConverter.toSaleOrderDO(saleOrder);
         
         // 更新订单状态，并检查是否更新成功
-        int effectedRows = saleOrderMapper.updateStatus(saleOrderDO);
-        return effectedRows == 1;
+        return saleOrderMapper.updateStatus(saleOrderDO) == 1;
     }
 }

@@ -24,13 +24,13 @@ public class SaleItemEventHandler implements EventHandlerI<Response, SaleItemEve
     public Response execute(SaleItemEvent saleItemEvent) {
         log.info("应用层 itemEvent，接收商品事件: {}", JSON.toJSON(saleItemEvent));
 
-        if (saleItemEvent.getId() == null) {
+        if (saleItemEvent.getItemId() == null) {
             log.info("应用层 itemEvent，商品事件参数错误");
             return Response.buildSuccess();
         }
         
         // 调用商品缓存服务尝试更新指定商品ID的缓存
-        saleItemCacheService.tryUpdateItemCache(saleItemEvent.getId());
+        saleItemCacheService.tryUpdateItemCache(saleItemEvent.getItemId());
         
         // 调用商品缓存服务尝试更新指定活动ID的商品缓存
         saleItemsCacheService.tryUpdateItemsCache(saleItemEvent.getActivityId());

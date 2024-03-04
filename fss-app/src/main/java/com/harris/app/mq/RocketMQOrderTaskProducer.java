@@ -36,6 +36,8 @@ public class RocketMQOrderTaskProducer {
             placeOrderMQProducer.setNamesrvAddr(nameServer);
             placeOrderMQProducer.start();
             
+            System.out.println("MQ placeOrderMQProducer" + placeOrderMQProducer);
+            
             log.info("应用层 orderTaskProducer，初始化下单任务生产者成功: [{},{},{}]", nameServer, producerGroup, placeOrderTopic);
         } catch (Exception e) {
             log.error("应用层 orderTaskProducer，初始化下单任务生产者失败: [{},{},{}]", nameServer, producerGroup, placeOrderTopic, e);
@@ -57,9 +59,12 @@ public class RocketMQOrderTaskProducer {
         message.setTopic(placeOrderTopic);
         message.setBody(placeOrderTaskString.getBytes());
         
+        System.out.println("message " + message);
+        
         try {
             // 发送消息，并获取发送结果
             SendResult sendResult = placeOrderMQProducer.send(message);
+            System.out.println("sendResult " + sendResult);
             log.info("应用层 post，下单任务投递完成: [{},{}]", placeOrderTask.getPlaceOrderTaskId(), sendResult);
             
             // 根据发送结果判断是否发送成功

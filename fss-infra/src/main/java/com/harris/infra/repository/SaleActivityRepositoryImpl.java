@@ -22,9 +22,7 @@ public class SaleActivityRepositoryImpl implements SaleActivityRepository {
     public Optional<SaleActivity> findActivityById(Long activityId) {
         // 从 mapper 中获取 DO
         SaleActivityDO saleActivityDO = saleActivityMapper.getActivityById(activityId);
-        if (saleActivityDO == null) {
-            return Optional.empty();
-        }
+        if (saleActivityDO == null) return Optional.empty();
         
         // 将 DO 转换为 domain model
         SaleActivity saleActivity = InfraConverter.toSaleActivityDomain(saleActivityDO);
@@ -42,7 +40,6 @@ public class SaleActivityRepositoryImpl implements SaleActivityRepository {
     
     @Override
     public Integer countAllActivityByCondition(PageQuery pageQuery) {
-        // 从 mapper 中获取符合条件的活动数量
         return saleActivityMapper.countActivitiesByCondition(pageQuery);
     }
     
@@ -53,9 +50,9 @@ public class SaleActivityRepositoryImpl implements SaleActivityRepository {
         
         // 如果 活动ID 为空，则插入新的活动，并将 ID 设置到 domain model 中
         if (saleActivityDO.getId() == null) {
-            int effectedRows = saleActivityMapper.insertActivity(saleActivityDO);
+            int res = saleActivityMapper.insertActivity(saleActivityDO);
             saleActivity.setId(saleActivityDO.getId());
-            return effectedRows;
+            return res;
         }
         
         // 否则更新活动

@@ -17,7 +17,7 @@ public class SaleOrder implements Serializable {
     private Integer status;
     private Long userId;
     private Date createTime;
-
+    
     public boolean invalidParams() {
         return itemId == null || activityId == null ||
                 quantity == null || quantity <= 0 ||

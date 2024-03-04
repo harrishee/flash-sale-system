@@ -25,8 +25,8 @@ public class SaleItem implements Serializable {
     
     public boolean invalidParams() {
         return StringUtils.isEmpty(itemTitle) ||
-                initialStock == null || initialStock <= 0 ||
-                availableStock == null || availableStock <= 0 || availableStock > initialStock ||
+                initialStock == null || initialStock < 0 ||
+                availableStock == null || availableStock < 0 || availableStock > initialStock ||
                 originalPrice == null || originalPrice < 0 ||
                 salePrice == null || salePrice < 0 ||
                 activityId == null ||

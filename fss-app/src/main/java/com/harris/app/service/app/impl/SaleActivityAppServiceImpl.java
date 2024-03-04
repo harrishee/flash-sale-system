@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SaleActivityAppServiceImpl implements SaleActivityAppService {
-    // 分布式锁的 key 的前缀
     public static final String ACTIVITY_CREATE_LOCK = "ACTIVITY_CREATE_LOCK";
     public static final String ACTIVITY_MODIFICATION_LOCK = "ACTIVITY_MODIFICATION_LOCK";
     
@@ -60,243 +59,216 @@ public class SaleActivityAppServiceImpl implements SaleActivityAppService {
     
     @Override
     public AppSingleResult<SaleActivityDTO> getActivity(Long userId, Long activityId, Long version) {
-        log.info("应用层 getActivity: [{},{},{}]", userId, activityId, version);
         if (userId == null || activityId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
+        log.info("应用层 getActivity: [userId={}, activityId={}, version={}]", userId, activityId, version);
         
-        // 从缓存中检索活动缓存对象并检查是否存在
+        // 从缓存中获取 活动缓存对象
         SaleActivityCache activityCache = saleActivityCacheService.getActivityCache(activityId, version);
-        if (!activityCache.isExist()) {
-            log.info("应用层 getActivity，活动不存在: [{},{},{}]", userId, activityId, version);
+        if (!activityCache.isExist() || activityCache.getSaleActivity() == null) {
             throw new BizException(AppErrorCode.ACTIVITY_NOT_FOUND.getErrDesc());
         }
-        
-        // 如果活动缓存对象标志为稍后重试
         if (activityCache.isLater()) {
-            log.info("应用层 getActivity，请稍后重试: [{},{},{}]", userId, activityId, version);
+            log.info("应用层 getActivity，请稍后重试: [userId={}, activityId={}, version={}]", userId, activityId, version);
             return AppSingleResult.tryLater();
         }
         
-        // 从活动缓存对象中获取活动对象和版本号，然后转换为DTO对象
+        // 从 活动缓存对象 中获取 活动对象 和 版本号
         SaleActivity saleActivity = activityCache.getSaleActivity();
         SaleActivityDTO saleActivityDTO = AppConverter.toDTO(saleActivity);
         saleActivityDTO.setVersion(activityCache.getVersion());
         
-        log.info("应用层 getActivity，成功: [{},{},{}]", userId, activityId, version);
+        log.info("应用层 getActivity，成功: [userId={}, activityId={}, version={}]", userId, activityId, version);
         return AppSingleResult.ok(saleActivityDTO);
     }
     
     @Override
     public AppMultiResult<SaleActivityDTO> listActivities(Long userId, SaleActivitiesQuery saleActivitiesQuery) {
-        log.info("应用层 listActivities: [{},{}]", userId, saleActivitiesQuery);
         if (userId == null || saleActivitiesQuery == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
+        log.info("应用层 listActivities: [userId={}, saleActivitiesQuery={}]", userId, saleActivitiesQuery);
         
-        // 声明活动列表和总数变量
         List<SaleActivity> activities;
         Integer total;
         
-        // 如果是 第一页 且 不在线状态 的活动查询，从缓存中获取
-        // 第一页且不在线状态的活动查询，不需要实时数据，可以从缓存中获取
-        if (saleActivitiesQuery.isFirstPageQuery() &&
-                !Objects.equals(SaleActivityStatus.ONLINE.getCode(), saleActivitiesQuery.getStatus())) {
-            
-            // 获取页码和版本号
+        // 查询 第一页 且 不为ONLINE 的活动列表，走缓存，因为数据变更不频繁
+        if (saleActivitiesQuery.isFirstPageQuery() && !Objects.equals(SaleActivityStatus.ONLINE.getCode(), saleActivitiesQuery.getStatus())) {
+            log.info("应用层 listActivities，走缓存");
+            // 从缓存中获取 活动列表缓存对象
             Integer pageNumber = saleActivitiesQuery.getPageNumber();
             Long version = saleActivitiesQuery.getVersion();
-            
-            // 从缓存中获取活动列表缓存对象
             SaleActivitiesCache activitiesCache = saleActivitiesCacheService.getActivitiesCache(pageNumber, version);
+            if (activitiesCache.isLater()) return AppMultiResult.tryLater();
             
-            // 如果活动列表缓存对象标志为稍后重试
-            if (activitiesCache.isLater()) {
-                log.info("应用层 listActivities，请稍后重试: [{},{}]", userId, saleActivitiesQuery);
-                return AppMultiResult.tryLater();
-            }
-            
-            // 获取活动列表缓存对象中的活动列表和总数
+            // 获取缓存的结果
             activities = activitiesCache.getSaleActivities();
             total = activitiesCache.getTotal();
         } else {
-            // 将抢购品活动查询参数转换为领域层的分页查询对象，然后调用领域层的服务方法，获取抢购品活动分页结果
+            log.info("应用层 listActivities，走数据库");
+            // 从领域层获取 活动列表
             PageQuery pageQuery = AppConverter.toPageQuery(saleActivitiesQuery);
             PageResult<SaleActivity> activitiesPageResult = saleActivityDomainService.getActivities(pageQuery);
             
-            // 获取分页结果中的活动列表和总数
+            // 获取数据库的结果
             activities = activitiesPageResult.getData();
             total = activitiesPageResult.getTotal();
         }
         
-        // 将活动列表转换为DTO对象列表
         List<SaleActivityDTO> saleActivityDTOS = activities.stream().map(AppConverter::toDTO).collect(Collectors.toList());
-        
-        log.info("应用层 listActivities，成功: [{},{}]", userId, saleActivitiesQuery);
+        log.info("应用层 listActivities，成功: [uerId={}, total={}]", userId, total);
         return AppMultiResult.of(saleActivityDTOS, total);
     }
     
     @Override
     public AppResult publishActivity(Long userId, PublishActivityCommand publishActivityCommand) {
-        log.info("应用层 publishActivity: [{},{}]", userId, publishActivityCommand);
         if (userId == null || publishActivityCommand == null || publishActivityCommand.invalidParams()) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
+        log.info("应用层 publishActivity: [userId={}, publishActivityCommand={}]", userId, publishActivityCommand);
         
         // 进行用户权限认证，确保用户具有发布活动的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ACTIVITY_CREATE);
         if (!authResult.isSuccess()) throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         
-        // 获取 Redisson 分布式锁
-        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildCreateKey(userId));
+        // 获取 Redisson 分布式锁实例，key = ACTIVITY_CREATE_LOCK + userId
+        DistributedLock rLock = distributedLockService.getLock(buildCreateKey(userId));
         try {
-            // 尝试获取分布式锁，设置超时时间为500毫秒，等待时间为1000毫秒
-            boolean lockSuccess = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            // 尝试获取分布式锁
+            boolean lockSuccess = rLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!lockSuccess) throw new BizException(AppErrorCode.LOCK_FAILED);
             
-            // 转换成领域层的活动对象，然后调用领域层的 发布活动 方法
+            // 调用领域层的 发布活动 方法
             SaleActivity saleActivity = AppConverter.toDomainModel(publishActivityCommand);
             saleActivityDomainService.publishActivity(userId, saleActivity);
             
             log.info("应用层 publishActivity，成功: [{},{}]", userId, publishActivityCommand);
             return AppResult.ok();
         } catch (Exception e) {
-            log.error("应用层 publishActivity，异常: ", e);
+            log.error("应用层 publishActivity，异常: [userId={}] ", userId, e);
             throw new BizException(AppErrorCode.ACTIVITY_PUBLISH_FAILED);
         } finally {
-            distributedLock.unlock();
+            rLock.unlock();
         }
     }
     
     @Override
     public AppResult modifyActivity(Long userId, Long activityId, PublishActivityCommand publishActivityCommand) {
-        log.info("应用层 modifyActivity: [{},{},{}]", userId, activityId, publishActivityCommand);
         if (userId == null || publishActivityCommand == null || publishActivityCommand.invalidParams()) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
+        log.info("应用层 modifyActivity: [userId={}, activityId={}, publishActivityCommand={}]", userId, activityId, publishActivityCommand);
         
         // 进行用户权限认证，确保用户具有修改活动的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ACTIVITY_MODIFICATION);
         if (!authResult.isSuccess()) throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         
-        // 获取 Redisson 分布式锁
-        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildModificationKey(activityId));
+        // 获取 Redisson 分布式锁实例，key = ACTIVITY_MODIFICATION_LOCK + activityId
+        DistributedLock rLock = distributedLockService.getLock(buildModificationKey(activityId));
         try {
-            // 尝试获取分布式锁，设置超时时间为500毫秒，等待时间为1000毫秒
-            boolean lockSuccess = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            // 尝试获取分布式锁
+            boolean lockSuccess = rLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!lockSuccess) throw new BizException(AppErrorCode.LOCK_FAILED);
             
-            // 转换成领域层的活动对象并设置活动ID，然后调用领域层的 修改活动 方法
+            // 调用领域层的 修改活动 方法
             SaleActivity saleActivity = AppConverter.toDomainModel(publishActivityCommand);
             saleActivity.setId(activityId);
             saleActivityDomainService.modifyActivity(userId, saleActivity);
             
-            log.info("应用层 modifyActivity，成功: [{},{},{}]", userId, activityId, publishActivityCommand);
+            log.info("应用层 modifyActivity，成功: [userId={}, activityId={}, publishActivityCommand={}]", userId, activityId, publishActivityCommand);
             return AppResult.ok();
         } catch (Exception e) {
-            log.error("应用层 modifyActivity，异常: ", e);
+            log.error("应用层 modifyActivity，异常: [userId={}] ", userId, e);
             throw new BizException(AppErrorCode.ACTIVITY_MODIFY_FAILED);
         } finally {
-            distributedLock.unlock();
+            rLock.unlock();
         }
     }
     
     @Override
     public AppResult onlineActivity(Long userId, Long activityId) {
-        log.info("应用层 onlineActivity: [{},{}]", userId, activityId);
         if (userId == null || activityId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
+        log.info("应用层 onlineActivity: [userId={}, activityId={}]", userId, activityId);
         
         // 进行用户权限认证，确保用户具有上线活动的权限
-        AuthResult authResult = authService.auth(userId, ResourceEnum.ACTIVITY_CREATE);
+        AuthResult authResult = authService.auth(userId, ResourceEnum.ACTIVITY_MODIFICATION);
         if (!authResult.isSuccess()) throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         
-        // 获取 Redisson 分布式锁
-        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildModificationKey(activityId));
+        // 获取 Redisson 分布式锁实例，key = ACTIVITY_MODIFICATION_LOCK + activityId
+        DistributedLock rLock = distributedLockService.getLock(buildModificationKey(activityId));
         try {
-            // 尝试获取分布式锁，设置超时时间为500毫秒，等待时间为1000毫秒
-            boolean lockSuccess = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            // 尝试获取分布式锁
+            boolean lockSuccess = rLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!lockSuccess) throw new BizException(AppErrorCode.LOCK_FAILED);
             
             // 调用领域层的 上线活动 方法
             saleActivityDomainService.onlineActivity(userId, activityId);
             
-            log.info("应用层 onlineActivity，成功: [{},{}]", userId, activityId);
+            log.info("应用层 onlineActivity，成功: [userId={}, activityId={}]", userId, activityId);
             return AppResult.ok();
         } catch (Exception e) {
-            log.error("应用层 onlineActivity，异常: ", e);
+            log.error("应用层 onlineActivity，异常:[userId={}] ", userId, e);
             throw new BizException(AppErrorCode.ACTIVITY_MODIFY_FAILED);
         } finally {
-            distributedLock.unlock();
+            rLock.unlock();
         }
     }
     
     @Override
     public AppResult offlineActivity(Long userId, Long activityId) {
-        log.info("应用层 offlineActivity: [{},{}]", userId, activityId);
         if (userId == null || activityId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
+        log.info("应用层 offlineActivity: [userId={}, activityId={}]", userId, activityId);
         
         // 进行用户权限认证，确保用户具有下线活动的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ACTIVITY_MODIFICATION);
         if (!authResult.isSuccess()) throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         
-        // 获取 Redisson 分布式锁
-        DistributedLock distributedLock = distributedLockService.getDistributedLock(buildModificationKey(activityId));
+        // 获取 Redisson 分布式锁实例，key = ACTIVITY_MODIFICATION_LOCK + activityId
+        DistributedLock rLock = distributedLockService.getLock(buildModificationKey(activityId));
         try {
-            // 尝试获取分布式锁，设置超时时间为500毫秒，等待时间为1000毫秒
-            boolean lockSuccess = distributedLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
+            // 尝试获取分布式锁
+            boolean lockSuccess = rLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!lockSuccess) throw new BizException(AppErrorCode.LOCK_FAILED);
             
             // 调用领域层的 下线活动 方法
             saleActivityDomainService.offlineActivity(userId, activityId);
             
-            log.info("应用层 offlineActivity，成功: [{},{}]", userId, activityId);
+            log.info("应用层 offlineActivity，成功: [userId={}, activityId={}]", userId, activityId);
             return AppResult.ok();
         } catch (Exception e) {
-            log.error("应用层 offlineActivity，异常: ", e);
+            log.error("应用层 offlineActivity，异常: [userId={}] ", userId, e);
             throw new BizException(AppErrorCode.ACTIVITY_MODIFY_FAILED);
         } finally {
-            distributedLock.unlock();
+            rLock.unlock();
         }
     }
     
     @Override
     public boolean isPlaceOrderAllowed(Long activityId) {
-        // 从缓存中获取活动缓存对象
+        // 从缓存中获取 活动缓存对象
         SaleActivityCache activityCache = saleActivityCacheService.getActivityCache(activityId, null);
-        
-        // 如果活动缓存对象标志为稍后重试
         if (activityCache.isLater()) {
             log.info("应用层 isPlaceOrderAllowed，请稍后重试: [{}]", activityId);
             return false;
         }
-        
-        // 如果活动缓存对象标志为不存在或者其活动对象为空
         if (!activityCache.isExist() || activityCache.getSaleActivity() == null) {
             log.info("应用层 isPlaceOrderAllowed，活动不存在: [{}]", activityId);
             return false;
         }
-        
-        // 获取活动缓存对象中的活动对象
-        SaleActivity saleActivity = activityCache.getSaleActivity();
-        
-        // 如果活动不在线
-        if (!saleActivity.isOnline()) {
+        if (!activityCache.getSaleActivity().isOnline()) {
             log.info("应用层 isPlaceOrderAllowed，活动不在线: [{}]", activityId);
             return false;
         }
-        
-        // 如果活动不在进行中
-        if (!saleActivity.isInProgress()) {
+        if (!activityCache.getSaleActivity().isInProgress()) {
             log.info("应用层 isPlaceOrderAllowed，活动不在进行中: [{}]", activityId);
             return false;
         }
         
-        // 如果以上条件都满足，则表示可以下单，返回 true
+        // 以上条件都满足，可以下单
         return true;
     }
     
-    // 构建用于创建活动的分布式锁的 key
     private String buildCreateKey(Long userId) {
         return KeyUtil.link(ACTIVITY_CREATE_LOCK, userId);
     }
     
-    // 构建用于修改活动的分布式锁的 key
     private String buildModificationKey(Long activityId) {
         return KeyUtil.link(ACTIVITY_MODIFICATION_LOCK, activityId);
     }

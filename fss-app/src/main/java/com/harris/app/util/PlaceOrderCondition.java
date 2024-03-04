@@ -9,9 +9,11 @@ public class PlaceOrderCondition extends AnyNestedCondition {
         super(ConfigurationPhase.PARSE_CONFIGURATION);
     }
     
-    // 内嵌的条件类，当place_order_type配置属性的值为standard时，此条件满足
-    // 如果没有设置place_order_type属性，matchIfMissing属性为true表示条件默认满足
-    @ConditionalOnProperty(name = "place_order_type", havingValue = "standard", matchIfMissing = true)
+    @ConditionalOnProperty(name = "place_order_type", havingValue = "standard", matchIfMissing = false)
     static class StandardCondition {
+    }
+    
+    @ConditionalOnProperty(name = "place_order_type", havingValue = "queued", matchIfMissing = true)
+    static class QueuedCondition {
     }
 }

@@ -6,7 +6,7 @@ import com.harris.domain.model.StockDeduction;
 public interface StockCacheService {
     StockCache getStockCache(Long userId, Long itemId);
 
-    boolean alignStock(Long itemId);
+    boolean syncCachedStockToDB(Long itemId);
 
     boolean deductStock(StockDeduction stockDeduction);
 

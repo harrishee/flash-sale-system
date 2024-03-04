@@ -12,13 +12,12 @@ import com.harris.app.service.app.SaleItemAppService;
 import com.harris.app.service.cache.StockCacheService;
 import com.harris.app.util.AppConverter;
 import com.harris.app.util.OrderUtil;
-import com.harris.app.util.PlaceOrderCondition;
 import com.harris.domain.model.StockDeduction;
 import com.harris.domain.model.entity.SaleOrder;
 import com.harris.domain.service.SaleOrderDomainService;
 import com.harris.domain.service.StockDomainService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Conditional;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -26,7 +25,7 @@ import javax.annotation.Resource;
 
 @Slf4j
 @Service
-@Conditional(PlaceOrderCondition.class)
+@ConditionalOnProperty(name = "place_order_type", havingValue = "standard")
 public class StandardPlaceOrderService implements PlaceOrderService {
     @Resource
     private SaleOrderDomainService saleOrderDomainService;

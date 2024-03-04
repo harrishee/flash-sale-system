@@ -10,7 +10,7 @@ public class SaleActivityEvent implements DomainEventI {
     private SaleActivity saleActivity;
     private SaleActivityEventType saleActivityEventType;
     
-    public Long getId() {
+    public Long getActivityId() {
         if (saleActivity == null) return null;
         return saleActivity.getId();
     }

@@ -10,7 +10,7 @@ public class SaleItemEvent implements DomainEventI {
     private SaleItem saleItem;
     private SaleItemEventType saleItemEventType;
     
-    public Long getId() {
+    public Long getItemId() {
         if (saleItem == null) return null;
         return saleItem.getId();
     }

@@ -15,9 +15,9 @@ public class RedissonLockService implements DistributedLockService {
     private RedissonClient redissonClient;
     
     @Override
-    public DistributedLock getDistributedLock(String key) {
+    public DistributedLock getLock(String key) {
         RLock rLock = redissonClient.getLock(key);
-        log.info("分布式锁，获取Redisson锁对象: [{}]", key);
+        log.info("分布式锁实例，获取 Redisson 锁对象: [{}]", key);
         
         return new DistributedLock() {
             @Override

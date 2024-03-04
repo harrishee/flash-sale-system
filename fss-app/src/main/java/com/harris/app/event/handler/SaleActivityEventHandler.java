@@ -27,13 +27,13 @@ public class SaleActivityEventHandler implements EventHandlerI<Response, SaleAct
     public Response execute(SaleActivityEvent saleActivityEvent) {
         log.info("应用层 activityEvent，接收活动事件: {}", saleActivityEvent);
         
-        if (saleActivityEvent.getId() == null) {
+        if (saleActivityEvent.getActivityId() == null) {
             log.info("应用层 activityEvent，事件参数错误");
             return Response.buildFailure(INVALID_PARAMS.getErrCode(), INVALID_PARAMS.getErrDesc());
         }
         
         // 尝试更新指定活动ID的活动缓存
-        saleActivityCacheService.tryUpdateActivityCache(saleActivityEvent.getId());
+        saleActivityCacheService.tryUpdateActivityCache(saleActivityEvent.getActivityId());
         
         // 尝试更新第一页的活动缓存
         saleActivitiesCacheService.tryUpdateActivitiesCache(1);

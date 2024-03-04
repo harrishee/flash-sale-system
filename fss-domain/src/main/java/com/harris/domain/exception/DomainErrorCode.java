@@ -4,7 +4,6 @@ import com.alibaba.cola.dto.ErrorCodeI;
 
 public enum DomainErrorCode implements ErrorCodeI {
     INVALID_PARAMS("INVALID_PARAMS", "参数错误"),
-    ONLINE_ACTIVITY_INVALID_PARAMS("ONLINE_ACTIVITY_INVALID_PARAMS", "待上线活动参数无效"),
     ACTIVITY_DOES_NOT_EXIST("ACTIVITY_DOES_NOT_EXIST", "活动不存在"),
     ACTIVITY_OFFLINE("ACTIVITY_OFFLINE", "活动已下线"),
     ACTIVITY_NOT_ONLINE("ACTIVITY_NOT_ONLINE", "活动尚未上线"),
@@ -14,20 +13,20 @@ public enum DomainErrorCode implements ErrorCodeI {
     ITEM_OFFLINE("ITEM_OFFLINE", "商品已下线"),
     ITEM_NOT_ONLINE("ITEM_NOT_ONLINE", "商品尚未上线"),
     ITEM_NOT_IN_PROGRESS("ITEM_NOT_IN_PROGRESS", "当前非商品时段");
-
+    
     private final String errCode;
     private final String errDesc;
-
+    
     DomainErrorCode(String errCode, String errDesc) {
         this.errCode = errCode;
         this.errDesc = errDesc;
     }
-
+    
     @Override
     public String getErrCode() {
         return errCode;
     }
-
+    
     @Override
     public String getErrDesc() {
         return errDesc;

@@ -101,9 +101,9 @@ public class SaleItemCacheService {
         log.info("应用层 tryUpdateItemCache, 更新远程缓存: [{}]", itemId);
         
         // 获取 Redisson 分布式锁，锁的键由 预定义的前缀 和 商品ID 拼接而成
-        DistributedLock distributedLock = distributedLockService.getDistributedLock(UPDATE_ITEM_CACHE_LOCK_KEY + itemId);
+        DistributedLock distributedLock = distributedLockService.getLock(UPDATE_ITEM_CACHE_LOCK_KEY + itemId);
         try {
-            // 尝试获取分布式锁，设置超时时间为500毫秒，等待时间为1000毫秒
+            // 尝试获取分布式锁
             boolean lockSuccess = distributedLock.tryLock(1, 5, TimeUnit.SECONDS);
             if (!lockSuccess) return new SaleItemCache().tryLater();
             

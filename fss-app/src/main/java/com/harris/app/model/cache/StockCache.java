@@ -6,13 +6,13 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class StockCache {
-    private Integer availableStockQuantity;
+    private Integer availableStock;
     private boolean success;
     private boolean later;
     private boolean exist;
 
-    public StockCache with(Integer availableStockQuantity) {
-        this.availableStockQuantity = availableStockQuantity;
+    public StockCache with(Integer availableStock) {
+        this.availableStock = availableStock;
         this.success = true;
         this.exist = true;
         return this;

@@ -1,4 +1,4 @@
-package com.harris.controller.resource;
+package com.harris.controller.api;
 
 import com.alibaba.cola.dto.MultiResponse;
 import com.alibaba.cola.dto.Response;
@@ -32,14 +32,12 @@ public class SaleItemController {
                                                     @PathVariable Long activityId,
                                                     @PathVariable Long itemId,
                                                     @RequestParam(required = false) Long version) {
-        // 从应用层获取商品详情
+        // 调用应用层的 获取商品 方法
         AppSingleResult<SaleItemDTO> itemResult = saleItemAppService.getItem(userId, activityId, itemId, version);
-        
-        // 将商品详情转换为响应对象
         SaleItemDTO itemDTO = itemResult.getData();
         SaleItemResponse itemResponse = SaleItemConverter.toResponse(itemDTO);
         
-        // 如果获取商品详情失败或者商品详情为空，则返回对应的错误响应；否则返回成功响应并携带商品详情
+        // 检查获取商品是否 失败 或者 为空
         return !itemResult.isSuccess() || itemDTO == null
                 ? ResponseConverter.toSingleResponse(itemResult)
                 : SingleResponse.of(itemResponse);
@@ -52,17 +50,17 @@ public class SaleItemController {
                                                      @RequestParam Integer pageSize,
                                                      @RequestParam Integer pageNumber,
                                                      @RequestParam(required = false) String keyword) {
-        // 构建查询对象
-        SaleItemsQuery itemsQuery = new SaleItemsQuery().setKeyword(keyword).setPageSize(pageSize).setPageNumber(pageNumber);
+        SaleItemsQuery itemsQuery = new SaleItemsQuery()
+                .setKeyword(keyword)
+                .setPageSize(pageSize)
+                .setPageNumber(pageNumber);
         
-        // 从应用层获取商品列表
+        // 调用应用层的 获取商品列表 方法（走的是数据库）
         AppMultiResult<SaleItemDTO> itemsResult = saleItemAppService.listItems(userId, activityId, itemsQuery);
-        
-        // 将商品列表转换为响应对象
         Collection<SaleItemDTO> itemDTOS = itemsResult.getData();
         Collection<SaleItemResponse> itemResponses = SaleItemConverter.toResponseList(itemDTOS);
         
-        // 如果获取商品列表失败或者商品列表为空，则返回对应的错误响应；否则返回成功响应并携带商品列表
+        // 检查获取商品列表是否 失败 或者 为空
         return !itemsResult.isSuccess() || itemDTOS == null
                 ? ResponseConverter.toMultiResponse(itemsResult)
                 : MultiResponse.of(itemResponses, itemsResult.getTotal());
@@ -75,21 +73,18 @@ public class SaleItemController {
                                                            @RequestParam Integer pageSize,
                                                            @RequestParam Integer pageNumber,
                                                            @RequestParam(required = false) String keyword) {
-        // 构建查询对象
         SaleItemsQuery itemsQuery = new SaleItemsQuery()
                 .setKeyword(keyword)
                 .setPageSize(pageSize)
                 .setPageNumber(pageNumber)
                 .setStatus(SaleItemStatus.ONLINE.getCode());
         
-        // 从应用层获取商品列表
+        // 调用应用层的 获取商品列表 方法（走的是数据库）
         AppMultiResult<SaleItemDTO> itemsResult = saleItemAppService.listItems(userId, activityId, itemsQuery);
-        
-        // 将商品列表转换为响应对象
         Collection<SaleItemDTO> itemDTOS = itemsResult.getData();
         Collection<SaleItemResponse> itemResponses = SaleItemConverter.toResponseList(itemDTOS);
         
-        // 如果获取商品列表失败或者商品列表为空，则返回对应的错误响应；否则返回成功响应并携带商品列表
+        // 检查获取商品列表是否 失败 或者 为空
         return !itemsResult.isSuccess() || itemDTOS == null
                 ? ResponseConverter.toMultiResponse(itemsResult)
                 : MultiResponse.of(itemResponses, itemsResult.getTotal());
@@ -100,27 +95,25 @@ public class SaleItemController {
     public Response publishItem(@RequestAttribute Long userId,
                                 @PathVariable Long activityId,
                                 @RequestBody PublishItemRequest publishItemRequest) {
-        // 将请求参数转换为发布商品命令对象，并调用应用层发布商品
+        // 调用应用层的 发布商品 方法
         PublishItemCommand publishItemCommand = SaleItemConverter.toCommand(publishItemRequest);
         AppResult publishResult = saleItemAppService.publishItem(userId, activityId, publishItemCommand);
-        // 返回发布商品结果的响应
         return ResponseConverter.toResponse(publishResult);
     }
     
-    // 修改商品
+    // 上线商品
     @PutMapping("/{itemId}/online")
     public Response onlineItem(@RequestAttribute Long userId, @PathVariable Long activityId, @PathVariable Long itemId) {
-        // 调用应用层上线商品
+        // 调用应用层的 上线商品 方法
         AppResult onlineResult = saleItemAppService.onlineItem(userId, activityId, itemId);
-        // 返回上线商品结果的响应
         return ResponseConverter.toResponse(onlineResult);
     }
     
+    // 下线商品
     @PutMapping("/{itemId}/offline")
     public Response offlineItem(@RequestAttribute Long userId, @PathVariable Long activityId, @PathVariable Long itemId) {
-        // 调用应用层下线商品
+        // 调用应用层的 下线商品 方法
         AppResult offlineResult = saleItemAppService.offlineItem(userId, activityId, itemId);
-        // 返回下线商品结果的响应
         return ResponseConverter.toResponse(offlineResult);
     }
 }

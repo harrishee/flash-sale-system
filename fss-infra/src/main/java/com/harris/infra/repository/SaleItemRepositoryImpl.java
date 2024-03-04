@@ -22,9 +22,7 @@ public class SaleItemRepositoryImpl implements SaleItemRepository {
     public Optional<SaleItem> findItemById(Long itemId) {
         // 从 mapper 中获取 DO
         SaleItemDO saleItemDO = saleItemMapper.getItemById(itemId);
-        if (saleItemDO == null) {
-            return Optional.empty();
-        }
+        if (saleItemDO == null) return Optional.empty();
         
         // 将 DO 转换为 domain model
         SaleItem saleItem = InfraConverter.toSaleItemDomain(saleItemDO);
@@ -42,7 +40,6 @@ public class SaleItemRepositoryImpl implements SaleItemRepository {
     
     @Override
     public Integer countAllItemByCondition(PageQuery pageQuery) {
-        // 从 mapper 中获取符合条件的商品数量
         return saleItemMapper.countItemsByCondition(pageQuery);
     }
     

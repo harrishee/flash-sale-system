@@ -1,6 +1,5 @@
 package com.harris.domain.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.harris.domain.exception.DomainErrorCode;
 import com.harris.domain.exception.DomainException;
 import com.harris.domain.model.StockDeduction;
@@ -14,30 +13,32 @@ import javax.annotation.Resource;
 
 @Slf4j
 @Service
-@ConditionalOnProperty(name = "place_order_type", havingValue = "standard", matchIfMissing = true)
+@ConditionalOnProperty(name = "place_order_type", havingValue = "queued", matchIfMissing = true)
 public class StandardStockDomainService implements StockDomainService {
     @Resource
     private SaleItemRepository saleItemRepository;
-
+    
     @Override
     public boolean deductStock(StockDeduction stockDeduction) {
-        log.info("domain-standard-deductStock: {}", JSON.toJSONString(stockDeduction));
         if (stockDeduction == null || stockDeduction.getItemId() == null || stockDeduction.getQuantity() == null) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
         
         // 从仓库中扣减库存
-        return saleItemRepository.deductStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
+        boolean res = saleItemRepository.deductStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
+        log.info("领域层服务 deductStock, 从仓库中扣减库存: [stockDeduction={}, res={}]", stockDeduction, res);
+        return res;
     }
-
+    
     @Override
     public boolean revertStock(StockDeduction stockDeduction) {
-        log.info("domain-standard-revertStock: {}", JSON.toJSONString(stockDeduction));
         if (stockDeduction == null || stockDeduction.getItemId() == null || stockDeduction.getQuantity() == null) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
         
         // 从仓库中恢复库存
-        return saleItemRepository.revertStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
+        boolean res = saleItemRepository.revertStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
+        log.info("领域层服务 revertStock, 从仓库中恢复库存: [stockDeduction={}, res={}]", stockDeduction, res);
+        return res;
     }
 }

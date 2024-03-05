@@ -1,4 +1,4 @@
-package com.harris.app.service.app;
+package com.harris.app.service.placeorder;
 
 import com.harris.app.model.PlaceOrderTask;
 import com.harris.app.model.PlaceOrderTaskStatus;
@@ -9,5 +9,5 @@ public interface PlaceOrderTaskService {
 
     OrderSubmitResult submit(PlaceOrderTask placeOrderTask);
 
-    void updateTaskHandleResult(String placeOrderTaskId, boolean result);
+    void updatePlaceOrderTaskHandleResult(String placeOrderTaskId, boolean result);
 }

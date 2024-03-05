@@ -9,7 +9,7 @@ public interface SaleOrderDomainService {
     
     PageResult<SaleOrder> getOrders(Long userId, PageQuery pageQuery);
     
-    boolean placeOrder(Long userId, SaleOrder saleOrder);
+    boolean createOrder(Long userId, SaleOrder saleOrder);
     
     boolean cancelOrder(Long userId, Long orderId);
 }

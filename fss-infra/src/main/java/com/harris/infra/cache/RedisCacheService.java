@@ -40,7 +40,7 @@ public class RedisCacheService implements DistributedCacheService {
     }
     
     @Override
-    public <T> T getObject(String key, Class<T> targetClass) {
+    public <T> T get(String key, Class<T> targetClass) {
         // 用 redisTemplate 获取 key 对应的 object 类型的 value
         Object res = redisTemplate.opsForValue().get(key);
         if (res == null) return null;

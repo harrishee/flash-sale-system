@@ -3,7 +3,6 @@ package com.harris.app.event.handler;
 import com.alibaba.cola.dto.Response;
 import com.alibaba.cola.event.EventHandler;
 import com.alibaba.cola.event.EventHandlerI;
-import com.alibaba.fastjson.JSON;
 import com.harris.domain.model.event.SaleOrderEvent;
 import com.harris.infra.config.MarkTrace;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +13,10 @@ public class SaleOrderEventHandler implements EventHandlerI<Response, SaleOrderE
     @Override
     @MarkTrace
     public Response execute(SaleOrderEvent saleOrderEvent) {
-        log.info("应用层 orderEvent，接收订单事件: {}", JSON.toJSON(saleOrderEvent));
+        // log.info("应用层 orderEvent，接收订单事件: [orderId: {}]", saleOrderEvent.getOrderId());
         
         if (saleOrderEvent.getOrderId() == null) {
-            log.info("应用层 orderEvent，订单事件参数错误");
+            // log.info("应用层 orderEvent，订单事件参数错误");
             return Response.buildSuccess();
         }
         

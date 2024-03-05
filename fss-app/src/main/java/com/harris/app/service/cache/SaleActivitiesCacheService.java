@@ -24,13 +24,9 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 @Service
 public class SaleActivitiesCacheService {
-    // 锁的 key 的前缀
     private static final String UPDATE_ACTIVITIES_CACHE_LOCK_KEY = "UPDATE_ACTIVITIES_CACHE_LOCK_KEY";
     private final Lock localLock = new ReentrantLock();
-    
-    
-    // 本地缓存，用于暂存销售活动列表信息，减少对分布式缓存的访问频率
-    private static final Cache<Integer, SaleActivitiesCache> activitiesLocalCache =
+    private static final Cache<Integer, SaleActivitiesCache> ACTIVITIES_LOCAL_CACHE =
             CacheBuilder.newBuilder()
                     .initialCapacity(10)
                     .concurrencyLevel(5)
@@ -49,43 +45,36 @@ public class SaleActivitiesCacheService {
     public SaleActivitiesCache getActivitiesCache(Integer pageNumber, Long version) {
         pageNumber = pageNumber == null ? 1 : pageNumber;
         
-        // 尝试从本地缓存获取销售活动列表缓存
-        SaleActivitiesCache saleActivitiesCache = activitiesLocalCache.getIfPresent(pageNumber);
+        SaleActivitiesCache saleActivitiesCache = ACTIVITIES_LOCAL_CACHE.getIfPresent(pageNumber);
         if (saleActivitiesCache != null) {
-            // 获取本地缓存的版本号
             Long localVersion = saleActivitiesCache.getVersion();
             
             // 如果未提供版本号，或提供的版本号小于等于本地缓存的版本号，则直接返回本地缓存对象
             if (version == null || version <= localVersion) {
-                log.info("应用层 getActivitiesCache, 命中本地缓存: {}", pageNumber);
+                // log.info("应用层 getActivitiesCache, 命中本地缓存: [pageNumber: {}]", pageNumber);
                 return saleActivitiesCache;
             }
         } else {
-            log.info("应用层 getActivitiesCache, 未命中本地缓存: {}", pageNumber);
+            // log.info("应用层 getActivitiesCache, 未命中本地缓存: [pageNumber: {}]", pageNumber);
         }
         
         // 如果本地缓存不存在，或者提供的版本号大于本地缓存的版本号，则尝试从远程缓存获取销售活动列表缓存
-        return getLatestDistributedCache(pageNumber);
+        return getDistributedCache(pageNumber);
     }
     
-    private SaleActivitiesCache getLatestDistributedCache(Integer pageNumber) {
-        log.info("应用层 getLatestDistributedCache, 读取远程缓存: {}", pageNumber);
-        
-        // 尝试从分布式缓存服务获取销售活动列表缓存对象
-        SaleActivitiesCache distributedActivitiesCache = distributedCacheService.getObject(buildActivityCacheKey(pageNumber), SaleActivitiesCache.class);
-        
-        // 如果分布式缓存中没有找到，尝试更新分布式缓存
+    private SaleActivitiesCache getDistributedCache(Integer pageNumber) {
+        // 从分布式缓存中获取活动列表缓存对象
+        SaleActivitiesCache distributedActivitiesCache = distributedCacheService.get(buildActivityCacheKey(pageNumber), SaleActivitiesCache.class);
+        // 如果获取到的缓存对象无效，说明是第一次获取，或者缓存已过期，尝试更新缓存
         if (distributedActivitiesCache == null) distributedActivitiesCache = tryUpdateActivitiesCache(pageNumber);
         
         // 如果获取到的缓存对象有效，且不是标记为稍后再试的对象
         if (distributedActivitiesCache != null && !distributedActivitiesCache.isLater()) {
-            // 尝试获取本地锁
             boolean lockSuccess = localLock.tryLock();
             if (lockSuccess) {
                 try {
                     // 将分布式缓存中的对象更新到本地缓存中
-                    activitiesLocalCache.put(pageNumber, distributedActivitiesCache);
-                    log.info("应用层 getLatestDistributedCache, 本地缓存已更新: {}", pageNumber);
+                    ACTIVITIES_LOCAL_CACHE.put(pageNumber, distributedActivitiesCache);
                 } finally {
                     localLock.unlock();
                 }
@@ -96,13 +85,11 @@ public class SaleActivitiesCacheService {
     }
     
     public SaleActivitiesCache tryUpdateActivitiesCache(Integer pageNumber) {
-        log.info("应用层 tryUpdateActivitiesCache, 更新远程缓存: {}", pageNumber);
-        
-        // 获取 Redisson 分布式锁，锁的键由 预定义的前缀 + 页码 组成
-        DistributedLock distributedLock = distributedLockService.getLock(UPDATE_ACTIVITIES_CACHE_LOCK_KEY + pageNumber);
+        // 获取 Redisson 分布式锁，防止并发更新活动列表缓存，key = UPDATE_ACTIVITIES_CACHE_LOCK_KEY + pageNumber
+        DistributedLock rLock = distributedLockService.getLock(buildUpdateActivityCacheKey(pageNumber));
         try {
             // 尝试获取分布式锁
-            boolean lockSuccess = distributedLock.tryLock(1, 5, TimeUnit.SECONDS);
+            boolean lockSuccess = rLock.tryLock(1, 5, TimeUnit.SECONDS);
             if (!lockSuccess) return new SaleActivitiesCache().tryLater();
             
             // 从域服务中获取活动列表详情
@@ -123,18 +110,21 @@ public class SaleActivitiesCacheService {
             // 将构建的活动缓存对象序列化为JSON字符串，并存入分布式缓存中，设置过期时间为5分钟
             distributedCacheService.put(buildActivityCacheKey(pageNumber), JSON.toJSONString(saleActivitiesCache), CacheConstant.MINUTES_5);
             
-            log.info("应用层 tryUpdateActivitiesCache, 远程缓存已更新: {}", pageNumber);
+            // log.info("应用层 tryUpdateActivitiesCache, 远程缓存已更新: [pageNumber: {}]", pageNumber);
             return saleActivitiesCache;
         } catch (InterruptedException e) {
-            log.error("应用层 tryUpdateActivitiesCache, 远程缓存更新异常: {} ", pageNumber, e);
+            log.error("应用层 tryUpdateActivitiesCache, 远程缓存更新异常: [pageNumber: {}] ", pageNumber, e);
             return new SaleActivitiesCache().tryLater();
         } finally {
-            distributedLock.unlock();
+            rLock.unlock();
         }
     }
     
-    // 构建活动列表缓存的 key
     private String buildActivityCacheKey(Integer pageNumber) {
         return KeyUtil.link(CacheConstant.ACTIVITIES_CACHE_KEY, pageNumber);
+    }
+    
+    private String buildUpdateActivityCacheKey(Integer pageNumber) {
+        return KeyUtil.link(UPDATE_ACTIVITIES_CACHE_LOCK_KEY, pageNumber);
     }
 }

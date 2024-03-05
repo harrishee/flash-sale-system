@@ -11,5 +11,5 @@ public interface DistributedCacheService {
     
     void put(String key, Object value, long timeout, TimeUnit unit);
     
-    <T> T getObject(String key, Class<T> targetClass);
+    <T> T get(String key, Class<T> targetClass);
 }

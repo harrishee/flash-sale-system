@@ -24,15 +24,12 @@ import java.util.concurrent.TimeUnit;
 @Service
 @Conditional(PlaceOrderCondition.class)
 public class StandardStockCacheService implements StockCacheService {
-    // 锁的 key 的前缀
     private static final int IN_STOCK_ALIGNING = -9; // 库存对齐过程中的标志
     private static final String STOCK_CACHE_KEY = "STOCK_CACHE_KEY";
     private static final String STOCK_ALIGN_LOCK_KEY = "STOCK_ALIGN_LOCK_KEY";
     private static final String INIT_OR_ALIGN_STOCK_LUA;
     private static final String REVERT_STOCK_LUA;
     private static final String DEDUCT_STOCK_LUA;
-    
-    // 本地缓存的初始化，用于减少对外部系统的访问
     private static final Cache<Long, StockCache> STOCK_LOCAL_CACHE =
             CacheBuilder.newBuilder()
                     .initialCapacity(10)
@@ -97,12 +94,8 @@ public class StandardStockCacheService implements StockCacheService {
         StockCache stockCache = STOCK_LOCAL_CACHE.getIfPresent(itemId);
         if (stockCache != null) return stockCache;
         
-        System.out.println("key: " + buildStockCacheKey(itemId));
         // 否则，从分布式缓存中获取可用库存数量，还不存在则返回 null
-        Integer availableStockQuantity = distributedCacheService.getObject(buildStockCacheKey(itemId), Integer.class);
-        
-        System.out.println("availableStockQuantity: " + availableStockQuantity);
-        
+        Integer availableStockQuantity = distributedCacheService.get(buildStockCacheKey(itemId), Integer.class);
         if (availableStockQuantity == null) return null;
         
         // 本地不存在，分布式存在，创建新的库存缓存对象并存入本地缓存
@@ -162,7 +155,7 @@ public class StandardStockCacheService implements StockCacheService {
     
     @Override
     public boolean deductStock(StockDeduction stockDeduction) {
-        log.info("应用层 deductStock，申请库存预扣减: [{}]", stockDeduction);
+        log.info("应用层 deductStock，申请库存预扣减: [stockDeduction={}]", stockDeduction);
         if (stockDeduction == null || stockDeduction.invalidParams()) return false;
         
         try {
@@ -170,39 +163,32 @@ public class StandardStockCacheService implements StockCacheService {
             String stockCacheKey = buildStockCacheKey(stockDeduction.getItemId());
             String stockAlignKey = buildStockAlignKey(stockDeduction.getItemId());
             
-            // 准备Lua脚本执行所需的键列表，包含库存缓存键和库存对齐锁键
+            // 准备扣减库Lua脚本执行所需的键列表，包含库存缓存键和库存对齐锁键
             List<String> keys = Lists.newArrayList(stockCacheKey, stockAlignKey);
-            
-            // 创建Lua脚本执行器，指定脚本和返回类型
             DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(DEDUCT_STOCK_LUA, Long.class);
             Long result = null;
             long startTime = System.currentTimeMillis();
             
             // 循环执行Lua脚本，直到成功或超过1500毫秒的超时时间
             while ((result == null || result == IN_STOCK_ALIGNING) && (System.currentTimeMillis() - startTime) < 1500) {
-                // 执行Lua脚本，传递键和扣减数量作为参数
                 result = redisCacheService.getRedisTemplate().execute(redisScript, keys, stockDeduction.getQuantity());
                 
-                // 库存校准失败
                 if (result == null || result == -1 || result == -2 || result == -3) {
-                    log.info("应用层 deductStock, 库存预扣减失败: [{}]", stockCacheKey);
+                    log.info("应用层 deductStock, 库存预扣减失败: [stockDeduction={}]", stockDeduction);
                     return false;
                 }
-                
-                // 库存正在对齐中，等待20毫秒后重试
                 if (result == IN_STOCK_ALIGNING) {
-                    log.info("应用层 deductStock, 库存校准中: [{}]", stockCacheKey);
+                    log.info("应用层 deductStock, 库存校准中: [stockDeduction={}]", stockDeduction);
                     Thread.sleep(20);
                 }
                 
-                // 库存扣减成功
                 if (result == 1) {
-                    log.info("应用层 deductStock, 库存预扣减成功: [{}]", stockCacheKey);
+                    // log.info("应用层 deductStock, 库存预扣减成功: [stockDeduction={}]", stockDeduction);
                     return true;
                 }
             }
         } catch (Exception e) {
-            log.error("应用层 deductStock, 库存预扣减异常: ", e);
+            log.error("应用层 deductStock, 库存预扣减异常: [stockDeduction={}] ", stockDeduction, e);
             return false;
         }
         
@@ -212,7 +198,7 @@ public class StandardStockCacheService implements StockCacheService {
     
     @Override
     public boolean revertStock(StockDeduction stockDeduction) {
-        log.info("应用层 revertStock，申请库存预回滚: [{}]", stockDeduction);
+        log.info("应用层 revertStock，申请库存预回滚: [stockDeduction={}]", stockDeduction);
         if (stockDeduction == null || stockDeduction.invalidParams()) return false;
         
         try {
@@ -220,39 +206,32 @@ public class StandardStockCacheService implements StockCacheService {
             String stockCacheKey = buildStockCacheKey(stockDeduction.getItemId());
             String stockAlignKey = buildStockAlignKey(stockDeduction.getItemId());
             
-            // 准备Lua脚本执行所需的键列表，包含库存缓存键和库存对齐锁键
+            // 准备回滚库存Lua脚本执行所需的键列表，包含库存缓存键和库存对齐锁键
             List<String> keys = Lists.newArrayList(stockCacheKey, stockAlignKey);
-            
-            // 创建Lua脚本执行器，指定脚本和返回类型
             DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(REVERT_STOCK_LUA, Long.class);
             Long result = null;
             long startTime = System.currentTimeMillis();
             
             // 循环执行Lua脚本，直到成功或超过1500毫秒的超时时间
             while ((result == null || result == IN_STOCK_ALIGNING) && (System.currentTimeMillis() - startTime) < 1500) {
-                // 执行Lua脚本，传递键和回滚数量作为参数
                 result = redisCacheService.getRedisTemplate().execute(redisScript, keys, stockDeduction.getQuantity());
                 
-                // 库存校准失败
                 if (result == null || result == -1) {
-                    log.info("应用层 revertStock, 库存回滚失败: [{}]", stockCacheKey);
+                    log.info("应用层 revertStock, 库存回滚失败: [stockDeduction={}]", stockDeduction);
                     return false;
                 }
-                
-                // 库存正在对齐中，等待20毫秒后重试
                 if (result == IN_STOCK_ALIGNING) {
-                    log.info("应用层 revertStock, 库存校准中: [{}]", stockCacheKey);
+                    log.info("应用层 revertStock, 库存校准中: [stockDeduction={}]", stockDeduction);
                     Thread.sleep(20);
                 }
                 
-                // 库存回滚成功
                 if (result == 1) {
-                    log.info("应用层 revertStock, 库存回滚成功: [{}]", stockCacheKey);
+                    // log.info("应用层 revertStock, 库存回滚成功: [stockDeduction={}]", stockDeduction);
                     return true;
                 }
             }
         } catch (Exception e) {
-            log.error("应用层 revertStock, 库存回滚异常: ", e);
+            log.error("应用层 revertStock, 库存回滚异常: [stockDeduction={}] ", stockDeduction, e);
             return false;
         }
         
@@ -260,12 +239,10 @@ public class StandardStockCacheService implements StockCacheService {
         return false;
     }
     
-    // 构建库存对齐锁键
     public static String buildStockAlignKey(Long itemId) {
         return KeyUtil.link(STOCK_ALIGN_LOCK_KEY, itemId);
     }
     
-    // 构建库存缓存键
     public static String buildStockCacheKey(Long itemId) {
         return KeyUtil.link(STOCK_CACHE_KEY, itemId);
     }

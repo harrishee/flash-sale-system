@@ -23,7 +23,7 @@ public class OrderUtil {
         return snowflakeIdWorker.nextId();
     }
     
-    public static String generateOrderTaskId(Long userId, Long itemId) {
+    public static String getPlaceOrderTaskId(Long userId, Long itemId) {
         // 将 用户ID 和 商品ID 拼接成一个字符串，中间用下划线分隔
         String toEncrypt = userId + "_" + itemId;
         // 使用MD5算法对拼接后的字符串进行加密，并返回加密后的 16 进制字符串作为 订单任务ID

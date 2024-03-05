@@ -57,7 +57,7 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
         // 设置状态为已发布，并保存活动到仓库
         saleActivity.setStatus(SaleActivityStatus.PUBLISHED.getCode());
         saleActivityRepository.saveActivity(saleActivity);
-        log.info("领域层服务 publishActivity, 1. 活动已保存到仓库: [userId={}, activityId={}]", userId, saleActivity.getId());
+        // log.info("领域层服务 publishActivity, 1. 活动已保存到仓库: [userId={}, activityId={}]", userId, saleActivity.getId());
         
         // 创建活动发布事件
         SaleActivityEvent saleActivityEvent = new SaleActivityEvent();
@@ -66,7 +66,7 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
         
         // 发布活动发布事件
         domainEventPublisher.publish(saleActivityEvent);
-        log.info("领域层服务 publishActivity, 2. 活动发布事件已发布: [saleActivityEvent={}]", saleActivityEvent);
+        // log.info("领域层服务 publishActivity, 2. 活动发布事件已发布: [saleActivityEvent={}]", saleActivityEvent);
     }
     
     @Override
@@ -78,7 +78,7 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
         
         // 更新活动到仓库
         saleActivityRepository.saveActivity(saleActivity);
-        log.info("领域层服务 modifyActivity, 1. 活动已更新到仓库: [userId={}, activityId={}]", userId, saleActivity.getId());
+        // log.info("领域层服务 modifyActivity, 1. 活动已更新到仓库: [userId={}, activityId={}]", userId, saleActivity.getId());
         
         // 创建活动修改事件
         SaleActivityEvent saleActivityEvent = new SaleActivityEvent();
@@ -87,7 +87,7 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
         
         // 发布活动修改事件
         domainEventPublisher.publish(saleActivityEvent);
-        log.info("领域层服务 modifyActivity, 2. 活动修改事件已发布: [saleActivityEvent={}]", saleActivityEvent);
+        // log.info("领域层服务 modifyActivity, 2. 活动修改事件已发布: [saleActivityEvent={}]", saleActivityEvent);
     }
     
     @Override
@@ -109,7 +109,7 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
         // 设置状态为上线，并保存活动到仓库
         saleActivity.setStatus(SaleActivityStatus.ONLINE.getCode());
         saleActivityRepository.saveActivity(saleActivity);
-        log.info("领域层服务 onlineActivity, 1. 活动已更新上线到仓库: [userId={}, activityId={}]", userId, activityId);
+        // log.info("领域层服务 onlineActivity, 1. 活动已更新上线到仓库: [userId={}, activityId={}]", userId, activityId);
         
         // 创建活动上线事件
         SaleActivityEvent saleActivityEvent = new SaleActivityEvent();
@@ -118,7 +118,7 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
         
         // 发布活动上线事件
         domainEventPublisher.publish(saleActivityEvent);
-        log.info("领域层 onlineActivity, 2. 活动上线事件已发布: [saleActivityEvent={}]", saleActivityEvent);
+        // log.info("领域层 onlineActivity, 2. 活动上线事件已发布: [saleActivityEvent={}]", saleActivityEvent);
     }
     
     @Override
@@ -146,7 +146,7 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
         // 设置状态为下线，并保存活动到仓库
         saleActivity.setStatus(SaleActivityStatus.OFFLINE.getCode());
         saleActivityRepository.saveActivity(saleActivity);
-        log.info("领域层 offlineActivity, 1. 活动已更新下线到仓库: [userId={}, activityId={}]", userId, activityId);
+        // log.info("领域层 offlineActivity, 1. 活动已更新下线到仓库: [userId={}, activityId={}]", userId, activityId);
         
         // 创建活动下线事件
         SaleActivityEvent saleActivityEvent = new SaleActivityEvent();
@@ -155,6 +155,6 @@ public class SaleActivityDomainServiceImpl implements SaleActivityDomainService 
         
         // 发布活动下线事件
         domainEventPublisher.publish(saleActivityEvent);
-        log.info("领域层 offlineActivity, 2. 活动下线事件已发布: [saleActivityEvent={}]", saleActivityEvent);
+        // log.info("领域层 offlineActivity, 2. 活动下线事件已发布: [saleActivityEvent={}]", saleActivityEvent);
     }
 }

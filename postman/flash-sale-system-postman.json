@@ -1,0 +1,862 @@
+{
+	"info": {
+		"_postman_id": "a2e9658a-3967-44a3-9cc3-6cb3c61069b1",
+		"name": "flash-sale-system",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "32389413"
+	},
+	"item": [
+		{
+			"name": "local-test",
+			"item": [
+				{
+					"name": "sale-activity",
+					"item": [
+						{
+							"name": "根据活动ID获取活动详情",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/7?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"7"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "获取活动列表",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=&pageSize=10&pageNumber=1",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "pageNumber",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "获取在线活动列表",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/online?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=&pageSize=10&pageNumber=1",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"online"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "pageNumber",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "发布活动",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var now = new Date();",
+											"function formatDate(date) {",
+											"    var year = date.getFullYear();",
+											"    var month = ('0' + (date.getMonth() + 1)).slice(-2);",
+											"    var day = ('0' + date.getDate()).slice(-2);",
+											"    var hours = ('0' + date.getHours()).slice(-2);",
+											"    var minutes = ('0' + date.getMinutes()).slice(-2);",
+											"    var seconds = ('0' + date.getSeconds()).slice(-2);",
+											"    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;",
+											"}",
+											"",
+											"var formattedNow = formatDate(now);",
+											"pm.environment.set(\"startTime\", formattedNow);",
+											"",
+											"var endTime = new Date(now.getTime() + 10 * 60 * 60 * 1000);",
+											"var formattedEndTime = formatDate(endTime);",
+											"pm.environment.set(\"endTime\", formattedEndTime);",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"activityName\": \"Sale activity778\",\n    \"activityDesc\": \"Join the sale activity778 now!\",\n    \"startTime\": \"{{startTime}}\",\n    \"endTime\": \"{{endTime}}\"\n}\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "修改活动",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var now = new Date();",
+											"function formatDate(date) {",
+											"    var year = date.getFullYear();",
+											"    var month = ('0' + (date.getMonth() + 1)).slice(-2);",
+											"    var day = ('0' + date.getDate()).slice(-2);",
+											"    var hours = ('0' + date.getHours()).slice(-2);",
+											"    var minutes = ('0' + date.getMinutes()).slice(-2);",
+											"    var seconds = ('0' + date.getSeconds()).slice(-2);",
+											"    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;",
+											"}",
+											"",
+											"var formattedNow = formatDate(now);",
+											"pm.environment.set(\"startTime\", formattedNow);",
+											"",
+											"var endTime = new Date(now.getTime() + 10 * 60 * 60 * 1000);",
+											"var formattedEndTime = formatDate(endTime);",
+											"pm.environment.set(\"endTime\", formattedEndTime);",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"activityName\": \"Sale activity1 updated\",\n    \"activityDesc\": \"Join the sale activity1 now! updated\",\n    \"startTime\": \"{{startTime}}\",\n    \"endTime\": \"{{endTime}}\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/15?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"15"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "上线活动",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/16/online?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"16",
+										"online"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "下线活动",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/16/offline?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"16",
+										"offline"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "sale-item",
+					"item": [
+						{
+							"name": "根据商品ID获取商品详情",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/1/sale-items/3?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"1",
+										"sale-items",
+										"3"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "获取活动ID的商品列表",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/1/sale-items?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=&pageSize=10&pageNumber=1",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"1",
+										"sale-items"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "pageNumber",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "获取活动ID的在线商品列表",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/1/sale-items/online?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=&pageSize=10&pageNumber=1",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"1",
+										"sale-items",
+										"online"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "pageNumber",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "发布商品",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"var now = new Date();",
+											"function formatDate(date) {",
+											"    var year = date.getFullYear();",
+											"    var month = ('0' + (date.getMonth() + 1)).slice(-2);",
+											"    var day = ('0' + date.getDate()).slice(-2);",
+											"    var hours = ('0' + date.getHours()).slice(-2);",
+											"    var minutes = ('0' + date.getMinutes()).slice(-2);",
+											"    var seconds = ('0' + date.getSeconds()).slice(-2);",
+											"    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;",
+											"}",
+											"",
+											"var formattedNow = formatDate(now);",
+											"pm.environment.set(\"startTime\", formattedNow);",
+											"",
+											"var endTime = new Date(now.getTime() + 10 * 60 * 60 * 1000);",
+											"var formattedEndTime = formatDate(endTime);",
+											"pm.environment.set(\"endTime\", formattedEndTime);",
+											""
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"itemTitle\": \"Sale Item1\",\n    \"itemSubTitle\": \"Sale Item1 Test\",\n    \"itemDesc\": \"Buy the sale item1 with lowest price now!\",\n    \"initialStock\": 50,\n    \"availableStock\":50,\n    \"originalPrice\":20000,\n    \"salePrice\":999,\n    \"startTime\": \"{{startTime}}\",\n    \"endTime\": \"{{endTime}}\"\n}"
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/1/sale-items?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"1",
+										"sale-items"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "上线商品",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/1/sale-items/2/online?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"1",
+										"sale-items",
+										"2",
+										"online"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "下线商品",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"name": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-activities/1/sale-items/2/offline?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-activities",
+										"1",
+										"sale-items",
+										"2",
+										"offline"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "sale-order",
+					"item": [
+						{
+							"name": "根据订单ID获取下单任务结果",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const moment = require('moment');",
+											"pm.globals.set(\"currentTime\", moment().format(\"MMDDHHmmss\"));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-orders/items/1/1764845198879453184?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-orders",
+										"items",
+										"1",
+										"1764845198879453184"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "获取用户订单列表",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const moment = require('moment');",
+											"pm.globals.set(\"currentTime\", moment().format(\"MMDDHHmmss\"));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-orders/user?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=&pageSize=10&pageNumber=1",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-orders",
+										"user"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										},
+										{
+											"key": "pageSize",
+											"value": "10"
+										},
+										{
+											"key": "pageNumber",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "下单",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const moment = require('moment');",
+											"pm.globals.set(\"currentTime\", moment().format(\"MMDDHHmmss\"));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"itemId\": 1,\n    \"activityId\": 1,\n    \"quantity\": 1,\n    \"totalAmount\": 88\n}"
+								},
+								"url": {
+									"raw": "localhost:8090/api/sale-orders?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"sale-orders"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "取消订单",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const moment = require('moment');",
+											"pm.globals.set(\"currentTime\", moment().format(\"MMDDHHmmss\"));"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": ""
+								},
+								"url": {
+									"raw": "localhost:8090/api/flash-orders/1/cancel?token=eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30=",
+									"host": [
+										"localhost"
+									],
+									"port": "8090",
+									"path": [
+										"api",
+										"flash-orders",
+										"1",
+										"cancel"
+									],
+									"query": [
+										{
+											"key": "token",
+											"value": "eyJleHBpcmVEYXRlIjoiMjA5OS0xMi0zMSAxMjowMDowMCIsInVzZXJJZCI6MTAwN30="
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}

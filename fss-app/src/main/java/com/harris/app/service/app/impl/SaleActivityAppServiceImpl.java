@@ -60,7 +60,7 @@ public class SaleActivityAppServiceImpl implements SaleActivityAppService {
     @Override
     public AppSingleResult<SaleActivityDTO> getActivity(Long userId, Long activityId, Long version) {
         if (userId == null || activityId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        log.info("应用层 getActivity: [userId={}, activityId={}, version={}]", userId, activityId, version);
+        // log.info("应用层 getActivity: [userId={}, activityId={}, version={}]", userId, activityId, version);
         
         // 从缓存中获取 活动缓存对象
         SaleActivityCache activityCache = saleActivityCacheService.getActivityCache(activityId, version);
@@ -77,14 +77,14 @@ public class SaleActivityAppServiceImpl implements SaleActivityAppService {
         SaleActivityDTO saleActivityDTO = AppConverter.toDTO(saleActivity);
         saleActivityDTO.setVersion(activityCache.getVersion());
         
-        log.info("应用层 getActivity，成功: [userId={}, activityId={}, version={}]", userId, activityId, version);
+        // log.info("应用层 getActivity，成功: [userId={}, activityId={}, version={}]", userId, activityId, version);
         return AppSingleResult.ok(saleActivityDTO);
     }
     
     @Override
     public AppMultiResult<SaleActivityDTO> listActivities(Long userId, SaleActivitiesQuery saleActivitiesQuery) {
         if (userId == null || saleActivitiesQuery == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        log.info("应用层 listActivities: [userId={}, saleActivitiesQuery={}]", userId, saleActivitiesQuery);
+        // log.info("应用层 listActivities: [userId={}, saleActivitiesQuery={}]", userId, saleActivitiesQuery);
         
         List<SaleActivity> activities;
         Integer total;
@@ -113,7 +113,7 @@ public class SaleActivityAppServiceImpl implements SaleActivityAppService {
         }
         
         List<SaleActivityDTO> saleActivityDTOS = activities.stream().map(AppConverter::toDTO).collect(Collectors.toList());
-        log.info("应用层 listActivities，成功: [uerId={}, total={}]", userId, total);
+        // log.info("应用层 listActivities，成功: [uerId={}, total={}]", userId, total);
         return AppMultiResult.of(saleActivityDTOS, total);
     }
     
@@ -122,7 +122,7 @@ public class SaleActivityAppServiceImpl implements SaleActivityAppService {
         if (userId == null || publishActivityCommand == null || publishActivityCommand.invalidParams()) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
-        log.info("应用层 publishActivity: [userId={}, publishActivityCommand={}]", userId, publishActivityCommand);
+        // log.info("应用层 publishActivity: [userId={}, publishActivityCommand={}]", userId, publishActivityCommand);
         
         // 进行用户权限认证，确保用户具有发布活动的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ACTIVITY_CREATE);
@@ -154,7 +154,7 @@ public class SaleActivityAppServiceImpl implements SaleActivityAppService {
         if (userId == null || publishActivityCommand == null || publishActivityCommand.invalidParams()) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
-        log.info("应用层 modifyActivity: [userId={}, activityId={}, publishActivityCommand={}]", userId, activityId, publishActivityCommand);
+        // log.info("应用层 modifyActivity: [userId={}, activityId={}, publishActivityCommand={}]", userId, activityId, publishActivityCommand);
         
         // 进行用户权限认证，确保用户具有修改活动的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ACTIVITY_MODIFICATION);
@@ -185,7 +185,7 @@ public class SaleActivityAppServiceImpl implements SaleActivityAppService {
     @Override
     public AppResult onlineActivity(Long userId, Long activityId) {
         if (userId == null || activityId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        log.info("应用层 onlineActivity: [userId={}, activityId={}]", userId, activityId);
+        // log.info("应用层 onlineActivity: [userId={}, activityId={}]", userId, activityId);
         
         // 进行用户权限认证，确保用户具有上线活动的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ACTIVITY_MODIFICATION);
@@ -214,7 +214,7 @@ public class SaleActivityAppServiceImpl implements SaleActivityAppService {
     @Override
     public AppResult offlineActivity(Long userId, Long activityId) {
         if (userId == null || activityId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        log.info("应用层 offlineActivity: [userId={}, activityId={}]", userId, activityId);
+        // log.info("应用层 offlineActivity: [userId={}, activityId={}]", userId, activityId);
         
         // 进行用户权限认证，确保用户具有下线活动的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ACTIVITY_MODIFICATION);
@@ -245,19 +245,19 @@ public class SaleActivityAppServiceImpl implements SaleActivityAppService {
         // 从缓存中获取 活动缓存对象
         SaleActivityCache activityCache = saleActivityCacheService.getActivityCache(activityId, null);
         if (activityCache.isLater()) {
-            log.info("应用层 isPlaceOrderAllowed，请稍后重试: [{}]", activityId);
+            log.info("应用层 isPlaceOrderAllowed，请稍后重试: [activitiId={}]", activityId);
             return false;
         }
         if (!activityCache.isExist() || activityCache.getSaleActivity() == null) {
-            log.info("应用层 isPlaceOrderAllowed，活动不存在: [{}]", activityId);
+            log.info("应用层 isPlaceOrderAllowed，活动不存在: [activitiId={}]", activityId);
             return false;
         }
         if (!activityCache.getSaleActivity().isOnline()) {
-            log.info("应用层 isPlaceOrderAllowed，活动不在线: [{}]", activityId);
+            log.info("应用层 isPlaceOrderAllowed，活动不在线: [activitiId={}]", activityId);
             return false;
         }
         if (!activityCache.getSaleActivity().isInProgress()) {
-            log.info("应用层 isPlaceOrderAllowed，活动不在进行中: [{}]", activityId);
+            log.info("应用层 isPlaceOrderAllowed，活动不在进行中: [activitiId={}]", activityId);
             return false;
         }
         

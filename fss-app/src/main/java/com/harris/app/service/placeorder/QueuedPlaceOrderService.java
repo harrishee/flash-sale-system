@@ -1,4 +1,4 @@
-package com.harris.app.service.app.impl;
+package com.harris.app.service.placeorder;
 
 import com.harris.app.exception.AppErrorCode;
 import com.harris.app.exception.BizException;
@@ -11,8 +11,6 @@ import com.harris.app.model.result.AppSingleResult;
 import com.harris.app.model.result.OrderHandleResult;
 import com.harris.app.model.result.OrderSubmitResult;
 import com.harris.app.model.result.PlaceOrderResult;
-import com.harris.app.service.app.PlaceOrderService;
-import com.harris.app.service.app.PlaceOrderTaskService;
 import com.harris.app.service.app.SaleActivityAppService;
 import com.harris.app.service.app.SaleItemAppService;
 import com.harris.app.util.AppConverter;
@@ -24,6 +22,7 @@ import com.harris.domain.service.SaleItemDomainService;
 import com.harris.domain.service.SaleOrderDomainService;
 import com.harris.domain.service.StockDomainService;
 import com.harris.infra.cache.RedisCacheService;
+import com.harris.infra.util.KeyUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -36,8 +35,7 @@ import javax.annotation.Resource;
 @Service
 @ConditionalOnProperty(name = "place_order_type", havingValue = "queued")
 public class QueuedPlaceOrderService implements PlaceOrderService {
-    // 分布式锁的 key 的前缀
-    private static final String PL_TASK_ORDER_ID_KEY = "PLACE_ORDER_TASK_ORDER_ID_KEY_";
+    private static final String PLACE_ORDER_TASK_ORDER_ID_KEY = "PLACE_ORDER_TASK_ORDER_ID_KEY";
     
     @Resource
     private RedisCacheService redisCacheService;
@@ -62,67 +60,42 @@ public class QueuedPlaceOrderService implements PlaceOrderService {
     
     @PostConstruct
     public void init() {
-        log.info("应用层 queued PlaceOrderService initialized");
+        log.info("队列下单服务已启用");
     }
     
     @Override
     public PlaceOrderResult doPlaceOrder(Long userId, PlaceOrderCommand placeOrderCommand) {
-        log.info("应用层 queued doPlaceOrder: [{},{}]", userId, placeOrderCommand);
         if (userId == null || placeOrderCommand == null || placeOrderCommand.invalidParams()) {
             return PlaceOrderResult.error(AppErrorCode.INVALID_PARAMS);
         }
+        // log.info("队列下单 doPlaceOrder 开始: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
         
-        // 获取商品信息
+        // 获取商品
         AppSingleResult<SaleItemDTO> itemResult = saleItemAppService.getItem(placeOrderCommand.getItemId());
         if (!itemResult.isSuccess() || itemResult.getData() == null) {
-            log.info("应用层 queued doPlaceOrder, 获取商品信息失败: [{},{}]", userId, placeOrderCommand);
+            log.info("队列下单 doPlaceOrder, 获取商品失败: [itemId={}]", placeOrderCommand.getItemId());
             return PlaceOrderResult.error(AppErrorCode.GET_ITEM_FAILED);
         }
         
         // 检查商品是否在售
         SaleItemDTO saleItemDTO = itemResult.getData();
         if (saleItemDTO.notOnSale()) {
-            log.info("应用层 queued doPlaceOrder, 商品不在售: [{},{}]", userId, placeOrderCommand);
+            log.info("队列下单 doPlaceOrder, 商品不在售: [itemId={}]", placeOrderCommand.getItemId());
             return PlaceOrderResult.error(AppErrorCode.ITEM_NOT_ON_SALE);
         }
         
-        // 生成 下单任务ID（MD5算法），并设置到下单任务对象中
-        String placeOrderTaskId = OrderUtil.generateOrderTaskId(userId, placeOrderCommand.getItemId());
+        // 根据 用户ID + 商品ID 生成 下单任务ID
+        String placeOrderTaskId = OrderUtil.getPlaceOrderTaskId(userId, placeOrderCommand.getItemId());
         PlaceOrderTask placeOrderTask = AppConverter.toTask(userId, placeOrderCommand);
         placeOrderTask.setPlaceOrderTaskId(placeOrderTaskId);
         
-        // 提交下单任务到队列
+        // 调用队列下单任务服务的 提交下单任务 方法
         OrderSubmitResult submitResult = placeOrderTaskService.submit(placeOrderTask);
         if (!submitResult.isSuccess()) {
-            log.info("应用层 queued doPlaceOrder, 提交任务失败: [{},{}]", userId, placeOrderCommand);
             return PlaceOrderResult.error(submitResult.getCode(), submitResult.getMessage());
         }
         
-        log.info("应用层 queued doPlaceOrder, 提交任务完成: [{},{}]", userId, placeOrderCommand);
         return PlaceOrderResult.ok(placeOrderTaskId);
-    }
-    
-    public OrderHandleResult getPlaceOrderResult(Long userId, Long itemId, String placeOrderTaskId) {
-        // 检查下单任务ID是否和用户ID、商品ID匹配（MD5算法）
-        String expectedTaskId = OrderUtil.generateOrderTaskId(userId, itemId);
-        if (!expectedTaskId.equals(placeOrderTaskId)) {
-            return OrderHandleResult.error(AppErrorCode.PLACE_ORDER_TASK_ID_INVALID);
-        }
-        
-        // 检查下单任务的处理状态
-        PlaceOrderTaskStatus placeOrderTaskStatus = placeOrderTaskService.getStatus(placeOrderTaskId);
-        if (placeOrderTaskStatus == null) {
-            return OrderHandleResult.error(AppErrorCode.PLACE_ORDER_TASK_ID_INVALID);
-        }
-        
-        // 检查下单任务是否处理成功，如果没有成功，返回 OrderHandleResult 的失败结果
-        if (!PlaceOrderTaskStatus.SUCCESS.equals(placeOrderTaskStatus)) {
-            return OrderHandleResult.error(placeOrderTaskStatus);
-        }
-        
-        // 从缓存中获取下单任务ID对应的订单ID
-        Long orderId = redisCacheService.getObject(PL_TASK_ORDER_ID_KEY + placeOrderTaskId, Long.class);
-        return OrderHandleResult.ok(orderId);
     }
     
     @Transactional
@@ -133,62 +106,85 @@ public class QueuedPlaceOrderService implements PlaceOrderService {
             // 检查活动是否允许下单
             boolean activityAllowed = saleActivityAppService.isPlaceOrderAllowed(placeOrderTask.getActivityId());
             if (!activityAllowed) {
-                log.info("应用层 queued handlePlaceOrderTask, 活动不允许下单: [{}]", placeOrderTask);
-                placeOrderTaskService.updateTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), false);
+                log.info("队列下单 handlePlaceOrderTask, 活动不允许下单: [userId={}, placeOrderTask={}]", userId, placeOrderTask);
+                placeOrderTaskService.updatePlaceOrderTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), false);
                 return;
             }
             
             // 检查商品是否允许下单
             boolean itemAllowed = saleItemAppService.isPlaceOrderAllowed(placeOrderTask.getItemId());
             if (!itemAllowed) {
-                log.info("应用层 queued handlePlaceOrderTask, 商品不允许下单: [{}]", placeOrderTask);
-                placeOrderTaskService.updateTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), false);
+                log.info("队列下单 handlePlaceOrderTask, 商品不允许下单: [userId={}, placeOrderTask={}]", userId, placeOrderTask);
+                placeOrderTaskService.updatePlaceOrderTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), false);
                 return;
             }
             
-            // 获取商品信息
+            // 构建新订单对象
             SaleItem saleItem = saleItemDomainService.getItem(placeOrderTask.getItemId());
-            
-            // 生成订单号（snowflake 算法）
             Long orderId = OrderUtil.generateOrderNo();
-            
-            // 构建订单对象
-            SaleOrder saleOrderToPlace = AppConverter.toDomainModel(placeOrderTask);
-            saleOrderToPlace.setItemTitle(saleItem.getItemTitle());
-            saleOrderToPlace.setSalePrice(saleItem.getSalePrice());
-            saleOrderToPlace.setUserId(userId);
-            saleOrderToPlace.setId(orderId);
+            SaleOrder newOrder = AppConverter.toDomainModel(placeOrderTask);
+            newOrder.setItemTitle(saleItem.getItemTitle());
+            newOrder.setSalePrice(saleItem.getSalePrice());
+            newOrder.setUserId(userId);
+            newOrder.setId(orderId);
             
             // 构建库存扣减对象
             StockDeduction stockDeduction = new StockDeduction()
                     .setItemId(placeOrderTask.getItemId())
                     .setQuantity(placeOrderTask.getQuantity());
             
-            // 扣减库存
+            // 1. 扣减库存
             boolean deductSuccess = stockDomainService.deductStock(stockDeduction);
             if (!deductSuccess) {
-                log.info("应用层 queued handlePlaceOrderTask, 扣减库存失败: [{}]", placeOrderTask);
+                log.info("队列下单 handlePlaceOrderTask, 抢购失败，库存不足: [userId={}, placeOrderTask={}]", userId, placeOrderTask);
                 return;
             }
             
-            // 下单
-            boolean placeOrderSuccess = saleOrderDomainService.placeOrder(userId, saleOrderToPlace);
-            if (!placeOrderSuccess) {
-                log.info("应用层 queued handlePlaceOrderTask, 下单失败: [{}]", placeOrderTask);
+            // 2. 调用领域服务的 下单 方法（存入数据库）
+            boolean createOrderSuccess = saleOrderDomainService.createOrder(userId, newOrder);
+            if (!createOrderSuccess) {
+                log.info("队列下单 handlePlaceOrderTask, 抢购失败，创建订单失败: [userId={}, placeOrderTask={}]", userId, placeOrderTask);
                 throw new BizException(AppErrorCode.PLACE_ORDER_FAILED.getErrDesc());
             }
             
             // 更新下单任务的处理结果
-            placeOrderTaskService.updateTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), true);
+            placeOrderTaskService.updatePlaceOrderTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), true);
             
             // 将订单ID放入缓存
-            redisCacheService.put(PL_TASK_ORDER_ID_KEY + placeOrderTask.getPlaceOrderTaskId(), orderId, CacheConstant.HOURS_24);
-            log.info("应用层 queued handlePlaceOrderTask, 下单任务处理完成: [{}]", placeOrderTask);
+            redisCacheService.put(buildPlaceOrderTaskKey(placeOrderTask.getPlaceOrderTaskId()), orderId, CacheConstant.HOURS_24);
+            log.info("队列下单 handlePlaceOrderTask，抢购成功: [userId={}, placeOrderTask={}]", userId, placeOrderTask);
         } catch (Exception e) {
             // 更新下单任务的处理结果
-            placeOrderTaskService.updateTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), false);
-            log.error("应用层 queued handlePlaceOrderTask, 下单任务处理错误: [{}]", placeOrderTask, e);
+            placeOrderTaskService.updatePlaceOrderTaskHandleResult(placeOrderTask.getPlaceOrderTaskId(), false);
+            log.error("队列下单 handlePlaceOrderTask, 下单任务处理异常: [placeOrderTask={}] ", placeOrderTask, e);
             throw new BizException(e.getMessage());
         }
+    }
+    
+    public OrderHandleResult getOrderHandleResult(Long userId, Long itemId, String placeOrderTaskId) {
+        // 检查下单任务ID是否有效
+        String expectedTaskId = OrderUtil.getPlaceOrderTaskId(userId, itemId);
+        if (!expectedTaskId.equals(placeOrderTaskId)) {
+            return OrderHandleResult.error(AppErrorCode.PLACE_ORDER_TASK_ID_INVALID);
+        }
+        
+        // 检查下单任务的处理状态
+        PlaceOrderTaskStatus placeOrderTaskStatus = placeOrderTaskService.getStatus(placeOrderTaskId);
+        if (placeOrderTaskStatus == null) {
+            return OrderHandleResult.error(AppErrorCode.PLACE_ORDER_TASK_ID_INVALID);
+        }
+        
+        // 检查下单任务是否处理成功
+        if (!PlaceOrderTaskStatus.SUCCESS.equals(placeOrderTaskStatus)) {
+            return OrderHandleResult.error(placeOrderTaskStatus);
+        }
+        
+        // 从缓存中获取订单ID
+        Long orderId = redisCacheService.get(buildPlaceOrderTaskKey(placeOrderTaskId), Long.class);
+        return OrderHandleResult.ok(orderId);
+    }
+    
+    private String buildPlaceOrderTaskKey(String placeOrderTaskId) {
+        return KeyUtil.link(PLACE_ORDER_TASK_ORDER_ID_KEY, placeOrderTaskId);
     }
 }

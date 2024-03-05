@@ -55,9 +55,9 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         log.info("领域层服务 publishItem: [itemId={}]", saleItem.getId());
         
         // 设置状态为已发布，并保存商品到仓库
-        saleItem.setStatus(SaleItemStatus.PUBLISHED.getCode());
+        saleItem.setStatus(SaleItemStatus.ONLINE.getCode());
         saleItemRepository.saveItem(saleItem);
-        log.info("领域层服务 publishItem, 1. 商品已保存到仓库: [itemId={}]", saleItem.getId());
+        // log.info("领域层服务 publishItem, 1. 商品已保存到仓库: [itemId={}]", saleItem.getId());
         
         // 创建商品发布事件
         SaleItemEvent saleItemEvent = new SaleItemEvent();
@@ -66,7 +66,7 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         
         // 发布商品发布事件
         domainEventPublisher.publish(saleItemEvent);
-        log.info("领域层服务 publishItem, 2. 商品发布事件发布成功: [saleItemEvent={}]", saleItemEvent);
+        // log.info("领域层服务 publishItem, 2. 商品发布事件发布成功: [saleItemEvent={}]", saleItemEvent);
     }
     
     @Override
@@ -88,7 +88,7 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         // 设置状态为上线，并保存商品到仓库
         saleItem.setStatus(SaleItemStatus.ONLINE.getCode());
         saleItemRepository.saveItem(saleItem);
-        log.info("领域层 onlineItem, 1. 商品已更新上线到仓库: [itemId={}]", itemId);
+        // log.info("领域层 onlineItem, 1. 商品已更新上线到仓库: [itemId={}]", itemId);
         
         // 创建商品上线事件
         SaleItemEvent saleItemEvent = new SaleItemEvent();
@@ -97,7 +97,7 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         
         // 发布商品上线事件
         domainEventPublisher.publish(saleItemEvent);
-        log.info("领域层 onlineItem, 2. 商品上线事件发布成功: [saleItemEvent={}]", saleItemEvent);
+        // log.info("领域层 onlineItem, 2. 商品上线事件发布成功: [saleItemEvent={}]", saleItemEvent);
     }
     
     @Override
@@ -125,7 +125,7 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         // 设置状态为下线，并保存商品到仓库
         saleItem.setStatus(SaleItemStatus.OFFLINE.getCode());
         saleItemRepository.saveItem(saleItem);
-        log.info("领域层 offlineItem, 1. 商品已更新下线到仓库: [itemId={}]", itemId);
+        // log.info("领域层 offlineItem, 1. 商品已更新下线到仓库: [itemId={}]", itemId);
         
         // 创建商品下线事件
         SaleItemEvent saleItemEvent = new SaleItemEvent();
@@ -134,6 +134,6 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         
         // 发布商品下线事件
         domainEventPublisher.publish(saleItemEvent);
-        log.info("领域层 offlineItem, 2. 商品下线事件发布成功: [saleItemEvent={}]", saleItemEvent);
+        // log.info("领域层 offlineItem, 2. 商品下线事件发布成功: [saleItemEvent={}]", saleItemEvent);
     }
 }

@@ -47,21 +47,21 @@ public class SaleOrderDomainServiceImpl implements SaleOrderDomainService {
     }
     
     @Override
-    public boolean placeOrder(Long userId, SaleOrder saleOrder) {
+    public boolean createOrder(Long userId, SaleOrder saleOrder) {
         if (saleOrder == null || saleOrder.invalidParams()) throw new DomainException(DomainErrorCode.INVALID_PARAMS);
-        log.info("领域层服务 placeOrder: [userId={}, itemId={}, activityId={}]", userId, saleOrder.getItemId(), saleOrder.getActivityId());
+        // log.info("领域层服务 createOrder: [userId={}, itemId={}, activityId={}]", userId, saleOrder.getItemId(), saleOrder.getActivityId());
         
         // 设置订单状态为已创建并保存订单
         saleOrder.setStatus(SaleOrderStatus.CREATED.getCode());
         boolean saveSuccess = saleOrderRepository.saveOrder(saleOrder);
-        log.info("领域层服务 placeOrder, 1. 保存订单到仓库: [userId={}, itemId={}, activityId={}]", userId, saleOrder.getItemId(), saleOrder.getActivityId());
+        // log.info("领域层服务 createOrder, 1. 保存订单到仓库: [userId={}, itemId={}, activityId={}]", userId, saleOrder.getItemId(), saleOrder.getActivityId());
         
         // 如果保存成功，发布订单创建事件
         if (saveSuccess) {
             SaleOrderEvent saleOrderEvent = new SaleOrderEvent();
             saleOrderEvent.setSaleOrderEventType(SaleOrderEventType.CREATED);
             domainEventPublisher.publish(saleOrderEvent);
-            log.info("领域层服务，placeOrder, 2. 订单创建事件发布成功: [saleOrderEvent={}]", saleOrderEvent);
+            // log.info("领域层服务，createOrder, 2. 订单创建事件发布成功: [saleOrderEvent={}]", saleOrderEvent);
         }
         
         return saveSuccess;
@@ -94,14 +94,14 @@ public class SaleOrderDomainServiceImpl implements SaleOrderDomainService {
         // 设置订单状态为已取消并更新订单
         saleOrder.setStatus(SaleOrderStatus.CANCELED.getCode());
         boolean updateSuccess = saleOrderRepository.updateStatus(saleOrder);
-        log.info("领域层服务 cancelOrder, 1. 更新订单取消到仓库: [userId={}, orderId={}]", userId, orderId);
+        // log.info("领域层服务 cancelOrder, 1. 更新订单取消到仓库: [userId={}, orderId={}]", userId, orderId);
         
         // 如果更新成功，发布订单取消事件
         if (updateSuccess) {
             SaleOrderEvent saleOrderEvent = new SaleOrderEvent();
             saleOrderEvent.setSaleOrderEventType(SaleOrderEventType.CANCEL);
             domainEventPublisher.publish(saleOrderEvent);
-            log.info("领域层服务 cancelOrder, 2. 订单取消事件发布成功: [saleOrderEvent={}]", saleOrderEvent);
+            // log.info("领域层服务 cancelOrder, 2. 订单取消事件发布成功: [saleOrderEvent={}]", saleOrderEvent);
         }
         
         return updateSuccess;

@@ -26,7 +26,7 @@ public class StandardStockDomainService implements StockDomainService {
         
         // 从仓库中扣减库存
         boolean res = saleItemRepository.deductStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
-        log.info("领域层服务 deductStock, 从仓库中扣减库存: [stockDeduction={}, res={}]", stockDeduction, res);
+        // log.info("领域层服务 deductStock, 从仓库中扣减库存: [stockDeduction={}, res={}]", stockDeduction, res);
         return res;
     }
     
@@ -38,7 +38,7 @@ public class StandardStockDomainService implements StockDomainService {
         
         // 从仓库中恢复库存
         boolean res = saleItemRepository.revertStockForItem(stockDeduction.getItemId(), stockDeduction.getQuantity());
-        log.info("领域层服务 revertStock, 从仓库中恢复库存: [stockDeduction={}, res={}]", stockDeduction, res);
+        // log.info("领域层服务 revertStock, 从仓库中恢复库存: [stockDeduction={}, res={}]", stockDeduction, res);
         return res;
     }
 }

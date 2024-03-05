@@ -3,6 +3,7 @@ package com.harris.app.event.handler;
 import com.alibaba.cola.dto.Response;
 import com.alibaba.cola.event.EventHandler;
 import com.alibaba.cola.event.EventHandlerI;
+import com.harris.app.exception.AppErrorCode;
 import com.harris.app.service.cache.SaleActivitiesCacheService;
 import com.harris.app.service.cache.SaleActivityCacheService;
 import com.harris.domain.model.event.SaleActivityEvent;
@@ -10,8 +11,6 @@ import com.harris.infra.config.MarkTrace;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
-
-import static com.harris.app.exception.AppErrorCode.INVALID_PARAMS;
 
 @Slf4j
 @EventHandler // 事件处理器，用于处理销售活动相关的事件
@@ -25,11 +24,11 @@ public class SaleActivityEventHandler implements EventHandlerI<Response, SaleAct
     @Override
     @MarkTrace
     public Response execute(SaleActivityEvent saleActivityEvent) {
-        log.info("应用层 activityEvent，接收活动事件: {}", saleActivityEvent);
+        // log.info("应用层 activityEvent，接收活动事件: [activityId: {}]", saleActivityEvent.getActivityId());
         
         if (saleActivityEvent.getActivityId() == null) {
             log.info("应用层 activityEvent，事件参数错误");
-            return Response.buildFailure(INVALID_PARAMS.getErrCode(), INVALID_PARAMS.getErrDesc());
+            return Response.buildFailure(AppErrorCode.INVALID_PARAMS.getErrCode(), AppErrorCode.INVALID_PARAMS.getErrDesc());
         }
         
         // 尝试更新指定活动ID的活动缓存

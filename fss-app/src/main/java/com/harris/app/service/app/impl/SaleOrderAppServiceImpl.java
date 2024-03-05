@@ -6,7 +6,8 @@ import com.harris.app.model.command.PlaceOrderCommand;
 import com.harris.app.model.dto.SaleOrderDTO;
 import com.harris.app.model.query.SaleOrdersQuery;
 import com.harris.app.model.result.*;
-import com.harris.app.service.app.PlaceOrderService;
+import com.harris.app.service.placeorder.PlaceOrderService;
+import com.harris.app.service.placeorder.QueuedPlaceOrderService;
 import com.harris.app.service.app.SaleOrderAppService;
 import com.harris.app.service.app.SecurityService;
 import com.harris.app.service.cache.StockCacheService;
@@ -55,13 +56,13 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
     @Override
     public AppMultiResult<SaleOrderDTO> listOrdersByUser(Long userId, SaleOrdersQuery saleOrdersQuery) {
         if (userId == null || saleOrdersQuery == null) return AppMultiResult.empty();
-        log.info("应用层 listOrdersByUser: [userId={}, saleOrdersQuery={}]", userId, saleOrdersQuery);
+        // log.info("应用层 listOrdersByUser: [userId={}, saleOrdersQuery={}]", userId, saleOrdersQuery);
         
         // 调用领域服务的 订单列表 方法
         PageResult<SaleOrder> orderPageResult = saleOrderDomainService.getOrders(userId, AppConverter.toPageQuery(saleOrdersQuery));
         
         List<SaleOrderDTO> saleOrderDTOS = orderPageResult.getData().stream().map(AppConverter::toDTO).collect(Collectors.toList());
-        log.info("应用层 listOrdersByUser，成功: [userId={}, saleOrdersQuery={}, total={}]", userId, saleOrdersQuery, orderPageResult.getTotal());
+        // log.info("应用层 listOrdersByUser，成功: [userId={}, saleOrdersQuery={}, total={}]", userId, saleOrdersQuery, orderPageResult.getTotal());
         return AppMultiResult.of(saleOrderDTOS, orderPageResult.getTotal());
     }
     
@@ -71,7 +72,7 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
         if (userId == null || placeOrderCommand == null || placeOrderCommand.invalidParams()) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
-        log.info("应用层 placeOrder: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
+        // log.info("应用层 placeOrder 开始: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
         
         // 获取 Redisson 分布式锁实例，key = PLACE_ORDER_LOCK_KEY + userId
         DistributedLock rLock = distributedLockService.getLock(buildPlaceOrderLockKey(userId));
@@ -90,11 +91,11 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
             // 调用下单服务
             PlaceOrderResult placeOrderResult = placeOrderService.doPlaceOrder(userId, placeOrderCommand);
             if (!placeOrderResult.isSuccess()) {
-                log.info("应用层 placeOrder，失败: [userId={}]", userId);
+                // log.info("应用层 placeOrder，排队失败，库存不足: [userId={}, placeOrderResult={}]", userId, placeOrderResult);
                 return AppSingleResult.error(placeOrderResult.getCode(), placeOrderResult.getMessage());
             }
             
-            log.info("应用层 placeOrder，成功: [userId={}, placeOrderResult={}]", userId, placeOrderResult);
+            log.info("应用层 placeOrder，排队成功: [userId={}, placeOrderResult={}]", userId, placeOrderResult);
             return AppSingleResult.ok(placeOrderResult);
         } catch (Exception e) {
             log.error("应用层 placeOrder，异常: [userId={}] ", userId, e);
@@ -108,7 +109,7 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
     @Transactional
     public AppResult cancelOrder(Long userId, Long orderId) {
         if (userId == null || orderId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        log.info("应用层 cancelOrder: [userId={}, orderId={}]", userId, orderId);
+        // log.info("应用层 cancelOrder: [userId={}, orderId={}]", userId, orderId);
         
         // 调用领域服务的 获取订单 方法
         SaleOrder saleOrder = saleOrderDomainService.getOrder(userId, orderId);
@@ -147,13 +148,13 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
         if (userId == null || itemId == null || StringUtils.isEmpty(placeOrderTaskId)) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
-        log.info("应用层 getPlaceOrderTaskResult: [userId={}, itemId={}, placeOrderTaskId={}]", userId, itemId, placeOrderTaskId);
+        // log.info("应用层 getPlaceOrderTaskResult: [userId={}, itemId={}, placeOrderTaskId={}]", userId, itemId, placeOrderTaskId);
         
         // 只有采用 消息队列 下单服务才支持获取下单任务结果
         if (placeOrderService instanceof QueuedPlaceOrderService) {
             // 调用 队列下单服务 获取下单任务结果
             QueuedPlaceOrderService queuedPlaceOrderService = (QueuedPlaceOrderService) placeOrderService;
-            OrderHandleResult orderHandleResult = queuedPlaceOrderService.getPlaceOrderResult(userId, itemId, placeOrderTaskId);
+            OrderHandleResult orderHandleResult = queuedPlaceOrderService.getOrderHandleResult(userId, itemId, placeOrderTaskId);
             if (!orderHandleResult.isSuccess()) {
                 log.info("应用层 getPlaceOrderTaskResult，失败: [userId={}, itemId={}, placeOrderTaskId={}]", userId, itemId, placeOrderTaskId);
                 return AppSingleResult.error(orderHandleResult.getCode(), orderHandleResult.getMessage(), orderHandleResult);

@@ -13,12 +13,14 @@ public class PlaceOrderResult {
     private String code;
     private String message;
 
+    // 同步下单
     public static PlaceOrderResult ok(Long orderId) {
-        return new PlaceOrderResult().setSuccess(true).setOrderId(orderId);
+        return new PlaceOrderResult().setSuccess(true).setOrderId(orderId).setMessage("抢购成功");
     }
 
+    // 异步下单
     public static PlaceOrderResult ok(String placeOrderTaskId) {
-        return new PlaceOrderResult().setSuccess(true).setPlaceOrderTaskId(placeOrderTaskId);
+        return new PlaceOrderResult().setSuccess(true).setPlaceOrderTaskId(placeOrderTaskId).setMessage("排队成功");
     }
 
     public static PlaceOrderResult error(AppErrorCode appErrorCode) {

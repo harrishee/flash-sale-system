@@ -43,7 +43,7 @@ public class StandardPlaceOrderService implements PlaceOrderService {
     
     @PostConstruct
     public void init() {
-        log.info("同步下单服务已启用");
+        log.info("同步下单模式已启用");
     }
     
     @Override
@@ -51,40 +51,32 @@ public class StandardPlaceOrderService implements PlaceOrderService {
         if (userId == null || placeOrderCommand == null || placeOrderCommand.invalidParams()) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
-        log.info("同步下单 doPlaceOrder: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
         
         // 检查活动是否允许下单
         boolean activityAllowed = saleActivityAppService.isPlaceOrderAllowed(placeOrderCommand.getActivityId());
         if (!activityAllowed) {
-            log.info("同步下单 doPlaceOrder, 活动不允许下单: [activityId={}]", placeOrderCommand.getActivityId());
+            log.info("同步下单, 活动不允许下单: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
             return PlaceOrderResult.error(AppErrorCode.PLACE_ORDER_FAILED);
         }
-        
         // 检查商品是否允许下单
         boolean itemAllowed = saleItemAppService.isPlaceOrderAllowed(placeOrderCommand.getItemId());
         if (!itemAllowed) {
-            log.info("同步下单 doPlaceOrder, 商品不允许下单: [itemId={}]", placeOrderCommand.getItemId());
+            log.info("同步下单, 商品不允许下单: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
             return PlaceOrderResult.error(AppErrorCode.PLACE_ORDER_FAILED);
         }
         
         // 获取商品
         AppSingleResult<SaleItemDTO> itemResult = saleItemAppService.getItem(placeOrderCommand.getItemId());
         if (!itemResult.isSuccess() || itemResult.getData() == null) {
-            log.info("同步下单 doPlaceOrder, 获取商品失败: [itemId={}]", placeOrderCommand.getItemId());
+            log.info("同步下单, 获取商品失败: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
             return PlaceOrderResult.error(AppErrorCode.GET_ITEM_FAILED);
-        }
-        
-        // 检查商品是否在售
-        SaleItemDTO saleItemDTO = itemResult.getData();
-        if (saleItemDTO.notOnSale()) {
-            log.info("同步下单 doPlaceOrder, 商品不在售: [itemId={}]", placeOrderCommand.getItemId());
-            return PlaceOrderResult.error(AppErrorCode.ITEM_NOT_ON_SALE);
         }
         
         // 用 snowflake 算法生成订单号
         Long orderId = OrderUtil.generateOrderNo();
         
         // 构建订单对象
+        SaleItemDTO saleItemDTO = itemResult.getData();
         SaleOrder newOrder = AppConverter.toDomainModel(placeOrderCommand);
         newOrder.setItemTitle(saleItemDTO.getItemTitle());
         newOrder.setSalePrice(saleItemDTO.getSalePrice());
@@ -97,40 +89,40 @@ public class StandardPlaceOrderService implements PlaceOrderService {
                 .setQuantity(placeOrderCommand.getQuantity())
                 .setUserId(userId);
         
-        // 预扣减库存成功标识，默认为失败
+        // 缓存预扣标识
         boolean preDeductSuccess = false;
         try {
             // 1. 缓存预扣
             preDeductSuccess = stockCacheService.deductStock(stockDeduction);
             if (!preDeductSuccess) {
-                log.info("同步下单 doPlaceOrder, 缓存预扣失败: [stockDeduction={}]", stockDeduction);
+                log.info("同步下单, 缓存预扣失败: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
                 return PlaceOrderResult.error(AppErrorCode.PLACE_ORDER_FAILED.getErrCode(), AppErrorCode.PLACE_ORDER_FAILED.getErrDesc());
             }
             
             // 2. 扣减库存
             boolean deductSuccess = stockDomainService.deductStock(stockDeduction);
             if (!deductSuccess) {
-                log.info("同步下单 doPlaceOrder, 扣减库存失败: [stockDeduction={}]", stockDeduction);
+                log.info("同步下单, 扣减库存失败: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
                 return PlaceOrderResult.error(AppErrorCode.PLACE_ORDER_FAILED.getErrCode(), AppErrorCode.PLACE_ORDER_FAILED.getErrDesc());
             }
             
-            // 3. 调用领域服务的 下单 方法（存入数据库）
+            // 3. 调用领域服务的 创建订单 方法
             boolean placeOrderSuccess = saleOrderDomainService.createOrder(userId, newOrder);
             if (!placeOrderSuccess) throw new BizException(AppErrorCode.PLACE_ORDER_FAILED.getErrDesc());
         } catch (Exception e) {
-            // 如果缓存预扣成功，但是扣减库存或者下单失败，则需要恢复缓存库存
+            // 如果缓存预扣成功，但是扣减库存或者创建订单失败，需要恢复缓存库存
             if (preDeductSuccess) {
                 boolean revertSuccess = stockCacheService.revertStock(stockDeduction);
                 if (!revertSuccess) {
-                    log.error("同步下单 doPlaceOrder, 恢复缓存预扣失败: [stockDeduction={}]", stockDeduction);
+                    log.error("同步下单, 恢复缓存预扣失败: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
                 }
             }
             
-            log.error("同步下单 doPlaceOrder, 下单异常: [stockDeduction={}]", stockDeduction, e);
+            log.error("同步下单, 下单失败: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand, e);
             throw new BizException(AppErrorCode.PLACE_ORDER_FAILED.getErrDesc());
         }
         
-        log.info("同步下单 doPlaceOrder, 下单成功: [userId={}, orderId={}]", userId, orderId);
+        log.info("同步下单, 下单成功: [userId={}, orderId={}]", userId, orderId);
         return PlaceOrderResult.ok(orderId);
     }
 }

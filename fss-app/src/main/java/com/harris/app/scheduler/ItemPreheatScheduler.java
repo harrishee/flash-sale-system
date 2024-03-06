@@ -23,9 +23,9 @@ public class ItemPreheatScheduler {
     private StockCacheService stockCacheService;
     
     @MarkTrace
-    @Scheduled(fixedRate = 24 * 60 * 60 * 1000) // 定时任务，每 24 小时执行一次这个方法
+    @Scheduled(fixedRate = 6 * 60 * 60 * 1000) // 固定每 6 小时执行一次这个方法
     public void itemPreheatTask() {
-        log.info("应用层调度 itemPreheatTask，商品预热调度");
+        log.info("定时任务 itemPreheatTask，商品预热开始");
         
         // TODO: 预热时可以进一步根据秒杀品的上线时间进行预热，只预热临近开始的秒杀品；
         // TODO: 预热过程中，应对已预热但即将开始的活动进行预热复查，防止数据库中显示已预热，但缓存中的数据已经丢失；
@@ -37,10 +37,10 @@ public class ItemPreheatScheduler {
         List<Long> ids = new ArrayList<>();
         
         pageResult.getData().forEach(saleItem -> {
-            // 确保缓存中的库存数据与数据库中的实际库存数据保持一致
+            // 确保缓存中的库存和数据库中的库存保持一致
             boolean initSuccess = stockCacheService.syncCachedStockToDB(saleItem.getId());
             if (!initSuccess) {
-                log.info("应用层调度 itemPreheatTask，商品初始化预热失败: [saleItemId={}]", saleItem.getId());
+                log.info("定时任务 itemPreheatTask，商品初始化预热失败: [saleItemId={}]", saleItem.getId());
                 return;
             }
             
@@ -50,6 +50,6 @@ public class ItemPreheatScheduler {
             ids.add(saleItem.getId());
         });
         
-        log.info("应用层调度 itemPreheatTask，商品预热调度完成: [total={}, itemIds={}]", pageResult.getTotal(), ids);
+        log.info("定时任务 itemPreheatTask，商品预热完成: [total={}, itemIds={}]", pageResult.getTotal(), ids);
     }
 }

@@ -18,7 +18,6 @@ import com.harris.domain.model.enums.SaleActivityStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Collection;
 
 @RestController
 @RequestMapping("/sale-activities")
@@ -32,14 +31,17 @@ public class SaleActivityController {
                                                                 @PathVariable Long activityId,
                                                                 @RequestParam(required = false) Long version) {
         // 调用应用层的 获取活动 方法
+        // 应用层 -> 本地缓存 -> 分布式缓存 -> 最新状态缓存 / 稍后再试（tryLater） / 不存在（notExist）
+        // 高并发读活动请求被阻止在应用层，通过缓存实现数据获取，不会让请求进入领域层。
+        // 只有在分布式 数据尚未被缓存 和 缓存失效 的情况下，才会进入领域层获取数据。
         AppSingleResult<SaleActivityDTO> activityResult = saleActivityAppService.getActivity(userId, activityId, version);
+        if (!activityResult.isSuccess() || activityResult.getData() == null) {
+            return ResponseConverter.toSingleResponse(activityResult);
+        }
+        
         SaleActivityDTO activityDTO = activityResult.getData();
         SaleActivityResponse activityResponse = SaleActivityConverter.toResponse(activityDTO);
-        
-        // 检查获取活动是否 失败 或者 为空
-        return !activityResult.isSuccess() || activityDTO == null
-                ? ResponseConverter.toSingleResponse(activityResult)
-                : SingleResponse.of(activityResponse);
+        return SingleResponse.of(activityResponse);
     }
     
     // 获取活动列表
@@ -53,15 +55,14 @@ public class SaleActivityController {
                 .setPageSize(pageSize)
                 .setPageNumber(pageNumber);
         
-        // 调用应用层的 获取活动列表 方法（走的是缓存）
+        // 调用应用层的 获取活动列表 方法
+        // 对第一页且无关键字的查询，走缓存；其他情况走数据库
         AppMultiResult<SaleActivityDTO> listResult = saleActivityAppService.listActivities(userId, activitiesQuery);
-        Collection<SaleActivityDTO> activityDTOs = listResult.getData();
-        Collection<SaleActivityResponse> activitiesResponses = SaleActivityConverter.toResponseList(activityDTOs);
+        if (!listResult.isSuccess() || listResult.getData() == null) {
+            return ResponseConverter.toMultiResponse(listResult);
+        }
         
-        // 检查获取活动列表是否 失败 或者 为空
-        return !listResult.isSuccess() || activityDTOs == null
-                ? ResponseConverter.toMultiResponse(listResult)
-                : MultiResponse.of(activitiesResponses, listResult.getTotal());
+        return MultiResponse.of(SaleActivityConverter.toResponseList(listResult.getData()), listResult.getTotal());
     }
     
     // 获取在线活动列表
@@ -76,15 +77,14 @@ public class SaleActivityController {
                 .setPageNumber(pageNumber)
                 .setStatus(SaleActivityStatus.ONLINE.getCode());
         
-        // 调用应用层的 获取活动列表 方法（走的是数据库）
+        // 调用应用层的 获取活动列表 方法
+        // 对第一页且无关键字的查询，走缓存；其他情况走数据库
         AppMultiResult<SaleActivityDTO> listResult = saleActivityAppService.listActivities(userId, activitiesQuery);
-        Collection<SaleActivityDTO> activityDTOs = listResult.getData();
-        Collection<SaleActivityResponse> activitiesResponses = SaleActivityConverter.toResponseList(activityDTOs);
+        if (!listResult.isSuccess() || listResult.getData() == null) {
+            return ResponseConverter.toMultiResponse(listResult);
+        }
         
-        // 检查获取活动列表是否 失败 或者 为空
-        return !listResult.isSuccess() || activityDTOs == null
-                ? ResponseConverter.toMultiResponse(listResult)
-                : MultiResponse.of(activitiesResponses, listResult.getTotal());
+        return MultiResponse.of(SaleActivityConverter.toResponseList(listResult.getData()), listResult.getTotal());
     }
     
     // 发布活动
@@ -92,6 +92,7 @@ public class SaleActivityController {
     public Response publishActivity(@RequestAttribute Long userId,
                                     @RequestBody PublishActivityRequest publishActivityRequest) {
         // 调用应用层的 发布活动 方法
+        // 应用层加分布式锁，用户防抖，key = ACTIVITY_CREATE_LOCK + userId
         PublishActivityCommand publishActivityCommand = SaleActivityConverter.toCommand(publishActivityRequest);
         AppResult publishResult = saleActivityAppService.publishActivity(userId, publishActivityCommand);
         return ResponseConverter.toResponse(publishResult);
@@ -103,6 +104,7 @@ public class SaleActivityController {
                                    @PathVariable Long activityId,
                                    @RequestBody PublishActivityRequest publishActivityRequest) {
         // 调用应用层的 修改活动 方法
+        // 应用层加分布式锁，防止并发修改活动，key = ACTIVITY_MODIFICATION_LOCK + activityId
         PublishActivityCommand modifyActivityCommand = SaleActivityConverter.toCommand(publishActivityRequest);
         AppResult modifyResult = saleActivityAppService.modifyActivity(userId, activityId, modifyActivityCommand);
         return ResponseConverter.toResponse(modifyResult);
@@ -112,6 +114,7 @@ public class SaleActivityController {
     @PutMapping("/{activityId}/online")
     public Response onlineActivity(@RequestAttribute Long userId, @PathVariable Long activityId) {
         // 调用应用层的 上线活动 方法
+        // 应用层加分布式锁，防止并发修改活动，key = ACTIVITY_MODIFICATION_LOCK + activityId
         AppResult onlineResult = saleActivityAppService.onlineActivity(userId, activityId);
         return ResponseConverter.toResponse(onlineResult);
     }
@@ -120,6 +123,7 @@ public class SaleActivityController {
     @PutMapping("/{activityId}/offline")
     public Response offlineActivity(@RequestAttribute Long userId, @PathVariable Long activityId) {
         // 调用应用层的 下线活动 方法
+        // 应用层加分布式锁，防止并发修改活动，key = ACTIVITY_MODIFICATION_LOCK + activityId
         AppResult offlineResult = saleActivityAppService.offlineActivity(userId, activityId);
         return ResponseConverter.toResponse(offlineResult);
     }

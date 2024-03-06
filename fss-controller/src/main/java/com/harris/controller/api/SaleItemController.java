@@ -18,7 +18,6 @@ import com.harris.domain.model.enums.SaleItemStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Collection;
 
 @RestController
 @RequestMapping("/sale-activities/{activityId}/sale-items")
@@ -33,17 +32,20 @@ public class SaleItemController {
                                                     @PathVariable Long itemId,
                                                     @RequestParam(required = false) Long version) {
         // 调用应用层的 获取商品 方法
+        // 应用层 -> 本地缓存 -> 分布式缓存 -> 最新状态缓存 / 稍后再试（tryLater） / 不存在（notExist）
+        // 高并发读商品请求被阻止在应用层，通过缓存实现数据获取，不会让请求进入领域层。
+        // 只有在分布式 数据尚未被缓存 和 缓存失效 的情况下，才会进入领域层获取数据。
         AppSingleResult<SaleItemDTO> itemResult = saleItemAppService.getItem(userId, activityId, itemId, version);
+        if (!itemResult.isSuccess() || itemResult.getData() == null) {
+            return ResponseConverter.toSingleResponse(itemResult);
+        }
+        
         SaleItemDTO itemDTO = itemResult.getData();
         SaleItemResponse itemResponse = SaleItemConverter.toResponse(itemDTO);
-        
-        // 检查获取商品是否 失败 或者 为空
-        return !itemResult.isSuccess() || itemDTO == null
-                ? ResponseConverter.toSingleResponse(itemResult)
-                : SingleResponse.of(itemResponse);
+        return SingleResponse.of(itemResponse);
     }
     
-    // 获取商品列表
+    // 获取活动ID的 商品列表
     @GetMapping
     public MultiResponse<SaleItemResponse> listItems(@RequestAttribute Long userId,
                                                      @PathVariable Long activityId,
@@ -55,15 +57,14 @@ public class SaleItemController {
                 .setPageSize(pageSize)
                 .setPageNumber(pageNumber);
         
-        // 调用应用层的 获取商品列表 方法（走的是数据库）
+        // 调用应用层的 获取商品列表 方法
+        // 对第一页且无关键字且商品在线的查询，走缓存；其他情况走数据库
         AppMultiResult<SaleItemDTO> itemsResult = saleItemAppService.listItems(userId, activityId, itemsQuery);
-        Collection<SaleItemDTO> itemDTOS = itemsResult.getData();
-        Collection<SaleItemResponse> itemResponses = SaleItemConverter.toResponseList(itemDTOS);
+        if (!itemsResult.isSuccess() || itemsResult.getData() == null) {
+            return ResponseConverter.toMultiResponse(itemsResult);
+        }
         
-        // 检查获取商品列表是否 失败 或者 为空
-        return !itemsResult.isSuccess() || itemDTOS == null
-                ? ResponseConverter.toMultiResponse(itemsResult)
-                : MultiResponse.of(itemResponses, itemsResult.getTotal());
+        return MultiResponse.of(SaleItemConverter.toResponseList(itemsResult.getData()), itemsResult.getTotal());
     }
     
     // 获取在线商品列表
@@ -79,15 +80,14 @@ public class SaleItemController {
                 .setPageNumber(pageNumber)
                 .setStatus(SaleItemStatus.ONLINE.getCode());
         
-        // 调用应用层的 获取商品列表 方法（走的是数据库）
+        // 调用应用层的 获取商品列表 方法
+        // 对第一页且无关键字且商品在线的查询，走缓存；其他情况走数据库
         AppMultiResult<SaleItemDTO> itemsResult = saleItemAppService.listItems(userId, activityId, itemsQuery);
-        Collection<SaleItemDTO> itemDTOS = itemsResult.getData();
-        Collection<SaleItemResponse> itemResponses = SaleItemConverter.toResponseList(itemDTOS);
+        if (!itemsResult.isSuccess() || itemsResult.getData() == null) {
+            return ResponseConverter.toMultiResponse(itemsResult);
+        }
         
-        // 检查获取商品列表是否 失败 或者 为空
-        return !itemsResult.isSuccess() || itemDTOS == null
-                ? ResponseConverter.toMultiResponse(itemsResult)
-                : MultiResponse.of(itemResponses, itemsResult.getTotal());
+        return MultiResponse.of(SaleItemConverter.toResponseList(itemsResult.getData()), itemsResult.getTotal());
     }
     
     // 发布商品
@@ -96,6 +96,7 @@ public class SaleItemController {
                                 @PathVariable Long activityId,
                                 @RequestBody PublishItemRequest publishItemRequest) {
         // 调用应用层的 发布商品 方法
+        // 应用层加分布式锁，用户防抖，key = ITEM_CREATE_LOCK_KEY + userId
         PublishItemCommand publishItemCommand = SaleItemConverter.toCommand(publishItemRequest);
         AppResult publishResult = saleItemAppService.publishItem(userId, activityId, publishItemCommand);
         return ResponseConverter.toResponse(publishResult);
@@ -105,6 +106,7 @@ public class SaleItemController {
     @PutMapping("/{itemId}/online")
     public Response onlineItem(@RequestAttribute Long userId, @PathVariable Long activityId, @PathVariable Long itemId) {
         // 调用应用层的 上线商品 方法
+        // 应用层加分布式锁，用户防抖，key = ITEM_MODIFICATION_LOCK_KEY + userId
         AppResult onlineResult = saleItemAppService.onlineItem(userId, activityId, itemId);
         return ResponseConverter.toResponse(onlineResult);
     }
@@ -113,6 +115,7 @@ public class SaleItemController {
     @PutMapping("/{itemId}/offline")
     public Response offlineItem(@RequestAttribute Long userId, @PathVariable Long activityId, @PathVariable Long itemId) {
         // 调用应用层的 下线商品 方法
+        // 应用层加分布式锁，用户防抖，key = ITEM_MODIFICATION_LOCK_KEY + userId
         AppResult offlineResult = saleItemAppService.offlineItem(userId, activityId, itemId);
         return ResponseConverter.toResponse(offlineResult);
     }

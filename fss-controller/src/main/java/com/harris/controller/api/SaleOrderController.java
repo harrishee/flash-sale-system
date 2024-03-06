@@ -57,10 +57,11 @@ public class SaleOrderController {
                 : MultiResponse.of(orderResponses, ordersResult.getTotal());
     }
     
-    // 下单
+    // 下单！！
     @PostMapping
     public SingleResponse<PlaceOrderResult> placeOrder(@RequestAttribute Long userId, @RequestBody PlaceOrderRequest placeOrderRequest) {
-        // 调用应用层的 下单 方法
+        // 调用应用层的 下单 方法，加 Transactional 保证下单操作的原子性
+        // 应用层加分布式锁，用户防抖，key = PLACE_ORDER_LOCK_KEY + userId
         PlaceOrderCommand placeOrderCommand = SaleOrderConverter.toCommand(placeOrderRequest);
         AppSingleResult<PlaceOrderResult> placeOrderResult = saleOrderAppService.placeOrder(userId, placeOrderCommand);
         

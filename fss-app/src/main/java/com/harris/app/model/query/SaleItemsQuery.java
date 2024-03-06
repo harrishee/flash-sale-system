@@ -14,9 +14,8 @@ public class SaleItemsQuery {
     private Integer status;
     private Long version;
     private Long activityId;
-
-    public boolean isOnlineFirstPageQuery() {
-        return StringUtils.isEmpty(keyword) && pageNumber != null &&
-                pageNumber == 1 && SaleItemStatus.isOnline(status);
+    
+    public boolean isOnlineFirstPageAndNoKeywordQuery() {
+        return StringUtils.isEmpty(keyword) && pageNumber != null && pageNumber == 1 && SaleItemStatus.isOnline(status);
     }
 }

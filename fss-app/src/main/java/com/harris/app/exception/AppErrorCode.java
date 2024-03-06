@@ -3,9 +3,9 @@ package com.harris.app.exception;
 import com.alibaba.cola.dto.ErrorCodeI;
 
 public enum AppErrorCode implements ErrorCodeI {
-    INVALID_PARAMS("INVALID_PARAMS", "参数错误"),
-    TRY_LATER("TRY_LATER", "稍后再试"),
-    LOCK_FAILED("LOCK_FAILED_ERROR", "变更中，稍后再试"),
+    INVALID_PARAMS("INVALID_PARAMS", "应用层，参数错误"),
+    TRY_LATER("TRY_LATER", "应用层，稍后再试"),
+    LOCK_FAILED("LOCK_FAILED_ERROR", "分布式锁失败，稍后再试"),
     ACTIVITY_PUBLISH_FAILED("ACTIVITY_PUBLISH_FAILED", "活动发布失败"),
     ACTIVITY_MODIFY_FAILED("ACTIVITY_MODIFY_FAILED", "活动修改失败"),
     ACTIVITY_NOT_FOUND("ACTIVITY_NOT_FOUND", "活动不存在"),

@@ -11,7 +11,7 @@ public interface SaleOrderRepository {
     
     List<SaleOrder> findAllOrderByCondition(PageQuery pageQuery);
     
-    int countOrdersByCondition(PageQuery pageQuery);
+    int countAllOrderByCondition(PageQuery pageQuery);
     
     boolean saveOrder(SaleOrder saleOrder);
     

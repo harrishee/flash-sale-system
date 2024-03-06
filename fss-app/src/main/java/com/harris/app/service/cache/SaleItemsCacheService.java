@@ -44,39 +44,30 @@ public class SaleItemsCacheService {
     private SaleItemDomainService saleItemDomainService;
     
     public SaleItemsCache getItemsCache(Long activityId, Long version) {
-        if (activityId == null) return null;
-        
         SaleItemsCache saleItemsCache = ITEMS_LOCAL_CACHE.getIfPresent(activityId);
         if (saleItemsCache != null) {
-            // 如果本地缓存命中，且传入的版本号为null或小于等于缓存中的版本号，则直接返回缓存对象
             if (version == null) {
-                // log.info("应用层 getItemsCache, 命中本地缓存: [activityId: {}]", activityId);
                 return saleItemsCache;
-            }
-            
-            if (version.equals(saleItemsCache.getVersion()) || version < saleItemsCache.getVersion()) {
-                // log.info("应用层 getItemsCache, 命中本地缓存: [activityId: {}, version: {}]", activityId, version);
+            } else if (version.equals(saleItemsCache.getVersion()) || version < saleItemsCache.getVersion()) {
                 return saleItemsCache;
+            } else {
+                return getDistributedCache(activityId);
             }
-            
-            // 如果传入的版本号大于缓存中的版本号，说明本地缓存的数据可能已经过时，需要从分布式缓存中获取最新数据
-            // log.info("应用层 getItemsCache, 未命中本地缓存: [activityId: {}]", activityId);
-            return getDistributedCache(activityId);
         }
         
-        // 如果本地缓存未命中，则尝试从分布式缓存中获取最新的缓存数据
-        // log.info("应用层 getItemsCache, 未命中本地缓存: [activityId: {}]", activityId);
         return getDistributedCache(activityId);
     }
     
     private SaleItemsCache getDistributedCache(Long activityId) {
-        // 尝试从分布式缓存服务获取商品列表缓存对象
+        // 1. 从分布式缓存中获取商品列表缓存，key = ITEMS_CACHE_KEY + activityId
         SaleItemsCache distributedItemsCache = distributedCacheService.get(buildItemCacheKey(activityId), SaleItemsCache.class);
-        // 如果分布式缓存中没有找到，尝试更新分布式缓存
+        
+        // 2. 分布式缓存中也没有，说明 缓存数据尚未生成 或者 缓存失效，尝试更新缓存
         if (distributedItemsCache == null) distributedItemsCache = tryUpdateItemsCache(activityId);
         
-        // 如果获取到的缓存对象有效，且不是标记为稍后再试的对象
+        // 3. 分布式缓存中有缓存，并且未处于更新中状态，说明缓存是最新的，可用；将其更新到本地缓存中
         if (distributedItemsCache != null && !distributedItemsCache.isLater()) {
+            // 4. 同一时间只允许一个线程更新本地缓存
             boolean lockSuccess = localLock.tryLock();
             if (lockSuccess) {
                 try {
@@ -88,36 +79,39 @@ public class SaleItemsCacheService {
             }
         }
         
+        // 5. 最后返回的：最新状态缓存 / 稍后再试（tryLater） / 不存在（notExist）
         return distributedItemsCache;
     }
     
     public SaleItemsCache tryUpdateItemsCache(Long activityId) {
-        // 获取 Redisson 分布式锁，防止并发更新商品列表缓存，key = UPDATE_ITEMS_CACHE_LOCK_KEY + activityId
+        // 获取分布式锁实例，防止并发更新商品列表缓存，key = UPDATE_ITEMS_CACHE_LOCK_KEY + activityId
         DistributedLock rLock = distributedLockService.getLock(buildUpdateItemCacheKey(activityId));
         try {
-            // 尝试获取分布式锁
             boolean lockSuccess = rLock.tryLock(1, 5, TimeUnit.SECONDS);
             if (!lockSuccess) return new SaleItemsCache().tryLater();
             
-            // 从域服务中获取销售商品列表信息
+            // 从领域服层调用 获取商品列表 方法
             PageQuery pageQuery = new PageQuery().setActivityId(activityId).setStatus(SaleItemStatus.ONLINE.getCode());
             PageResult<SaleItem> itemsPageResult = saleItemDomainService.getItems(pageQuery);
             
-            // 根据获取到的销售商品列表信息构建商品列表缓存对象。如果获取的商品列表不为空，则奢姿总数和商品列表数据，否则返回一个空的缓存对象
-            SaleItemsCache saleItemsCache = (itemsPageResult != null)
-                    ? new SaleItemsCache()
-                    .setTotal(itemsPageResult.getTotal())
-                    .setSaleItems(itemsPageResult.getData())
-                    .setVersion(System.currentTimeMillis())
-                    : new SaleItemsCache().empty();
+            // 如果商品列表不存在，设置状态为不存在；如果存在，设置数据和添加当前时间戳为版本号
+            SaleItemsCache saleItemsCache;
+            if (itemsPageResult == null) {
+                saleItemsCache = new SaleItemsCache().empty();
+            } else {
+                saleItemsCache = new SaleItemsCache()
+                        .setTotal(itemsPageResult.getTotal())
+                        .setSaleItems(itemsPageResult.getData())
+                        .setVersion(System.currentTimeMillis());
+            }
             
-            // 将构建的商品缓存对象序列化为JSON字符串，并存入分布式缓存中，设置过期时间为5分钟
+            // 更新分布式缓存，key = ITEMS_CACHE_KEY + activityId
             distributedCacheService.put(buildItemCacheKey(activityId), JSON.toJSONString(saleItemsCache), CacheConstant.MINUTES_5);
             
-            // log.info("应用层 tryUpdateItemsCache, 远程缓存已更新: [activityId: {}]", activityId);
+            log.info("分布式商品缓存已更新: [saleItemsCache={}]", saleItemsCache);
             return saleItemsCache;
         } catch (Exception e) {
-            log.error("应用层 tryUpdateItemsCache, 远程缓存更新异常: [activityId: {}] ", activityId, e);
+            log.error("更新分布式商品缓存异常: [activityId: {}] ", activityId, e);
             return new SaleItemsCache().tryLater();
         } finally {
             rLock.unlock();

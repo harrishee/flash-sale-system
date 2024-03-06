@@ -28,40 +28,43 @@ public class SaleOrderDomainServiceImpl implements SaleOrderDomainService {
     
     @Override
     public SaleOrder getOrder(Long userId, Long orderId) {
-        if (userId == null || orderId == null) throw new DomainException(DomainErrorCode.INVALID_PARAMS);
+        if (userId == null || orderId == null) {
+            throw new DomainException(DomainErrorCode.INVALID_PARAMS);
+        }
         
         // 从仓库中获取订单
-        Optional<SaleOrder> optionalSaleOrder = saleOrderRepository.findOrderById(orderId);
-        if (!optionalSaleOrder.isPresent()) throw new DomainException(DomainErrorCode.ITEM_DOES_NOT_EXIST);
-        return optionalSaleOrder.get();
+        Optional<SaleOrder> saleOrder = saleOrderRepository.findOrderById(orderId);
+        if (!saleOrder.isPresent()) throw new DomainException(DomainErrorCode.ITEM_NOT_EXIST);
+        return saleOrder.get();
     }
     
     @Override
     public PageResult<SaleOrder> getOrders(Long userId, PageQuery pageQuery) {
         if (pageQuery == null) pageQuery = new PageQuery();
         
-        // 从仓库中获取订单列表和订单数量，包装成分页结果并返回
+        // 从仓库中获取 订单列表 和 订单数量，包装成分页结果并返回
         List<SaleOrder> saleOrders = saleOrderRepository.findAllOrderByCondition(pageQuery.validateParams());
-        int total = saleOrderRepository.countOrdersByCondition(pageQuery.validateParams());
+        int total = saleOrderRepository.countAllOrderByCondition(pageQuery.validateParams());
         return PageResult.of(saleOrders, total);
     }
     
     @Override
     public boolean createOrder(Long userId, SaleOrder saleOrder) {
-        if (saleOrder == null || saleOrder.invalidParams()) throw new DomainException(DomainErrorCode.INVALID_PARAMS);
-        // log.info("领域层服务 createOrder: [userId={}, itemId={}, activityId={}]", userId, saleOrder.getItemId(), saleOrder.getActivityId());
+        if (saleOrder == null || saleOrder.invalidParams()) {
+            throw new DomainException(DomainErrorCode.INVALID_PARAMS);
+        }
         
         // 设置订单状态为已创建并保存订单
         saleOrder.setStatus(SaleOrderStatus.CREATED.getCode());
         boolean saveSuccess = saleOrderRepository.saveOrder(saleOrder);
-        // log.info("领域层服务 createOrder, 1. 保存订单到仓库: [userId={}, itemId={}, activityId={}]", userId, saleOrder.getItemId(), saleOrder.getActivityId());
-        
-        // 如果保存成功，发布订单创建事件
         if (saveSuccess) {
+            // 创建订单创建事件
             SaleOrderEvent saleOrderEvent = new SaleOrderEvent();
             saleOrderEvent.setSaleOrderEventType(SaleOrderEventType.CREATED);
+            
+            // 发布订单创建事件
             domainEventPublisher.publish(saleOrderEvent);
-            // log.info("领域层服务，createOrder, 2. 订单创建事件发布成功: [saleOrderEvent={}]", saleOrderEvent);
+            // log.info("领域层，createOrder, 订单创建事件发布成功: [saleOrderEvent={}]", saleOrderEvent);
         }
         
         return saveSuccess;
@@ -69,23 +72,23 @@ public class SaleOrderDomainServiceImpl implements SaleOrderDomainService {
     
     @Override
     public boolean cancelOrder(Long userId, Long orderId) {
-        log.info("领域层服务 cancelOrder: [userId={}, orderId={}]", userId, orderId);
-        if (userId == null || orderId == null) throw new DomainException(DomainErrorCode.INVALID_PARAMS);
+        if (userId == null || orderId == null) {
+            throw new DomainException(DomainErrorCode.INVALID_PARAMS);
+        }
         
         // 从仓库中获取订单
         Optional<SaleOrder> optionalSaleOrder = saleOrderRepository.findOrderById(orderId);
         if (!optionalSaleOrder.isPresent()) {
-            log.info("领域层服务 cancelOrder, 订单不存在: [userId={}, orderId={}]", userId, orderId);
-            throw new DomainException(DomainErrorCode.ITEM_DOES_NOT_EXIST);
+            log.info("领域层 cancelOrder, 订单不存在: [userId={}, orderId={}]", userId, orderId);
+            throw new DomainException(DomainErrorCode.ORDER_NOT_EXIST);
         }
         
         // 检查订单是否属于当前用户
         SaleOrder saleOrder = optionalSaleOrder.get();
         if (!saleOrder.getUserId().equals(userId)) {
-            log.info("领域层服务 cancelOrder, 订单不属于当前用户: [userId={}, orderId={}]", userId, orderId);
-            throw new DomainException(DomainErrorCode.ITEM_DOES_NOT_EXIST);
+            log.info("领域层 cancelOrder, 订单不属于当前用户: [userId={}, orderId={}]", userId, orderId);
+            throw new DomainException(DomainErrorCode.ORDER_NOT_EXIST);
         }
-        
         // 检查订单是否已取消
         if (SaleOrderStatus.isCanceled(saleOrder.getStatus())) {
             return false;
@@ -94,14 +97,14 @@ public class SaleOrderDomainServiceImpl implements SaleOrderDomainService {
         // 设置订单状态为已取消并更新订单
         saleOrder.setStatus(SaleOrderStatus.CANCELED.getCode());
         boolean updateSuccess = saleOrderRepository.updateStatus(saleOrder);
-        // log.info("领域层服务 cancelOrder, 1. 更新订单取消到仓库: [userId={}, orderId={}]", userId, orderId);
-        
-        // 如果更新成功，发布订单取消事件
         if (updateSuccess) {
+            // 创建订单取消事件
             SaleOrderEvent saleOrderEvent = new SaleOrderEvent();
             saleOrderEvent.setSaleOrderEventType(SaleOrderEventType.CANCEL);
+            
+            // 发布订单取消事件
             domainEventPublisher.publish(saleOrderEvent);
-            // log.info("领域层服务 cancelOrder, 2. 订单取消事件发布成功: [saleOrderEvent={}]", saleOrderEvent);
+            log.info("领域层 cancelOrder, 订单取消事件发布成功: [saleOrderEvent={}]", saleOrderEvent);
         }
         
         return updateSuccess;

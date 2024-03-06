@@ -29,12 +29,14 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
     
     @Override
     public SaleItem getItem(Long itemId) {
-        if (itemId == null) throw new DomainException(DomainErrorCode.INVALID_PARAMS);
+        if (itemId == null) {
+            throw new DomainException(DomainErrorCode.INVALID_PARAMS);
+        }
         
         // 从仓库中获取商品
-        Optional<SaleItem> optionalSaleItem = saleItemRepository.findItemById(itemId);
-        if (!optionalSaleItem.isPresent()) throw new DomainException(DomainErrorCode.ITEM_DOES_NOT_EXIST);
-        return optionalSaleItem.get();
+        Optional<SaleItem> saleItem = saleItemRepository.findItemById(itemId);
+        if (!saleItem.isPresent()) throw new DomainException(DomainErrorCode.ITEM_NOT_EXIST);
+        return saleItem.get();
     }
     
     @Override
@@ -52,12 +54,10 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         if (saleItem == null || saleItem.invalidParams()) {
             throw new DomainException(DomainErrorCode.INVALID_PARAMS);
         }
-        log.info("领域层服务 publishItem: [itemId={}]", saleItem.getId());
         
         // 设置状态为已发布，并保存商品到仓库
-        saleItem.setStatus(SaleItemStatus.ONLINE.getCode());
+        saleItem.setStatus(SaleItemStatus.PUBLISHED.getCode());
         saleItemRepository.saveItem(saleItem);
-        // log.info("领域层服务 publishItem, 1. 商品已保存到仓库: [itemId={}]", saleItem.getId());
         
         // 创建商品发布事件
         SaleItemEvent saleItemEvent = new SaleItemEvent();
@@ -66,17 +66,18 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         
         // 发布商品发布事件
         domainEventPublisher.publish(saleItemEvent);
-        // log.info("领域层服务 publishItem, 2. 商品发布事件发布成功: [saleItemEvent={}]", saleItemEvent);
+        // log.info("领域层服务 publishItem, 商品发布事件发布成功: [saleItemEvent={}]", saleItemEvent);
     }
     
     @Override
     public void onlineItem(Long itemId) {
-        if (itemId == null) throw new DomainException(DomainErrorCode.INVALID_PARAMS);
-        log.info("领域层 onlineItem: [itemId={}]", itemId);
+        if (itemId == null) {
+            throw new DomainException(DomainErrorCode.INVALID_PARAMS);
+        }
         
-        // 从仓库中获取商品
+        // 先从仓库中获取商品
         Optional<SaleItem> optionalSaleItem = saleItemRepository.findItemById(itemId);
-        if (!optionalSaleItem.isPresent()) throw new DomainException(DomainErrorCode.ITEM_DOES_NOT_EXIST);
+        if (!optionalSaleItem.isPresent()) throw new DomainException(DomainErrorCode.ITEM_NOT_EXIST);
         SaleItem saleItem = optionalSaleItem.get();
         
         // 如果商品已经上线，则直接返回
@@ -88,7 +89,6 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         // 设置状态为上线，并保存商品到仓库
         saleItem.setStatus(SaleItemStatus.ONLINE.getCode());
         saleItemRepository.saveItem(saleItem);
-        // log.info("领域层 onlineItem, 1. 商品已更新上线到仓库: [itemId={}]", itemId);
         
         // 创建商品上线事件
         SaleItemEvent saleItemEvent = new SaleItemEvent();
@@ -97,17 +97,18 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         
         // 发布商品上线事件
         domainEventPublisher.publish(saleItemEvent);
-        // log.info("领域层 onlineItem, 2. 商品上线事件发布成功: [saleItemEvent={}]", saleItemEvent);
+        // log.info("领域层 onlineItem, 商品上线事件发布成功: [saleItemEvent={}]", saleItemEvent);
     }
     
     @Override
     public void offlineItem(Long itemId) {
-        if (itemId == null) throw new DomainException(DomainErrorCode.INVALID_PARAMS);
-        log.info("领域层 offlineItem: [itemId={}]", itemId);
+        if (itemId == null) {
+            throw new DomainException(DomainErrorCode.INVALID_PARAMS);
+        }
         
-        // 从仓库中获取商品
+        // 先从仓库中获取商品
         Optional<SaleItem> optionalSaleItem = saleItemRepository.findItemById(itemId);
-        if (!optionalSaleItem.isPresent()) throw new DomainException(DomainErrorCode.ITEM_DOES_NOT_EXIST);
+        if (!optionalSaleItem.isPresent()) throw new DomainException(DomainErrorCode.ITEM_NOT_EXIST);
         SaleItem saleItem = optionalSaleItem.get();
         
         // 如果商品已经下线，则直接返回
@@ -125,7 +126,6 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         // 设置状态为下线，并保存商品到仓库
         saleItem.setStatus(SaleItemStatus.OFFLINE.getCode());
         saleItemRepository.saveItem(saleItem);
-        // log.info("领域层 offlineItem, 1. 商品已更新下线到仓库: [itemId={}]", itemId);
         
         // 创建商品下线事件
         SaleItemEvent saleItemEvent = new SaleItemEvent();
@@ -134,6 +134,6 @@ public class SaleItemDomainServiceImpl implements SaleItemDomainService {
         
         // 发布商品下线事件
         domainEventPublisher.publish(saleItemEvent);
-        // log.info("领域层 offlineItem, 2. 商品下线事件发布成功: [saleItemEvent={}]", saleItemEvent);
+        // log.info("领域层 offlineItem, 商品下线事件发布成功: [saleItemEvent={}]", saleItemEvent);
     }
 }

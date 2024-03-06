@@ -41,73 +41,79 @@ public class SaleActivityCacheService {
     private SaleActivityDomainService saleActivityDomainService;
     
     public SaleActivityCache getActivityCache(Long activityId, Long version) {
-        if (activityId == null) return null;
-        
         SaleActivityCache saleActivityCache = ACTIVITY_LOCAL_CACHE.getIfPresent(activityId);
+        
+        // 1.1 如果本地有缓存，进一步判断版本号，否则直接从分布式缓存获取
         if (saleActivityCache != null) {
-            // 如果本地缓存命中，且传入的版本号为null或小于等于缓存中的版本号，则直接返回缓存对象
-            if (version == null || version.equals(saleActivityCache.getVersion()) || version < saleActivityCache.getVersion()) {
-                // log.info("应用层 getActivityCache，命中本地缓存: [activityId: {}]", activityId);
+            // 2.1 无版本号情况下直接返回本地缓存
+            if (version == null) {
+                // log.info("获取活动缓存，命中本地缓存，无版本号: [activityId: {}]", activityId);
                 return saleActivityCache;
+            } else if (version.equals(saleActivityCache.getVersion()) || version < saleActivityCache.getVersion()) {
+                // 2.2 有版本号情况下，版本号一致 或者 本地缓存版本号大于提供版本号，说明本地缓存是最新的
+                // log.info("获取活动缓存，命中本地缓存，有版本号: [activityId: {}, version: {}]", activityId, version);
+                return saleActivityCache;
+            } else {
+                // 2.3 本地缓存版本号小于提供的版本号，说明本地缓存不是最新的，从分布式缓存获取
+                // log.info("获取活动缓存，命中本地缓存，但本地缓存非最新: [activityId: {}, version: {}]", activityId, version);
+                return getDistributedCache(activityId);
             }
-            // log.info("应用层 getActivityCache，未命中本地缓存: [activityId: {}, version: {}]", activityId, version);
-            return getDistributedCache(activityId);
         }
         
-        // 如果本地缓存不存在，或者提供的版本号大于本地缓存的版本号，则尝试从远程缓存获取销售活动缓存
-        // log.info("应用层 getActivityCache，未命中本地缓存: [activityId: {}]", activityId);
+        // 1.2 本地没有缓存，直接从分布式缓存获取
+        // log.info("获取活动缓存，未命中本地缓存: [activityId: {}]", activityId);
         return getDistributedCache(activityId);
     }
     
     private SaleActivityCache getDistributedCache(Long activityId) {
-        // 尝试从分布式缓存服务获取销售活动缓存对象，key = ACTIVITY_CACHE_KEY + activityId
-        SaleActivityCache distributedActivityCache = distributedCacheService.get(buildActivityCacheKey(activityId), SaleActivityCache.class);
-        // 如果分布式缓存中没有找到，说明是第一次获取，或者缓存已过期，尝试更新缓存
-        if (distributedActivityCache == null) distributedActivityCache = tryUpdateActivityCache(activityId);
+        // 1. 从分布式缓存中获取活动缓存，key = ACTIVITY_CACHE_KEY + activityId
+        SaleActivityCache redisActivityCache = distributedCacheService.get(buildActivityCacheKey(activityId), SaleActivityCache.class);
         
-        // 如果获取到的缓存对象有效，且不是标记为稍后再试的对象
-        if (distributedActivityCache != null && !distributedActivityCache.isLater()) {
+        // 2. 分布式缓存中也没有，说明 缓存数据尚未生成 或者 缓存失效，尝试更新缓存
+        if (redisActivityCache == null) redisActivityCache = tryUpdateDistActivityCache(activityId);
+        
+        // 3. 分布式缓存中有缓存，并且未处于更新中状态，说明缓存是最新的，可用；将其更新到本地缓存中
+        if (redisActivityCache != null && !redisActivityCache.isLater()) {
+            // 4. 同一时间只允许一个线程更新本地缓存
             boolean lockSuccess = localLock.tryLock();
             if (lockSuccess) {
                 try {
-                    // 将分布式缓存中的对象更新到本地缓存中
-                    ACTIVITY_LOCAL_CACHE.put(activityId, distributedActivityCache);
+                    ACTIVITY_LOCAL_CACHE.put(activityId, redisActivityCache);
                 } finally {
                     localLock.unlock();
                 }
             }
         }
         
-        return distributedActivityCache;
+        // 5. 最后返回的：最新状态缓存 / 稍后再试（tryLater） / 不存在（notExist）
+        return redisActivityCache;
     }
     
-    public SaleActivityCache tryUpdateActivityCache(Long activityId) {
-        // 获取 Redisson 分布式锁，防止并发更新活动缓存，key = UPDATE_ACTIVITY_CACHE_LOCK_KEY + activityId
+    public SaleActivityCache tryUpdateDistActivityCache(Long activityId) {
+        // 获取分布式锁实例，防止并发更新活动缓存，key = UPDATE_ACTIVITY_CACHE_LOCK_KEY + activityId
         DistributedLock rLock = distributedLockService.getLock(buildUpdateActivityCacheKey(activityId));
         try {
-            // 尝试获取分布式锁
             boolean lockSuccess = rLock.tryLock(1, 5, TimeUnit.SECONDS);
-            if (!lockSuccess) {
-                log.info("未获取到并发锁：[activityId={}]", activityId);
-                return new SaleActivityCache().tryLater();
-            }
+            if (!lockSuccess) return new SaleActivityCache().tryLater();
             
-            // 从域服务中获取活动详情
+            // 从领域服层调用 获取活动 方法
             SaleActivity saleActivity = saleActivityDomainService.getActivity(activityId);
             
-            // 根据获取的活动详情构建活动缓存对象。如果活动存在，填充数据并设置当前时间戳为版本号；
-            // 如果活动不存在，设置状态为不存在
-            SaleActivityCache saleActivityCache = saleActivity != null
-                    ? new SaleActivityCache().with(saleActivity).withVersion(System.currentTimeMillis())
-                    : new SaleActivityCache().notExist();
+            // 如果活动不存在，设置状态为不存在；如果存在，设置数据和添加当前时间戳为版本号
+            SaleActivityCache saleActivityCache;
+            if (saleActivity == null) {
+                saleActivityCache = new SaleActivityCache().notExist();
+            } else {
+                saleActivityCache = new SaleActivityCache().with(saleActivity).withVersion(System.currentTimeMillis());
+            }
             
-            // 将构建的活动缓存对象序列化为JSON字符串，并存入分布式缓存中，设置过期时间为5分钟
+            // 更新活动的分布式缓存，key = ACTIVITY_CACHE_KEY + activityId
             distributedCacheService.put(buildActivityCacheKey(activityId), JSON.toJSONString(saleActivityCache), CacheConstant.MINUTES_5);
             
-            // log.info("应用层 tryUpdateActivityCache，远程缓存已更新: [activityId: {}]", activityId);
+            // log.info("分布式活动缓存已更新: [saleActivityCache={}]", saleActivityCache);
             return saleActivityCache;
         } catch (InterruptedException e) {
-            log.error("应用层 tryUpdateActivityCache，远程缓存更新异常: [activityId: {}] ", activityId, e);
+            log.error("更新分布式活动缓存异常: [activityId: {}] ", activityId, e);
             return new SaleActivityCache().tryLater();
         } finally {
             rLock.unlock();

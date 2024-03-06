@@ -3,7 +3,6 @@ package com.harris.app.event.handler;
 import com.alibaba.cola.dto.Response;
 import com.alibaba.cola.event.EventHandler;
 import com.alibaba.cola.event.EventHandlerI;
-import com.harris.app.exception.AppErrorCode;
 import com.harris.app.service.cache.SaleActivitiesCacheService;
 import com.harris.app.service.cache.SaleActivityCacheService;
 import com.harris.domain.model.event.SaleActivityEvent;
@@ -24,19 +23,16 @@ public class SaleActivityEventHandler implements EventHandlerI<Response, SaleAct
     @Override
     @MarkTrace
     public Response execute(SaleActivityEvent saleActivityEvent) {
-        // log.info("应用层 activityEvent，接收活动事件: [activityId: {}]", saleActivityEvent.getActivityId());
-        
         if (saleActivityEvent.getActivityId() == null) {
-            log.info("应用层 activityEvent，事件参数错误");
-            return Response.buildFailure(AppErrorCode.INVALID_PARAMS.getErrCode(), AppErrorCode.INVALID_PARAMS.getErrDesc());
+            log.info("应用层 activityEvent，事件参数错误: [saleActivityEvent={}]", saleActivityEvent);
+            return Response.buildSuccess();
         }
         
-        // 尝试更新指定活动ID的活动缓存
-        saleActivityCacheService.tryUpdateActivityCache(saleActivityEvent.getActivityId());
+        // 比如接收到领域层的 活动发布 / 活动修改 / 活动上线 / 活动下线 等事件，更新分布式缓存
         
-        // 尝试更新第一页的活动缓存
-        saleActivitiesCacheService.tryUpdateActivitiesCache(1);
-        
+        // 更新此事件对应的 活动缓存 和 第一页活动列表缓存
+        saleActivityCacheService.tryUpdateDistActivityCache(saleActivityEvent.getActivityId());
+        saleActivitiesCacheService.tryUpdateDistActivitiesCache(1);
         return Response.buildSuccess();
     }
 }

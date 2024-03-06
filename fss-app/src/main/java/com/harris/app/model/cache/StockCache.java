@@ -6,7 +6,7 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class StockCache {
-    private Integer availableStock;
+    private Integer availableStock; // 当前可用库存，该值的更新可能会滞后数据库
     private boolean success;
     private boolean later;
     private boolean exist;

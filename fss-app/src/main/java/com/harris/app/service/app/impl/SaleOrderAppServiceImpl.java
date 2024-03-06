@@ -56,13 +56,11 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
     @Override
     public AppMultiResult<SaleOrderDTO> listOrdersByUser(Long userId, SaleOrdersQuery saleOrdersQuery) {
         if (userId == null || saleOrdersQuery == null) return AppMultiResult.empty();
-        // log.info("应用层 listOrdersByUser: [userId={}, saleOrdersQuery={}]", userId, saleOrdersQuery);
         
         // 调用领域服务的 订单列表 方法
         PageResult<SaleOrder> orderPageResult = saleOrderDomainService.getOrders(userId, AppConverter.toPageQuery(saleOrdersQuery));
         
         List<SaleOrderDTO> saleOrderDTOS = orderPageResult.getData().stream().map(AppConverter::toDTO).collect(Collectors.toList());
-        // log.info("应用层 listOrdersByUser，成功: [userId={}, saleOrdersQuery={}, total={}]", userId, saleOrdersQuery, orderPageResult.getTotal());
         return AppMultiResult.of(saleOrderDTOS, orderPageResult.getTotal());
     }
     
@@ -72,19 +70,17 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
         if (userId == null || placeOrderCommand == null || placeOrderCommand.invalidParams()) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
-        // log.info("应用层 placeOrder 开始: [userId={}, placeOrderCommand={}]", userId, placeOrderCommand);
         
-        // 获取 Redisson 分布式锁实例，key = PLACE_ORDER_LOCK_KEY + userId
+        // 获取分布式锁实例，用户防抖，key = PLACE_ORDER_LOCK_KEY + userId
         DistributedLock rLock = distributedLockService.getLock(buildPlaceOrderLockKey(userId));
         try {
-            // 尝试获取分布式锁
             boolean lockSuccess = rLock.tryLock(5, 5, TimeUnit.SECONDS);
             if (!lockSuccess) return AppSingleResult.error(AppErrorCode.LOCK_FAILED);
             
             // 检查用户是否通过风控检查，这里只是为了演示，直接返回 true
             boolean notRisk = securityService.inspectRisksByPolicy(userId);
             if (!notRisk) {
-                log.info("应用层 placeOrder，风控检查失败: [userId={}]", userId);
+                log.info("应用层下单风控检查失败: [userId={}]", userId);
                 return AppSingleResult.error(AppErrorCode.PLACE_ORDER_FAILED);
             }
             
@@ -108,8 +104,9 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
     @Override
     @Transactional
     public AppResult cancelOrder(Long userId, Long orderId) {
-        if (userId == null || orderId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        // log.info("应用层 cancelOrder: [userId={}, orderId={}]", userId, orderId);
+        if (userId == null || orderId == null) {
+            throw new BizException(AppErrorCode.INVALID_PARAMS);
+        }
         
         // 调用领域服务的 获取订单 方法
         SaleOrder saleOrder = saleOrderDomainService.getOrder(userId, orderId);
@@ -123,7 +120,10 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
         }
         
         // 创建库存扣减对象
-        StockDeduction stockDeduction = new StockDeduction().setItemId(saleOrder.getItemId()).setQuantity(saleOrder.getQuantity()).setUserId(userId);
+        StockDeduction stockDeduction = new StockDeduction()
+                .setItemId(saleOrder.getItemId())
+                .setQuantity(saleOrder.getQuantity())
+                .setUserId(userId);
         
         // 调用领域服务的 恢复库存 方法
         boolean revertSuccess = stockDomainService.revertStock(stockDeduction);
@@ -148,7 +148,6 @@ public class SaleOrderAppServiceImpl implements SaleOrderAppService {
         if (userId == null || itemId == null || StringUtils.isEmpty(placeOrderTaskId)) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
-        // log.info("应用层 getPlaceOrderTaskResult: [userId={}, itemId={}, placeOrderTaskId={}]", userId, itemId, placeOrderTaskId);
         
         // 只有采用 消息队列 下单服务才支持获取下单任务结果
         if (placeOrderService instanceof QueuedPlaceOrderService) {

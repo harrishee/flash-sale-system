@@ -90,16 +90,16 @@ public class StandardStockCacheService implements StockCacheService {
     
     @Override
     public StockCache getStockCache(Long userId, Long itemId) {
-        // 从本地缓存中获取库存缓存对象，如果存在则直接返回
+        // 1. 获取库存时，优先从本地缓存中读取（可能存在延迟或不一致，但可以接受）
         StockCache stockCache = STOCK_LOCAL_CACHE.getIfPresent(itemId);
         if (stockCache != null) return stockCache;
         
-        // 否则，从分布式缓存中获取可用库存数量，还不存在则返回 null
-        Integer availableStockQuantity = distributedCacheService.get(buildStockCacheKey(itemId), Integer.class);
-        if (availableStockQuantity == null) return null;
+        // 2. 本地缓存不在时，将通过商品的库存 key = STOCK_CACHE_KEY + itemId 从分布式缓存中获取，并设置到本地中
+        Integer availableStock = distributedCacheService.get(buildStockCacheKey(itemId), Integer.class);
+        if (availableStock == null) return null;
         
-        // 本地不存在，分布式存在，创建新的库存缓存对象并存入本地缓存
-        stockCache = new StockCache().with(availableStockQuantity);
+        // 3. 创建新的库存缓存对象并存入本地缓存
+        stockCache = new StockCache().with(availableStock);
         STOCK_LOCAL_CACHE.put(itemId, stockCache);
         return stockCache;
     }
@@ -112,7 +112,7 @@ public class StandardStockCacheService implements StockCacheService {
         }
         
         try {
-            // 从领域服务获取销售项对象
+            // 从领域服务获取商品
             SaleItem saleItem = saleItemDomainService.getItem(itemId);
             if (saleItem == null) {
                 log.info("应用层 syncCachedStockToDB, 商品不存在: [itemId={}]", itemId);
@@ -124,10 +124,12 @@ public class StandardStockCacheService implements StockCacheService {
             }
             
             // 构建库存缓存键和库存对齐锁键
+            // stockCacheKey = STOCK_CACHE_KEY + itemId
+            // stockAlignKey = STOCK_ALIGN_LOCK_KEY + itemId
             String stockCacheKey = buildStockCacheKey(itemId);
             String stockAlignKey = buildStockAlignKey(itemId);
             
-            // 执行 Lua 脚本进行库存对齐
+            // 执行 Lua 脚本进行库存对齐，确保分布式缓存中的库存与数据库中的库存一致
             List<String> keys = Lists.newArrayList(stockCacheKey, stockAlignKey);
             DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(INIT_OR_ALIGN_STOCK_LUA, Long.class);
             Long result = redisCacheService.getRedisTemplate().execute(redisScript, keys, saleItem.getAvailableStock());
@@ -148,31 +150,36 @@ public class StandardStockCacheService implements StockCacheService {
             // 其他情况返回失败
             return false;
         } catch (Exception e) {
-            log.error("应用层 syncCachedStockToDB, 商品库存校准异常: [itemId={}]", itemId, e);
+            log.error("应用层 syncCachedStockToDB, 商品库存校准异常: [itemId={}] ", itemId, e);
             return false;
         }
     }
     
     @Override
     public boolean deductStock(StockDeduction stockDeduction) {
-        log.info("应用层 deductStock，申请库存预扣减: [stockDeduction={}]", stockDeduction);
+        log.info("应用层 deductStock，申请缓存预扣: [stockDeduction={}]", stockDeduction);
         if (stockDeduction == null || stockDeduction.invalidParams()) return false;
         
         try {
             // 构建库存缓存键和库存对齐锁键
+            // stockCacheKey = STOCK_CACHE_KEY + itemId
+            // stockAlignKey = STOCK_ALIGN_LOCK_KEY + itemId
             String stockCacheKey = buildStockCacheKey(stockDeduction.getItemId());
             String stockAlignKey = buildStockAlignKey(stockDeduction.getItemId());
             
-            // 准备扣减库Lua脚本执行所需的键列表，包含库存缓存键和库存对齐锁键
+            // 准备 扣减库存Lua脚本 的资源，保证 判断 和 扣减 缓存库存是原子操作
             List<String> keys = Lists.newArrayList(stockCacheKey, stockAlignKey);
             DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>(DEDUCT_STOCK_LUA, Long.class);
             Long result = null;
             long startTime = System.currentTimeMillis();
             
-            // 循环执行Lua脚本，直到成功或超过1500毫秒的超时时间
+            // 循环执行Lua脚本，直到成功或超过 1.5 秒的超时时间
             while ((result == null || result == IN_STOCK_ALIGNING) && (System.currentTimeMillis() - startTime) < 1500) {
                 result = redisCacheService.getRedisTemplate().execute(redisScript, keys, stockDeduction.getQuantity());
                 
+                // -1: 库存不存在
+                // -3: 库存不足，当前剩余库存不足以扣减
+                // -2: 异常情况，库存检查通过但扣减失败
                 if (result == null || result == -1 || result == -2 || result == -3) {
                     log.info("应用层 deductStock, 库存预扣减失败: [stockDeduction={}]", stockDeduction);
                     return false;

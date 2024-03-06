@@ -39,7 +39,7 @@ public class SaleOrderRepositoryImpl implements SaleOrderRepository {
     }
     
     @Override
-    public int countOrdersByCondition(PageQuery pageQuery) {
+    public int countAllOrderByCondition(PageQuery pageQuery) {
         return saleOrderMapper.countOrdersByCondition(pageQuery);
     }
     

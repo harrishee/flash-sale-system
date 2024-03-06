@@ -25,23 +25,23 @@ public class onlineItemAlignScheduler {
     private StockCacheService stockCacheService;
     
     @MarkTrace
-    @Scheduled(cron = "*/2 * * * * ?") // 定时任务，每 2 秒执行一次这个方法
+    @Scheduled(cron = "*/2 * * * * ?") // 每 2 秒执行一次这个方法
     public void onlineItemAlignTask() {
-        // log.info("应用层调度 onlineItemAlignTask，已上线商品库存校准调度");
+        // log.info("定时任务 onlineItemAlignTask，在线商品库存校准开始");
         
-        // 调用领域服务获取所有 已上线 的商品列表
+        // 调用领域服务获取所有 在线 商品列表
         PageQuery pageQuery = new PageQuery();
         pageQuery.setStatus(SaleItemStatus.ONLINE.getCode());
         PageResult<SaleItem> pageResult = saleItemDomainService.getItems(pageQuery);
         List<Long> ids = new ArrayList<>();
         
         pageResult.getData().forEach(saleItem -> {
-            // 确保缓存中的库存数据与数据库中的实际库存数据保持一致
+            // 确保缓存中的库存和数据库中的库存保持一致
             boolean result = stockCacheService.syncCachedStockToDB(saleItem.getId());
-            if (!result) log.info("应用层调度 onlineItemAlignTask，已上线商品库存校准失败: [itemId={}]", saleItem.getId());
+            if (!result) log.info("定时任务 onlineItemAlignTask，在线商品库存校准失败: [itemId={}]", saleItem.getId());
             else ids.add(saleItem.getId());
         });
         
-        // log.info("应用层调度 onlineItemAlignTask，已上线商品库存校准调度完成: [total={}, itemIds={}]", pageResult.getTotal(), ids);
+        // log.info("定时任务 onlineItemAlignTask，在线商品库存校准完成: [total={}, itemIds={}]", pageResult.getTotal(), ids);
     }
 }

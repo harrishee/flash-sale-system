@@ -37,9 +37,6 @@ public class RedissonLockService implements DistributedLockService {
             public void unlock() {
                 if (isLocked() && isHeldByCurrentThread()) {
                     rLock.unlock();
-                    // log.info("分布式锁，释放锁: [{}]", key);
-                } else {
-                    // log.warn("分布式锁，尝试释放锁失败，当前线程未持有锁: [{}]", key);
                 }
             }
             

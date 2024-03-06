@@ -68,10 +68,11 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
     
     @Override
     public AppSingleResult<SaleItemDTO> getItem(Long userId, Long activityId, Long itemId, Long version) {
-        if (userId == null || activityId == null || itemId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        // log.info("应用层 getItem: [userId={}, activityId={}, itemId={}, version={}]", userId, activityId, itemId, version);
+        if (userId == null || activityId == null || itemId == null) {
+            throw new BizException(AppErrorCode.INVALID_PARAMS);
+        }
         
-        // 从 缓存中获取 商品缓存对象
+        // 从缓存中获取商品缓存对象
         SaleItemCache itemCache = saleItemCacheService.getItemCache(itemId, version);
         if (!itemCache.isExist() || itemCache.getSaleItem() == null) {
             throw new BizException(AppErrorCode.ITEM_NOT_FOUND.getErrDesc());
@@ -81,23 +82,23 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
             return AppSingleResult.tryLater();
         }
         
-        // 更新最新的 商品库存
-        updateLatestItemStock(userId, itemCache.getSaleItem());
+        // 再次更新最新的 商品库存
+        updateLatestStockFromStockCache(userId, itemCache.getSaleItem());
         
-        // 从 商品缓存对象 中获取 商品对象 和 版本号
+        // 从商品缓存对象中获取 商品对象 和 版本号
         SaleItemDTO saleItemDTO = AppConverter.toDTO(itemCache.getSaleItem());
         saleItemDTO.setVersion(itemCache.getVersion());
         
-        // log.info("应用层 getItem，成功: [userId={}, activityId={}, itemId={}, version={}]", userId, activityId, itemId, version);
         return AppSingleResult.ok(saleItemDTO);
     }
     
     @Override
     public AppSingleResult<SaleItemDTO> getItem(Long itemId) {
-        if (itemId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        // log.info("应用层 getItem: [itemId={}]", itemId);
+        if (itemId == null) {
+            throw new BizException(AppErrorCode.INVALID_PARAMS);
+        }
         
-        // 从 缓存中获取 商品缓存对象
+        // 从缓存中获取商品缓存对象
         SaleItemCache itemCache = saleItemCacheService.getItemCache(itemId, null);
         if (!itemCache.isExist() || itemCache.getSaleItem() == null) {
             throw new BizException(AppErrorCode.ITEM_NOT_FOUND.getErrDesc());
@@ -107,21 +108,20 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
             return AppSingleResult.tryLater();
         }
         
-        // 更新最新的 商品库存
-        updateLatestItemStock(null, itemCache.getSaleItem());
+        // 再次更新最新的 商品库存
+        updateLatestStockFromStockCache(null, itemCache.getSaleItem());
         
-        // 从 商品缓存对象 中获取 商品对象 和 版本号
+        // 从商品缓存对象中获取 商品对象 和 版本号
         SaleItemDTO saleItemDTO = AppConverter.toDTO(itemCache.getSaleItem());
         saleItemDTO.setVersion(itemCache.getVersion());
         
-        // log.info("应用层 getItem，成功: [{}]", itemId);
         return AppSingleResult.ok(saleItemDTO);
     }
     
-    private void updateLatestItemStock(Long userId, SaleItem saleItem) {
+    private void updateLatestStockFromStockCache(Long userId, SaleItem saleItem) {
         if (saleItem == null) return;
         
-        // 从 缓存中获取 库存缓存对象
+        // 从缓存中获取 库存缓存对象
         StockCache stockCache = stockCacheService.getStockCache(userId, saleItem.getId());
         if (stockCache != null && stockCache.isSuccess() && stockCache.getAvailableStock() != null) {
             // 更新 商品对象 的 可用库存
@@ -131,17 +131,18 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
     
     @Override
     public AppMultiResult<SaleItemDTO> listItems(Long userId, Long activityId, SaleItemsQuery saleItemsQuery) {
-        if (saleItemsQuery == null) return AppMultiResult.empty();
-        // log.info("应用层 listItems: [userId={}, activityId={}, saleItemsQuery={}]", userId, activityId, saleItemsQuery);
+        if (saleItemsQuery == null) {
+            return AppMultiResult.empty();
+        }
         
+        // 绑定活动ID
         saleItemsQuery.setActivityId(activityId);
         List<SaleItem> items;
         Integer total;
         
-        // 查询 第一页 且 为ONLINE 的商品列表，走缓存
-        if (saleItemsQuery.isOnlineFirstPageQuery()) {
-            // log.info("应用层 listItems，走缓存");
-            // 从缓存中获取 商品列表缓存对象
+        // 第一页 且 没有关键字 且 在线 的查询，走缓存
+        if (saleItemsQuery.isOnlineFirstPageAndNoKeywordQuery()) {
+            // 从缓存中获取 商品列表缓存
             SaleItemsCache itemsCache = saleItemsCacheService.getItemsCache(activityId, saleItemsQuery.getVersion());
             if (itemsCache.isLater()) return AppMultiResult.tryLater();
             
@@ -149,7 +150,6 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
             items = itemsCache.getSaleItems();
             total = itemsCache.getTotal();
         } else {
-            // log.info("应用层 listItems，走数据库");
             // 从领域层获取 商品列表
             PageQuery condition = AppConverter.toPageQuery(saleItemsQuery);
             PageResult<SaleItem> itemsPageResult = saleItemDomainService.getItems(condition);
@@ -160,12 +160,10 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
         }
         
         if (CollectionUtils.isEmpty(items)) {
-            log.info("应用层 listItems，结果为空: [userId={}, activityId={}, saleItemsQuery={}]", userId, activityId, saleItemsQuery);
             return AppMultiResult.empty();
         }
         
         List<SaleItemDTO> saleItemDTOS = items.stream().map(AppConverter::toDTO).collect(Collectors.toList());
-        // log.info("应用层 listItems，成功: [userId={}, activityId={}, saleItemsQuery={}]", userId, activityId, saleItemsQuery);
         return AppMultiResult.of(saleItemDTOS, total);
     }
     
@@ -174,16 +172,14 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
         if (userId == null || activityId == null || publishItemCommand == null || publishItemCommand.invalidParams()) {
             throw new BizException(AppErrorCode.INVALID_PARAMS);
         }
-        // log.info("应用层 publishItem: [userId={}, activityId={}, publishItemCommand={}]", userId, activityId, publishItemCommand);
         
         // 进行用户权限认证，确保用户具有发布商品的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ITEM_CREATE);
         if (!authResult.isSuccess()) throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         
-        // 获取 Redisson 分布式锁实例，key = ITEM_CREATE_LOCK_KEY + userId
+        // 获取分布锁实例，用户防抖，key = ITEM_CREATE_LOCK_KEY + userId
         DistributedLock rLock = distributedLockService.getLock(buildCreateLockKey(userId));
         try {
-            // 尝试获取分布式锁
             boolean lockSuccess = rLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!lockSuccess) throw new BizException(AppErrorCode.LOCK_FAILED);
             
@@ -191,7 +187,7 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
             SaleActivity saleActivity = saleActivityDomainService.getActivity(activityId);
             if (saleActivity == null) throw new BizException(AppErrorCode.ACTIVITY_NOT_FOUND);
             
-            // 调用领域服务的 发布商品 方法
+            // 调用领域层的 发布商品 方法
             SaleItem saleItem = AppConverter.toDomainModel(publishItemCommand);
             saleItem.setActivityId(activityId);
             saleItem.setStockWarmUp(0);
@@ -209,21 +205,21 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
     
     @Override
     public AppResult onlineItem(Long userId, Long activityId, Long itemId) {
-        if (userId == null || activityId == null || itemId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        // log.info("应用层 onlineItem: [userId={}, activityId={}, itemId={}]", userId, activityId, itemId);
+        if (userId == null || activityId == null || itemId == null) {
+            throw new BizException(AppErrorCode.INVALID_PARAMS);
+        }
         
         // 进行用户权限认证，确保用户具有修改抢购品的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ITEM_MODIFICATION);
         if (!authResult.isSuccess()) throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         
-        // 获取 Redisson 分布式锁实例，key = ITEM_MODIFICATION_LOCK_KEY + itemId
+        // 应用层加分布式锁，防止并发修改商品，key = ITEM_MODIFICATION_LOCK_KEY + userId
         DistributedLock rLock = distributedLockService.getLock(buildModificationLockKey(userId));
         try {
-            // 尝试获取分布式锁
             boolean lockSuccess = rLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!lockSuccess) throw new BizException(AppErrorCode.LOCK_FAILED);
             
-            // 调用领域服务的 上线商品 方法
+            // 调用领域层的 修改商品 方法
             saleItemDomainService.onlineItem(itemId);
             
             log.info("应用层 onlineItem，成功: [userId={}, activityId={}, itemId={}]", userId, activityId, itemId);
@@ -238,21 +234,21 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
     
     @Override
     public AppResult offlineItem(Long userId, Long activityId, Long itemId) {
-        if (userId == null || activityId == null || itemId == null) throw new BizException(AppErrorCode.INVALID_PARAMS);
-        // log.info("应用层 offlineItem: [userId={}, activityId={}, itemId={}]", userId, activityId, itemId);
+        if (userId == null || activityId == null || itemId == null) {
+            throw new BizException(AppErrorCode.INVALID_PARAMS);
+        }
         
         // 进行用户权限认证，确保用户具有修改抢购品的权限
         AuthResult authResult = authService.auth(userId, ResourceEnum.ITEM_MODIFICATION);
         if (!authResult.isSuccess()) throw new AuthException(AuthErrorCode.UNAUTHORIZED_ACCESS);
         
-        // 获取 Redisson 分布式锁实例，key = ITEM_MODIFICATION_LOCK_KEY + itemId
+        // 应用层加分布式锁，防止并发修改商品，key = ITEM_MODIFICATION_LOCK_KEY + userId
         DistributedLock rLock = distributedLockService.getLock(buildModificationLockKey(userId));
         try {
-            // 尝试获取分布式锁
             boolean lockSuccess = rLock.tryLock(500, 1000, TimeUnit.MILLISECONDS);
             if (!lockSuccess) throw new BizException(AppErrorCode.LOCK_FAILED);
             
-            // 调用领域服务的 下线商品 方法
+            // 调用领域层的 下线商品 方法
             saleItemDomainService.offlineItem(itemId);
             
             log.info("应用层 offlineItem，成功: [userId={}, activityId={}, itemId={}]", userId, activityId, itemId);
@@ -267,25 +263,26 @@ public class SaleItemAppServiceImpl implements SaleItemAppService {
     
     @Override
     public boolean isPlaceOrderAllowed(Long itemId) {
-        // 从缓存中获取 商品缓存对象
+        // 从缓存中获取 商品缓存
         SaleItemCache itemCache = saleItemCacheService.getItemCache(itemId, null);
         if (itemCache.isLater()) {
-            log.info("应用层 isPlaceOrderAllowed，请稍后重试: [itemId={}]", itemId);
+            log.info("应用层商品检查，请稍后重试: [itemId={}]", itemId);
             return false;
         }
         if (!itemCache.isExist() || itemCache.getSaleItem() == null) {
-            log.info("应用层 isPlaceOrderAllowed，商品不存在: [itemId={}]", itemId);
+            log.info("应用层商品检查，商品不存在: [itemId={}]", itemId);
             return false;
         }
         if (!itemCache.getSaleItem().isOnline()) {
-            log.info("应用层 isPlaceOrderAllowed，商品未上线: [itemId={}]", itemId);
+            log.info("应用层商品检查，商品未上线: [itemId={}]", itemId);
             return false;
         }
         if (!itemCache.getSaleItem().isInProgress()) {
-            log.info("应用层 isPlaceOrderAllowed，商品未开始: [itemId={}]", itemId);
+            log.info("应用层商品检查，商品未开始: [itemId={}]", itemId);
             return false;
         }
         
+        // 以上条件都满足，可以下单
         return true;
     }
     

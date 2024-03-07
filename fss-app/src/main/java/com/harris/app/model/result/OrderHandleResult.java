@@ -13,21 +13,21 @@ public class OrderHandleResult {
     private String message;
     private PlaceOrderTaskStatus placeOrderTaskStatus;
     private Long orderId;
-
+    
     public static OrderHandleResult ok(Long orderId) {
         return new OrderHandleResult()
                 .setSuccess(true)
                 .setPlaceOrderTaskStatus(PlaceOrderTaskStatus.SUCCESS)
                 .setOrderId(orderId);
     }
-
+    
     public static OrderHandleResult error(AppErrorCode appErrorCode) {
         return new OrderHandleResult()
                 .setSuccess(false)
                 .setCode(appErrorCode.getErrCode())
                 .setMessage(appErrorCode.getErrDesc());
     }
-
+    
     public static OrderHandleResult error(PlaceOrderTaskStatus placeOrderTaskStatus) {
         return new OrderHandleResult()
                 .setSuccess(false)

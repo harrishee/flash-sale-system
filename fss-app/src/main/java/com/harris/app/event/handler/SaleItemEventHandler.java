@@ -3,8 +3,8 @@ package com.harris.app.event.handler;
 import com.alibaba.cola.dto.Response;
 import com.alibaba.cola.event.EventHandler;
 import com.alibaba.cola.event.EventHandlerI;
-import com.harris.app.service.cache.SaleItemCacheService;
-import com.harris.app.service.cache.SaleItemsCacheService;
+import com.harris.app.service.saleitem.SaleItemCacheService;
+import com.harris.app.service.saleitem.SaleItemsCacheService;
 import com.harris.domain.model.event.SaleItemEvent;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,19 +21,16 @@ public class SaleItemEventHandler implements EventHandlerI<Response, SaleItemEve
 
     @Override
     public Response execute(SaleItemEvent saleItemEvent) {
-        // log.info("应用层 itemEvent，接收商品事件: [itemId: {}]", saleItemEvent.getItemId());
-
         if (saleItemEvent.getItemId() == null) {
-            log.info("应用层 itemEvent，商品事件参数错误");
+            log.info("应用层 item event handler，事件参数ID为空: [saleItemEvent={}]", saleItemEvent);
             return Response.buildSuccess();
         }
         
-        // 调用商品缓存服务尝试更新指定商品ID的缓存
+        // 比如接收到领域层的 商品发布 / 商品上线 / 商品下线 等事件，更新分布式缓存
+        
+        // 更新此事件对应的 商品缓存 和 同一活动下的商品列表缓存
         saleItemCacheService.tryUpdateItemCache(saleItemEvent.getItemId());
-        
-        // 调用商品缓存服务尝试更新指定活动ID的商品缓存
         saleItemsCacheService.tryUpdateItemsCache(saleItemEvent.getActivityId());
-        
         return Response.buildSuccess();
     }
 }

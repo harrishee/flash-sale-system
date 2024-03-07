@@ -1,12 +1,11 @@
 package com.harris.app.scheduler;
 
-import com.harris.app.service.cache.StockCacheService;
+import com.harris.app.service.stock.StockCacheService;
 import com.harris.domain.model.PageQuery;
 import com.harris.domain.model.PageResult;
 import com.harris.domain.model.entity.SaleItem;
 import com.harris.domain.model.enums.SaleItemStatus;
-import com.harris.domain.service.SaleItemDomainService;
-import com.harris.infra.config.MarkTrace;
+import com.harris.domain.service.item.SaleItemDomainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -24,10 +23,9 @@ public class onlineItemAlignScheduler {
     @Resource
     private StockCacheService stockCacheService;
     
-    @MarkTrace
     @Scheduled(cron = "*/2 * * * * ?") // 每 2 秒执行一次这个方法
     public void onlineItemAlignTask() {
-        // log.info("定时任务 onlineItemAlignTask，在线商品库存校准开始");
+        // log.info("对齐定时任务，在线商品库存校准开始");
         
         // 调用领域服务获取所有 在线 商品列表
         PageQuery pageQuery = new PageQuery();
@@ -38,10 +36,10 @@ public class onlineItemAlignScheduler {
         pageResult.getData().forEach(saleItem -> {
             // 确保缓存中的库存和数据库中的库存保持一致
             boolean result = stockCacheService.syncCachedStockToDB(saleItem.getId());
-            if (!result) log.info("定时任务 onlineItemAlignTask，在线商品库存校准失败: [itemId={}]", saleItem.getId());
+            if (!result) log.info("对齐定时任务，在线商品库存校准失败: [itemId={}]", saleItem.getId());
             else ids.add(saleItem.getId());
         });
         
-        // log.info("定时任务 onlineItemAlignTask，在线商品库存校准完成: [total={}, itemIds={}]", pageResult.getTotal(), ids);
+        // log.info("对齐定时任务，在线商品库存校准完成: [total={}, itemIds={}]", pageResult.getTotal(), ids);
     }
 }

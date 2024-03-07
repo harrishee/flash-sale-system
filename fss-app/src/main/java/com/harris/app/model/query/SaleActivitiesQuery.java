@@ -12,7 +12,7 @@ public class SaleActivitiesQuery {
     private Integer pageNumber;
     private Integer status;
     private Long version;
-
+    
     public boolean isFirstPageAndNoKeywordQuery() {
         return StringUtils.isEmpty(keyword) && Integer.valueOf(1).equals(pageNumber);
     }

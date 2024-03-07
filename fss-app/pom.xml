@@ -16,12 +16,14 @@
         <dependency>
             <groupId>com.harris</groupId>
             <artifactId>fss-domain</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.harris</groupId>
             <artifactId>fss-infra</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
         </dependency>
     </dependencies>
 

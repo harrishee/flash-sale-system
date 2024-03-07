@@ -1,6 +1,5 @@
 package com.harris.controller.exception.handler;
 
-import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -23,7 +22,7 @@ public class InternalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(); // 创建错误响应对象
         
         // 特殊处理UndeclaredThrowableException异常，检查其内部是否包装了FlowException
-        if (e instanceof UndeclaredThrowableException && ((UndeclaredThrowableException) e).getUndeclaredThrowable() instanceof FlowException) {
+        if (e instanceof UndeclaredThrowableException) {
             // 设置错误代码和消息为限流错误
             errorResponse.setErrCode(ErrorCode.LIMIT_ERROR.getCode());
             errorResponse.setErrMessage(ErrorCode.LIMIT_ERROR.getMessage());

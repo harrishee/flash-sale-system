@@ -11,7 +11,7 @@ public class PlaceOrderCommand {
     private Long activityId;
     private Long totalAmount;
     private Integer quantity;
-
+    
     public boolean invalidParams() {
         return itemId == null || activityId == null || quantity == null || quantity <= 0;
     }

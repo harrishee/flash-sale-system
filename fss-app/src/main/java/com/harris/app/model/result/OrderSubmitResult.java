@@ -10,11 +10,11 @@ public class OrderSubmitResult {
     private boolean success;
     private String code;
     private String message;
-
+    
     public static OrderSubmitResult ok() {
         return new OrderSubmitResult().setSuccess(true);
     }
-
+    
     public static OrderSubmitResult error(AppErrorCode appErrorCode) {
         return new OrderSubmitResult()
                 .setSuccess(false)

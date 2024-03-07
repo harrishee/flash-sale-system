@@ -10,11 +10,11 @@ public class AppResult {
     private boolean success;
     private String code;
     private String message;
-
+    
     public static AppResult ok() {
         return new AppResult().setSuccess(true);
     }
-
+    
     public static AppResult error(AppErrorCode appErrorCode) {
         return new AppResult()
                 .setSuccess(false)

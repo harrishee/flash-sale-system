@@ -16,18 +16,18 @@ public class SaleItemsCache {
     private boolean later;
     private boolean exist;
     private boolean empty;
-
+    
     public SaleItemsCache with(List<SaleItem> saleItems) {
         this.saleItems = saleItems;
         this.exist = true;
         return this;
     }
-
+    
     public SaleItemsCache tryLater() {
         this.later = true;
         return this;
     }
-
+    
     public SaleItemsCache empty() {
         this.saleItems = new ArrayList<>();
         this.total = 0;

@@ -10,9 +10,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.BeanUtils;
 
-/**
- * 工具类，用于在领域实体 SaleActivity, SaleItem, SaleOrder 和数据对象 SaleActivityDO, SaleItemDO, SaleOrderDO 之间进行转换
- */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class InfraConverter {
     public static SaleActivityDO toSaleActivityDO(SaleActivity saleActivity) {

@@ -14,7 +14,7 @@ public class RedissonConfig {
     
     @Bean
     public RedissonClient redissonClient() {
-        // 配置并创建RedissonClient实例，用于操作Redis
+        // 配置并创建 RedissonClient 实例
         Config config = new Config();
         config.useSingleServer().setAddress(redisAddress).setDatabase(0);
         return Redisson.create(config);

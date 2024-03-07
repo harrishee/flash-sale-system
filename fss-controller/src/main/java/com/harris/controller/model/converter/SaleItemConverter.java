@@ -22,14 +22,14 @@ public class SaleItemConverter {
         BeanUtils.copyProperties(publishItemRequest, publishItemCommand);
         return publishItemCommand;
     }
-
+    
     public static SaleItemResponse toResponse(SaleItemDTO saleItemDTO) {
         if (saleItemDTO == null) return null;
         SaleItemResponse saleItemResponse = new SaleItemResponse();
         BeanUtils.copyProperties(saleItemDTO, saleItemResponse);
         return saleItemResponse;
     }
-
+    
     public static List<SaleItemResponse> toResponseList(Collection<SaleItemDTO> saleItemDTOS) {
         if (CollectionUtils.isEmpty(saleItemDTOS)) return new ArrayList<>();
         return saleItemDTOS.stream().map(SaleItemConverter::toResponse).collect(Collectors.toList());

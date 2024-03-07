@@ -22,15 +22,14 @@ public class SaleActivityConverter {
         BeanUtils.copyProperties(publishActivityRequest, activityPublishCommand);
         return activityPublishCommand;
     }
-
+    
     public static SaleActivityResponse toResponse(SaleActivityDTO saleActivityDTO) {
         if (saleActivityDTO == null) return null;
         SaleActivityResponse saleActivityResponse = new SaleActivityResponse();
         BeanUtils.copyProperties(saleActivityDTO, saleActivityResponse);
-
         return saleActivityResponse;
     }
-
+    
     public static List<SaleActivityResponse> toResponseList(Collection<SaleActivityDTO> saleActivityDTOS) {
         if (CollectionUtils.isEmpty(saleActivityDTOS)) return new ArrayList<>();
         return saleActivityDTOS.stream().map(SaleActivityConverter::toResponse).collect(Collectors.toList());

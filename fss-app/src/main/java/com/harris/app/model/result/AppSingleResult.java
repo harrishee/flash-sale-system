@@ -11,18 +11,18 @@ public class AppSingleResult<T> {
     private String code;
     private String message;
     private T data;
-
+    
     public static <T> AppSingleResult<T> ok(T data) {
         return new AppSingleResult<T>().setSuccess(true).setData(data);
     }
-
+    
     public static <T> AppSingleResult<T> error(String errCode, String errDesc) {
         return new AppSingleResult<T>()
                 .setSuccess(false)
                 .setCode(errCode)
                 .setMessage(errDesc);
     }
-
+    
     public static <T> AppSingleResult<T> error(String errCode, String errDesc, T data) {
         return new AppSingleResult<T>()
                 .setSuccess(false)
@@ -30,14 +30,14 @@ public class AppSingleResult<T> {
                 .setCode(errCode)
                 .setMessage(errDesc);
     }
-
+    
     public static <T> AppSingleResult<T> error(AppErrorCode appErrorCode) {
         return new AppSingleResult<T>()
                 .setSuccess(false)
                 .setCode(appErrorCode.getErrCode())
                 .setMessage(appErrorCode.getErrDesc());
     }
-
+    
     public static <T> AppSingleResult<T> tryLater() {
         return new AppSingleResult<T>()
                 .setSuccess(false)

@@ -8,11 +8,11 @@ import com.harris.app.model.PlaceOrderTaskStatus;
 import com.harris.app.model.cache.CacheConstant;
 import com.harris.app.model.cache.StockCache;
 import com.harris.app.model.result.OrderSubmitResult;
-import com.harris.app.mq.RocketMQOrderTaskProducer;
-import com.harris.app.service.cache.StockCacheService;
-import com.harris.infra.cache.RedisCacheService;
-import com.harris.infra.lock.DistributedLock;
-import com.harris.infra.lock.DistributedLockService;
+import com.harris.app.mq.PlaceOrderTaskProducer;
+import com.harris.app.service.stock.StockCacheService;
+import com.harris.infra.distributed.cache.RedisCacheService;
+import com.harris.infra.distributed.lock.DistributedLock;
+import com.harris.infra.distributed.lock.DistributedLockService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -68,7 +68,7 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
     private StockCacheService stockCacheService;
     
     @Resource
-    private RocketMQOrderTaskProducer mqOrderTaskProducer;
+    private PlaceOrderTaskProducer mqOrderTaskProducer;
     
     @Resource
     private RedisCacheService redisCacheService;
@@ -88,7 +88,7 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
         // 先取消，方便测试
         if (taskIdSubmitted != null) return OrderSubmitResult.error(AppErrorCode.REDUNDANT_SUBMIT);
         
-        // 检查是否还有可用库存（订单许可 = 库存数量 * 1.5）
+        // 检查是否还有可用库存（订单许可 = 库存数量 * 1.5），为了快速响应和减少下个 if 对 Redis 的操作
         Integer availableOrderToken = getAvailableOrderToken(placeOrderTask.getItemId());
         if (availableOrderToken == null || availableOrderToken == 0) {
             // log.info("应用层 submit, 暂无可用库存: [availableOrderToken={}, itemId={}]", availableOrderToken, placeOrderTask.getItemId());
@@ -97,7 +97,7 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
         
         // 使用 Lua 脚本减少订单许可
         if (!handleOrderTokenLua(placeOrderTask, DECREMENT_TOKEN_LUA)) {
-            log.info("应用层 submit, 库存扣减失败: [placeOrderTask={}]", placeOrderTask);
+            log.info("应用层 submit, 暂无可用库存: [placeOrderTask={}]", placeOrderTask);
             return OrderSubmitResult.error(AppErrorCode.ORDER_TOKENS_NOT_AVAILABLE);
         }
         

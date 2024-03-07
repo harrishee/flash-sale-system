@@ -11,5 +11,5 @@ import javax.servlet.http.HttpServletResponse;
 public interface SecurityChainService {
     boolean run(HttpServletRequest request, HttpServletResponse response);
     
-    int getOrder();
+    int getPriority();
 }

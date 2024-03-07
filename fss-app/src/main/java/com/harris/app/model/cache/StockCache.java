@@ -10,14 +10,14 @@ public class StockCache {
     private boolean success;
     private boolean later;
     private boolean exist;
-
+    
     public StockCache with(Integer availableStock) {
         this.availableStock = availableStock;
         this.success = true;
         this.exist = true;
         return this;
     }
-
+    
     public StockCache tryLater() {
         this.success = false;
         this.later = true;

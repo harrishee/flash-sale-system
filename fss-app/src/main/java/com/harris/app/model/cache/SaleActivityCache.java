@@ -11,23 +11,23 @@ public class SaleActivityCache {
     private Long version;
     private boolean later;
     private boolean exist;
-
+    
     public SaleActivityCache with(SaleActivity saleActivity) {
         this.saleActivity = saleActivity;
         this.exist = true;
         return this;
     }
-
+    
     public SaleActivityCache withVersion(Long version) {
         this.version = version;
         return this;
     }
-
+    
     public SaleActivityCache tryLater() {
         this.later = true;
         return this;
     }
-
+    
     public SaleActivityCache notExist() {
         this.exist = false;
         return this;

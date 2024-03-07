@@ -10,12 +10,12 @@ import java.util.List;
 @Mapper
 public interface SaleActivityMapper {
     SaleActivityDO getActivityById(@Param("activityId") Long activityId);
-
+    
     List<SaleActivityDO> getActivitiesByCondition(PageQuery pageQuery);
-
+    
     Integer countActivitiesByCondition(PageQuery pageQuery);
-
+    
     int insertActivity(SaleActivityDO saleActivityDO);
-
+    
     int updateActivity(SaleActivityDO saleActivityDO);
 }

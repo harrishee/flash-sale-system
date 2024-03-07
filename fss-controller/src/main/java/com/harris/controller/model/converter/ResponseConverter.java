@@ -19,7 +19,7 @@ public class ResponseConverter {
         response.setErrMessage(appResult.getMessage());
         return response;
     }
-
+    
     public static <T> SingleResponse<T> toSingleResponse(AppSingleResult appSingleResult) {
         if (appSingleResult == null) return new SingleResponse<>();
         SingleResponse singleResponse = new SingleResponse();
@@ -29,7 +29,7 @@ public class ResponseConverter {
         singleResponse.setData(appSingleResult.getData());
         return singleResponse;
     }
-
+    
     public static <T> MultiResponse<T> toMultiResponse(AppMultiResult appMultiResult) {
         if (appMultiResult == null) return new MultiResponse<>();
         MultiResponse multiResponse = new MultiResponse<>();

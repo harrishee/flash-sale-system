@@ -1,6 +1,6 @@
 package com.harris.controller.interceptor;
 
-import com.harris.app.service.app.AuthService;
+import com.harris.app.service.auth.AuthService;
 import com.harris.app.model.auth.AuthResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     private static final String USER_ID = "userId"; // 用户ID的请求属性键
     
     @Resource
-    private AuthService authService; // 注入认证服务
+    private AuthService authService;
     
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {

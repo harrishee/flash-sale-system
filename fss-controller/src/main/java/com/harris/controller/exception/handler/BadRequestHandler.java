@@ -1,6 +1,5 @@
 package com.harris.controller.exception.handler;
 
-import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.fastjson.JSON;
 import com.harris.app.exception.BizException;
 import com.harris.domain.exception.DomainException;
@@ -21,12 +20,12 @@ import java.lang.reflect.UndeclaredThrowableException;
 @ControllerAdvice
 public class BadRequestHandler extends ResponseEntityExceptionHandler {
     // 定义一个异常处理方法，处理一系列自定义异常
-    @ExceptionHandler({FlowException.class, AuthException.class, BizException.class, DomainException.class})
+    @ExceptionHandler({AuthException.class, BizException.class, DomainException.class})
     protected ResponseEntity<Object> handleConflict(RuntimeException e, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse(); // 创建错误响应对象
         
         // 特殊处理UndeclaredThrowableException异常，检查其内部是否包装了FlowException
-        if (e instanceof UndeclaredThrowableException && ((UndeclaredThrowableException) e).getUndeclaredThrowable() instanceof FlowException) {
+        if (e instanceof UndeclaredThrowableException) {
             // 设置错误代码和消息为限流错误
             errorResponse.setErrCode(ErrorCode.LIMIT_ERROR.getCode());
             errorResponse.setErrMessage(ErrorCode.LIMIT_ERROR.getMessage());

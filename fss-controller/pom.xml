@@ -16,7 +16,6 @@
         <dependency>
             <groupId>com.harris</groupId>
             <artifactId>fss-app</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

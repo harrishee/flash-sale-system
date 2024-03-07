@@ -3,10 +3,9 @@ package com.harris.app.event.handler;
 import com.alibaba.cola.dto.Response;
 import com.alibaba.cola.event.EventHandler;
 import com.alibaba.cola.event.EventHandlerI;
-import com.harris.app.service.cache.SaleActivitiesCacheService;
-import com.harris.app.service.cache.SaleActivityCacheService;
+import com.harris.app.service.saleactivity.SaleActivitiesCacheService;
+import com.harris.app.service.saleactivity.SaleActivityCacheService;
 import com.harris.domain.model.event.SaleActivityEvent;
-import com.harris.infra.config.MarkTrace;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -21,10 +20,9 @@ public class SaleActivityEventHandler implements EventHandlerI<Response, SaleAct
     private SaleActivitiesCacheService saleActivitiesCacheService;
     
     @Override
-    @MarkTrace
     public Response execute(SaleActivityEvent saleActivityEvent) {
         if (saleActivityEvent.getActivityId() == null) {
-            log.info("应用层 activityEvent，事件参数错误: [saleActivityEvent={}]", saleActivityEvent);
+            log.info("应用层 activity event handler，事件参数ID为空: [saleActivityEvent={}]", saleActivityEvent);
             return Response.buildSuccess();
         }
         

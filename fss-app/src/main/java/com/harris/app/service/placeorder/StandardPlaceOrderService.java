@@ -6,15 +6,15 @@ import com.harris.app.model.command.PlaceOrderCommand;
 import com.harris.app.model.dto.SaleItemDTO;
 import com.harris.app.model.result.AppSingleResult;
 import com.harris.app.model.result.PlaceOrderResult;
-import com.harris.app.service.app.SaleActivityAppService;
-import com.harris.app.service.app.SaleItemAppService;
-import com.harris.app.service.cache.StockCacheService;
+import com.harris.app.service.saleactivity.SaleActivityAppService;
+import com.harris.app.service.saleitem.SaleItemAppService;
+import com.harris.app.service.stock.StockCacheService;
 import com.harris.app.util.AppConverter;
 import com.harris.app.util.OrderUtil;
 import com.harris.domain.model.StockDeduction;
 import com.harris.domain.model.entity.SaleOrder;
-import com.harris.domain.service.SaleOrderDomainService;
-import com.harris.domain.service.StockDomainService;
+import com.harris.domain.service.order.SaleOrderDomainService;
+import com.harris.domain.service.stock.StockDomainService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -49,7 +49,7 @@ public class StandardPlaceOrderService implements PlaceOrderService {
     @Override
     public PlaceOrderResult doPlaceOrder(Long userId, PlaceOrderCommand placeOrderCommand) {
         if (userId == null || placeOrderCommand == null || placeOrderCommand.invalidParams()) {
-            throw new BizException(AppErrorCode.INVALID_PARAMS);
+            throw new BizException(AppErrorCode.INVALID_PARAMS.getErrDesc());
         }
         
         // 检查活动是否允许下单

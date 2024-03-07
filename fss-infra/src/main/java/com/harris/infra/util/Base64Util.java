@@ -10,9 +10,7 @@ public class Base64Util {
     
     // 用于解码 user 的 token
     public static String decode(String data) throws Exception {
-        // 将传入的 Base64 编码的字符串解码成字节数组
         byte[] b = Base64.decodeBase64(data.getBytes(ENCODING));
-        // 将字节数组转换回原始字符串并返回
         return new String(b, ENCODING);
     }
 }

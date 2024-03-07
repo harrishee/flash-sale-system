@@ -10,12 +10,12 @@ import java.util.List;
 @Mapper
 public interface SaleOrderMapper {
     SaleOrderDO getOrderById(@Param("orderId") Long orderId);
-
+    
     List<SaleOrderDO> getOrdersByCondition(PageQuery pageQuery);
-
+    
     Integer countOrdersByCondition(PageQuery pageQuery);
-
+    
     int insertOrder(SaleOrderDO saleOrderDO);
-
+    
     int updateStatus(SaleOrderDO saleOrderDO);
 }

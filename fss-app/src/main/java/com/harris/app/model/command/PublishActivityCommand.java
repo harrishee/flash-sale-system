@@ -14,10 +14,8 @@ public class PublishActivityCommand {
     private Integer status;
     private Date startTime;
     private Date endTime;
-
+    
     public boolean invalidParams() {
-        return !StringUtils.isNotEmpty(activityName) ||
-                startTime == null || endTime == null ||
-                !startTime.before(endTime);
+        return !StringUtils.isNotEmpty(activityName) || startTime == null || endTime == null || !startTime.before(endTime);
     }
 }

@@ -81,7 +81,7 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
         if (placeOrderTask == null) return OrderSubmitResult.error(AppErrorCode.INVALID_PARAMS);
         // log.info("应用层 submit 开始: [placeOrderTask={}]", placeOrderTask);
         
-        // 检查一个用户是不是多买了同样的商品
+        // 检查一个用户是不是多买了同样的商品，key = PLACE_ORDER_TASK_ORDER_ID_KEY + userId
         String taskKey = buildOrderTaskKey(placeOrderTask.getPlaceOrderTaskId());
         Integer taskIdSubmitted = redisCacheService.get(taskKey, Integer.class);
         
@@ -134,7 +134,7 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
         Integer availableOrderToken = ORDER_TOKEN_LOCAL_CACHE.getIfPresent(itemId);
         if (availableOrderToken != null) return availableOrderToken;
         
-        // 本地缓存中依旧没有，从分布式缓存中获取
+        // 本地缓存中依旧没有，从分布式缓存中获取，key = PLACE_ORDER_TASK_AVAILABLE_TOKEN_KEY + itemId
         Integer latestToken = redisCacheService.get(buildItemAvailableTokenKey(itemId), Integer.class);
         if (latestToken != null) {
             // 将分布式缓存中的最新 订单许可数量 存入本地缓存
@@ -147,7 +147,7 @@ public class QueuedPlaceOrderTaskService implements PlaceOrderTaskService {
     }
     
     private Integer refreshLatestAvailableToken(Long itemId) {
-        // 获取 Redisson 分布式锁，防止并发更新 订单许可数量，key = TOKEN_REFRESH_LOCK_KEY + itemId
+        // 获取分布式锁实例，防止 itemId 的订单许可数量并发更新，key = TOKEN_REFRESH_LOCK_KEY + itemId
         DistributedLock rLock = distributedLockService.getLock(buildRefreshTokensLockKey(itemId));
         try {
             // 尝试获取分布式锁

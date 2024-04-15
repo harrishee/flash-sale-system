@@ -140,7 +140,7 @@ public class QueuedPlaceOrderService implements PlaceOrderService {
                 return;
             }
             
-            // 2. 调用领域服务的 下单 方法（存入数据库）
+            // 2. 调用领域服务的 保存订单 方法
             boolean createOrderSuccess = saleOrderDomainService.createOrder(userId, newOrder);
             if (!createOrderSuccess) {
                 log.info("队列下单 handlePlaceOrderTask, 抢购失败，创建订单失败: [userId={}, placeOrderTask={}]", userId, placeOrderTask);
